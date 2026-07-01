@@ -12,6 +12,7 @@
 package ReportsHowieRT;
 
 {$R *.res}
+{$R *.otares}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS ON}
@@ -24,8 +25,8 @@ package ReportsHowieRT;
 {$LONGSTRINGS ON}
 {$OPENSTRINGS ON}
 {$OPTIMIZATION OFF}
-{$OVERFLOWCHECKS OFF}
-{$RANGECHECKS OFF}
+{$OVERFLOWCHECKS ON}
+{$RANGECHECKS ON}
 {$REFERENCEINFO ON}
 {$SAFEDIVIDE OFF}
 {$STACKFRAMES ON}
@@ -37,8 +38,8 @@ package ReportsHowieRT;
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
 {$DESCRIPTION 'ReportsHowie - Report Generator (Runtime)'}
-{$RUNONLY}
 {$LIBSUFFIX AUTO}
+{$RUNONLY}
 {$IMPLICITBUILD ON}
 
 requires

@@ -4,6 +4,8 @@
 
 # Saidas de compilacao
 *.dcu
+*.res
+*.otares
 *.o
 *.obj
 *.a
