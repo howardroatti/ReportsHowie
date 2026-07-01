@@ -58,3 +58,6 @@ modules/
 
 # Nao ignoramos os .dproj / .dpk / .groupproj: eles descrevem o projeto
 # e devem ser versionados.
+
+# Instrucoes locais do Claude Code (contem conta/paths especificos da maquina)
+CLAUDE.md
