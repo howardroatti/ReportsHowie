@@ -7,6 +7,13 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 5 — Designer visual em design-time)
+- **5b — Inspetor de propriedades (RTTI):** `rh.Design.Inspector` (`TrhInspector`, VCL puro).
+  Lista as propriedades publicadas do objeto/banda selecionado e edita conforme o tipo: string,
+  inteiro, geometria em **mm** (Left/Top/Width/Height), enumeração e booleano (combo), cor
+  (diálogo) e fonte (diálogo). Painel acoplado à direita do designer, com splitter; sincroniza
+  com a seleção e reflete mudanças ao arrastar/redimensionar na surface.
+
 ### Adicionado (Fase 5 — Designer visual em design-time, incremento 5a)
 - `rh.Design.Surface`: `TrhDesignSurface` (`TCustomControl` puro VCL, **livre de DesignIntf** —
   reutilizável no designer runtime da Fase 10). Editor por bandas: faixas empilhadas com rótulo

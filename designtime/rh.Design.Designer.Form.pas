@@ -21,7 +21,7 @@ uses
   Winapi.Windows, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.ComCtrls, Vcl.Dialogs,
   rh.Types, rh.Model.Types, rh.Objects, rh.Bands, rh.Report,
-  rh.Design.Surface;
+  rh.Design.Surface, rh.Design.Inspector;
 
 type
   TrhDesignerForm = class(TForm)
@@ -34,6 +34,8 @@ type
     FStatus: TStatusBar;
     FZoomLabel: TLabel;
     FBandCombo: TComboBox;
+    FInspector: TrhInspector;
+    FInspHeader: TLabel;
     function AddButton(const Caption: string; AWidth: Integer;
       AClick: TNotifyEvent): TButton;
     procedure AddSeparator;
@@ -51,6 +53,7 @@ type
     procedure DoCancel(Sender: TObject);
     procedure SurfaceModified(Sender: TObject);
     procedure SurfaceSelChanged(Sender: TObject);
+    procedure InspectorChanged(Sender: TObject);
     procedure FormKeyDownHandler(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure BuildUI;
     procedure UpdateZoomLabel;
@@ -100,7 +103,8 @@ end;
 
 procedure TrhDesignerForm.BuildUI;
 var
-  Bottom: TPanel;
+  Bottom, RightPanel: TPanel;
+  Splitter: TSplitter;
   BtnOK, BtnCancel: TButton;
   I: Integer;
 begin
@@ -181,6 +185,34 @@ begin
   FStatus := TStatusBar.Create(Self);
   FStatus.Parent := Self;
   FStatus.SimplePanel := True;
+
+  // ---- inspetor (direita) ----
+  RightPanel := TPanel.Create(Self);
+  RightPanel.Parent := Self;
+  RightPanel.Align := alRight;
+  RightPanel.Width := 250;
+  RightPanel.BevelOuter := bvNone;
+
+  FInspHeader := TLabel.Create(Self);
+  FInspHeader.Parent := RightPanel;
+  FInspHeader.Align := alTop;
+  FInspHeader.Height := 22;
+  FInspHeader.Alignment := taCenter;
+  FInspHeader.Layout := tlCenter;
+  FInspHeader.Caption := 'Propriedades';
+  FInspHeader.Color := clBtnFace;
+  FInspHeader.Transparent := False;
+  FInspHeader.Font.Style := [fsBold];
+
+  FInspector := TrhInspector.Create(Self);
+  FInspector.Parent := RightPanel;
+  FInspector.Align := alClient;
+  FInspector.OnChanged := InspectorChanged;
+
+  Splitter := TSplitter.Create(Self);
+  Splitter.Parent := Self;
+  Splitter.Align := alRight;
+  Splitter.Width := 4;
 
   // ---- area de design ----
   FScroll := TScrollBox.Create(Self);
@@ -292,11 +324,33 @@ end;
 
 procedure TrhDesignerForm.SurfaceModified(Sender: TObject);
 begin
+  FInspector.RefreshValues;
   UpdateStatus;
 end;
 
 procedure TrhDesignerForm.SurfaceSelChanged(Sender: TObject);
 begin
+  if FSurface.Selected <> nil then
+  begin
+    FInspHeader.Caption := 'Objeto selecionado';
+    FInspector.Inspect(FSurface.Selected);
+  end
+  else if FSurface.SelectedBand <> nil then
+  begin
+    FInspHeader.Caption := 'Banda selecionada';
+    FInspector.Inspect(FSurface.SelectedBand);
+  end
+  else
+  begin
+    FInspHeader.Caption := 'Propriedades';
+    FInspector.Inspect(nil);
+  end;
+  UpdateStatus;
+end;
+
+procedure TrhDesignerForm.InspectorChanged(Sender: TObject);
+begin
+  FSurface.RebuildLayout; // props podem mudar altura de banda/geometria
   UpdateStatus;
 end;
 
