@@ -7,6 +7,16 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 4 — Pipeline de dados)
+- `rh.Data.Pipeline`: percorre um `TDataSet` genérico emitindo a banda de dados por registro.
+- Grupo (header/footer) com quebra por `GroupExpression`; cabeçalho/rodapé de página; sumário.
+- Agregações reais `SUM`/`AVG`/`COUNT`/`MIN`/`MAX` — por grupo e geral — via re-varredura do
+  dataset com filtro de grupo e bookmark (sem acumuladores).
+- `TrhReport.SetDataSet`/`FindDataSet` (binding runtime nome→`TDataSet`) e helper `ShowDataPreview`.
+- Total de páginas correto (`[TOTALPAGES]`) via duas passagens.
+- Rodapé de grupo posiciona no último registro do grupo (rótulos `[Campo]` corretos).
+- `TrhRenderEngine.EmitBand` exposto para reuso pelo pipeline.
+
 ### Adicionado (Fase 3 — Motor de expressões/fórmulas)
 - `rh.Expr.Lexer`: tokenizador (campos `[Nome]`, strings, números, operadores, `AND/OR/NOT/MOD`).
 - `rh.Expr.Nodes`: nós da AST + `IrhEvalContext` + avaliador (Variant); nós de agregação delegam ao contexto.

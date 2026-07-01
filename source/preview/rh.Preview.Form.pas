@@ -44,7 +44,7 @@ type
     procedure DoZoomIn(Sender: TObject);
     procedure DoZoomOut(Sender: TObject);
     procedure DoPrint(Sender: TObject);
-    procedure DoClose(Sender: TObject);
+    procedure DoCloseClick(Sender: TObject);
   public
     constructor CreateWithDocument(AOwner: TComponent; ADoc: TrhRenderedDocument;
       AOwnsDoc: Boolean; const ATitle: string);
@@ -138,7 +138,7 @@ begin
   MakeButton(FToolbar, '+', X, 34, DoZoomIn); Inc(X, 48);
 
   MakeButton(FToolbar, 'Imprimir', X, 90, DoPrint); Inc(X, 98);
-  MakeButton(FToolbar, 'Fechar', X, 80, DoClose);
+  MakeButton(FToolbar, 'Fechar', X, 80, DoCloseClick);
 
   FScroll := TScrollBox.Create(Self);
   FScroll.Parent := Self;
@@ -254,7 +254,7 @@ begin
   TrhVCLRenderer.PrintDocument(FDoc, FTitle);
 end;
 
-procedure TrhPreviewForm.DoClose(Sender: TObject);
+procedure TrhPreviewForm.DoCloseClick(Sender: TObject);
 begin
   Close;
 end;

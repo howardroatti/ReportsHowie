@@ -19,7 +19,7 @@ unit rh.Report;
 interface
 
 uses
-  System.Classes, System.JSON,
+  System.Classes, System.JSON, System.Generics.Collections,
   rh.Consts, rh.Page;
 
 type
@@ -29,6 +29,7 @@ type
     FAuthor: string;
     FFormatVersion: Integer;
     FPages: TrhPageList;
+    FDataSets: TDictionary<string, TComponent>; // binding runtime (nao serializado)
     procedure ReadReportData(Stream: TStream);
     procedure WriteReportData(Stream: TStream);
   protected
@@ -41,6 +42,11 @@ type
     procedure Clear;
     /// <summary>Garante ao menos uma pagina e a retorna.</summary>
     function EnsurePage: TrhPage;
+
+    /// <summary>Liga (em runtime) um TDataSet a um nome usado por bandas de dados.</summary>
+    procedure SetDataSet(const Name: string; DataSet: TComponent);
+    /// <summary>Resolve o TDataSet ligado ao nome (nil se nao houver). Cast para TDataSet no uso.</summary>
+    function FindDataSet(const Name: string): TComponent;
 
     // --- serializacao ---
     function ToJSONString(Pretty: Boolean = True): string;
@@ -72,12 +78,25 @@ begin
   FFormatVersion := RH_FORMAT_VERSION;
   FPages := TrhPageList.Create;
   FPages.AddPage; // um relatorio novo ja nasce com uma pagina
+  FDataSets := TDictionary<string, TComponent>.Create;
 end;
 
 destructor TrhReport.Destroy;
 begin
+  FDataSets.Free;
   FPages.Free;
   inherited Destroy;
+end;
+
+procedure TrhReport.SetDataSet(const Name: string; DataSet: TComponent);
+begin
+  FDataSets.AddOrSetValue(UpperCase(Name), DataSet);
+end;
+
+function TrhReport.FindDataSet(const Name: string): TComponent;
+begin
+  if not FDataSets.TryGetValue(UpperCase(Name), Result) then
+    Result := nil;
 end;
 
 procedure TrhReport.Clear;

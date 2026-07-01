@@ -275,8 +275,10 @@ end;
 
 function TrhAggregateNode.Evaluate(const Ctx: IrhEvalContext): Variant;
 begin
+  // passa o ARGUMENTO interno (ex.: [Valor]); o contexto re-varre o dataset
+  // avaliando FArg por linha. Passar Self causaria recursao.
   if Ctx <> nil then
-    Result := Ctx.EvalAggregate(FFuncName, Self)
+    Result := Ctx.EvalAggregate(FFuncName, FArg)
   else
     Result := Null;
 end;

@@ -18,7 +18,7 @@ unit rh.Render.Engine;
 interface
 
 uses
-  rh.Report, rh.Render.Intf, rh.Expr.Nodes;
+  rh.Types, rh.Bands, rh.Report, rh.Render.Intf, rh.Expr.Nodes;
 
 type
   TrhRenderEngine = class
@@ -31,12 +31,16 @@ type
     /// </summary>
     class function BuildDocument(Report: TrhReport;
       const Ctx: IrhEvalContext = nil): TrhRenderedDocument;
+
+    /// <summary>Emite os objetos de uma banda numa pagina (usado pelo pipeline de dados).</summary>
+    class procedure EmitBand(RP: TrhRenderedPage; Band: TrhBand;
+      OriginX, BandTop: TrhUnit; const Ctx: IrhEvalContext);
   end;
 
 implementation
 
 uses
-  Vcl.Graphics, rh.Types, rh.Model.Types, rh.Page, rh.Bands, rh.Objects, rh.Expr;
+  Vcl.Graphics, rh.Model.Types, rh.Page, rh.Objects, rh.Expr;
 
 procedure EmitObject(RP: TrhRenderedPage; Obj: TrhReportObject;
   OriginX, OriginY: TrhUnit; const Ctx: IrhEvalContext);
@@ -113,13 +117,19 @@ begin
   end;
 end;
 
-procedure EmitBand(RP: TrhRenderedPage; Band: TrhBand; OriginX, BandTop: TrhUnit;
+procedure DoEmitBand(RP: TrhRenderedPage; Band: TrhBand; OriginX, BandTop: TrhUnit;
   const Ctx: IrhEvalContext);
 var
   Obj: TrhReportObject;
 begin
   for Obj in Band.Objects do
     EmitObject(RP, Obj, OriginX, BandTop, Ctx);
+end;
+
+class procedure TrhRenderEngine.EmitBand(RP: TrhRenderedPage; Band: TrhBand;
+  OriginX, BandTop: TrhUnit; const Ctx: IrhEvalContext);
+begin
+  DoEmitBand(RP, Band, OriginX, BandTop, Ctx);
 end;
 
 class function TrhRenderEngine.BuildDocument(Report: TrhReport;
@@ -150,7 +160,7 @@ begin
         CurY := Page.MarginTop;
       end;
 
-      EmitBand(RP, Band, Page.MarginLeft, CurY, Ctx);
+      DoEmitBand(RP, Band, Page.MarginLeft, CurY, Ctx);
       CurY := CurY + Band.Height;
     end;
   end;

@@ -78,7 +78,7 @@ end;
 | 1 | Modelo de objetos + persistência JSON (`.rhr`) e DFM | ✅ |
 | 2 | Abstração de render + preview VCL | ✅ |
 | 3 | Engine de expressões/fórmulas | ✅ |
-| 4 | Pipeline de dados (`TDataSet`, master-detail, grupos, agregados) | ⬜ |
+| 4 | Pipeline de dados (`TDataSet`, grupos, agregados) | ✅ |
 | 5 | Designer visual em design-time | ⬜ |
 | 6 | Export **HTML** | ⬜ |
 | 7 | Export **PDF** | ⬜ |

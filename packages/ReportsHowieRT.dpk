@@ -68,6 +68,7 @@ contains
   rh.Render.Intf in '..\source\render\rh.Render.Intf.pas',
   rh.Render.Engine in '..\source\render\rh.Render.Engine.pas',
   rh.Render.VCLCanvas in '..\source\render\rh.Render.VCLCanvas.pas',
-  rh.Preview.Form in '..\source\preview\rh.Preview.Form.pas';
+  rh.Preview.Form in '..\source\preview\rh.Preview.Form.pas',
+  rh.Data.Pipeline in '..\source\data\rh.Data.Pipeline.pas';
 
 end.
