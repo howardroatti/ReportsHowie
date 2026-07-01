@@ -97,6 +97,9 @@
         <DCCReference Include="..\source\data\rh.Data.Pipeline.pas"/>
         <DCCReference Include="..\source\export\html\rh.Export.HTML.pas"/>
         <DCCReference Include="..\source\export\pdf\rh.Export.PDF.pas"/>
+        <DCCReference Include="..\source\export\ooxml\rh.OOXML.Zip.pas"/>
+        <DCCReference Include="..\source\export\ooxml\rh.Export.XLSX.pas"/>
+        <DCCReference Include="..\source\export\ooxml\rh.Export.DOCX.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

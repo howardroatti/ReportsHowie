@@ -7,6 +7,18 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 8 — Export XLSX e DOCX / OOXML)
+- `rh.OOXML.Zip`: empacotador OOXML minimo sobre `System.Zip` — acumula *parts* XML/binárias e
+  grava o `.xlsx`/`.docx` como ZIP (reutilizável entre XLSX e DOCX). Helper `XmlEscape`.
+- `rh.Export.XLSX`: `TrhXlsxExporter` gera SpreadsheetML puro-Pascal. Como a display list é
+  posicional, reconstrói uma **grade tabular** agrupando os textos por posição (linhas por `Top`
+  dentro da página, colunas por `Left` global). Cada texto vira célula `inlineStr` já formatada,
+  com fonte/negrito/itálico/cor e alinhamento (styles.xml com fontes e `cellXfs` deduplicados),
+  larguras de coluna e alturas de linha derivadas das dimensões dos objetos.
+- `rh.Export.DOCX`: `TrhDocxExporter` gera WordprocessingML puro-Pascal. Documento de **fluxo**:
+  cada objeto de texto vira um parágrafo (ordenado por página/`Top`/`Left`) com fonte, estilo,
+  cor, alinhamento (`jc`), recuo esquerdo a partir do `Left` e `sectPr` com o tamanho da página.
+
 ### Adicionado (Fase 7 — Export PDF nativo)
 - `rh.Export.PDF`: `TrhPdfExporter` escreve um **PDF 1.4 puro-Pascal** (sem dependências) a
   partir do `TrhRenderedDocument`: objetos indiretos, tabela `xref` com offsets de bytes reais,
