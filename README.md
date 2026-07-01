@@ -73,7 +73,8 @@ end;
 
 ## Documentação
 
-- 📘 **[Manual de uso](./docs/MANUAL.md)** — guia completo com dezenas de exemplos: bandas, objetos, expressões, data binding, agrupamento/agregados, banco de dados, preview, exportação, designer e receitas prontas.
+- 📘 **[Manual de uso (HTML)](./docs/index.html)** — versão navegável com índice lateral, busca e prints (abra o arquivo no navegador). Mesmo conteúdo em Markdown: **[MANUAL.md](./docs/MANUAL.md)**.
+- Cobre: bandas, objetos, expressões, data binding híbrido, agrupamento/agregados e **grupos aninhados**, banco de dados, preview, exportação, designer e receitas prontas.
 - 🏗️ [Arquitetura](./docs/ARCHITECTURE.md) — visão interna do componente.
 
 ## Roadmap

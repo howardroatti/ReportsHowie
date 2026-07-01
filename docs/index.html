@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReportsHowie — Manual</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+    --side:#f6f8fa; --accent:#0969da; --accent-bg:#ddf4ff;
+    --code-bg:#f6f8fa; --mark:#fff3b0; --shadow:0 1px 3px rgba(27,31,36,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--fg); background:var(--bg);
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  .layout{display:flex;min-height:100vh}
+
+  /* ---- Sidebar (indice + busca no topo-esquerda) ---- */
+  .sidebar{
+    width:310px;flex:0 0 310px;background:var(--side);border-right:1px solid var(--border);
+    height:100vh;position:sticky;top:0;display:flex;flex-direction:column
+  }
+  .brand{padding:16px 18px 10px;border-bottom:1px solid var(--border)}
+  .brand h1{margin:0;font-size:17px}
+  .brand .sub{color:var(--muted);font-size:12px;margin-top:2px}
+  .search-wrap{padding:12px 14px}
+  .search-wrap input{
+    width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;
+    font-size:14px;background:#fff
+  }
+  .search-hint{color:var(--muted);font-size:11px;margin:6px 2px 0}
+  nav.toc{overflow:auto;padding:6px 8px 30px;flex:1}
+  nav.toc ul{list-style:none;margin:0;padding:0}
+  nav.toc li a{
+    display:block;padding:5px 10px;border-radius:6px;color:var(--fg);font-size:13.5px
+  }
+  nav.toc li a.h3{padding-left:24px;font-size:13px;color:var(--muted)}
+  nav.toc li a:hover{background:var(--accent-bg);text-decoration:none}
+  nav.toc li a.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+  nav.toc li.hidden{display:none}
+  .no-results{color:var(--muted);font-size:13px;padding:10px}
+
+  /* ---- Conteudo central ---- */
+  main{flex:1;min-width:0;max-width:900px;margin:0 auto;padding:34px 40px 120px}
+  main h2{font-size:24px;border-bottom:1px solid var(--border);padding-bottom:6px;margin:44px 0 14px}
+  main h2:first-child{margin-top:0}
+  main h3{font-size:18px;margin:28px 0 10px}
+  main p,main li{font-size:15px}
+  main code{background:var(--code-bg);padding:.15em .4em;border-radius:5px;font-size:.88em;
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
+  main pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;
+    padding:14px 16px;overflow:auto;margin:14px 0}
+  main pre code{background:none;padding:0;font-size:13px;line-height:1.55}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:var(--side)}
+  blockquote{margin:14px 0;padding:8px 16px;border-left:4px solid var(--accent);
+    background:var(--accent-bg);border-radius:0 6px 6px 0;color:#1f2937}
+  blockquote p{margin:.3em 0}
+  .tag{display:inline-block;background:var(--accent-bg);color:var(--accent);
+    font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px;vertical-align:middle}
+  mark{background:var(--mark);padding:0 1px;border-radius:2px}
+
+  /* ---- Screenshots (placeholders com fallback) ---- */
+  figure.shot{margin:18px 0;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+  figure.shot img{display:block;width:100%;height:auto;background:#fff}
+  figure.shot figcaption{font-size:12.5px;color:var(--muted);padding:8px 12px;background:var(--side);border-top:1px solid var(--border)}
+  figure.shot.missing img{display:none}
+  figure.shot.missing{background:repeating-linear-gradient(45deg,#f6f8fa,#f6f8fa 12px,#eef1f4 12px,#eef1f4 24px)}
+  figure.shot.missing .ph{display:flex;align-items:center;justify-content:center;
+    min-height:150px;color:var(--muted);font-size:13px;text-align:center;padding:20px}
+  figure.shot .ph{display:none}
+  figure.shot.missing .ph{display:flex}
+
+  .backtop{position:fixed;right:22px;bottom:22px;background:var(--accent);color:#fff;
+    border:none;border-radius:22px;padding:9px 14px;font-size:13px;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s}
+  .backtop.show{opacity:1;pointer-events:auto}
+
+  @media (max-width:820px){
+    .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:.2s;z-index:20}
+    .sidebar.open{transform:none}
+    main{padding:20px}
+    .menu-btn{display:inline-block}
+  }
+  .menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:30;background:var(--accent);
+    color:#fff;border:none;border-radius:6px;padding:8px 12px;cursor:pointer}
+</style>
+</head>
+<body>
+<button class="menu-btn" id="menuBtn" aria-label="Menu">☰ Índice</button>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <h1>ReportsHowie</h1>
+      <div class="sub">Manual de uso &middot; gerador de relatórios para Delphi (VCL)</div>
+    </div>
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Pesquisar no manual…" autocomplete="off" aria-label="Pesquisar">
+      <div class="search-hint">Filtra o índice e destaca no conteúdo</div>
+    </div>
+    <nav class="toc" id="toc"></nav>
+  </aside>
+
+  <main id="content">
+    <p><span class="tag">LGPL-3.0</span> Gerador de relatórios <em>banded</em> em Pascal puro, sem dependências externas — alternativa livre ao FastReport/QuickReport. Este manual espelha o <a href="MANUAL.md">MANUAL.md</a> e traz dezenas de exemplos prontos para copiar.</p>
+
+    <h2 id="conceitos">1. Conceitos fundamentais</h2>
+    <ul>
+      <li><b>Modelo em bandas:</b> um relatório é uma pilha de <em>bandas</em> (título, cabeçalho, dados, rodapé…). A banda de dados repete uma vez por registro; as demais aparecem em pontos específicos.</li>
+      <li><b>Unidade interna = 0,1&nbsp;mm (inteiro):</b> independente de dispositivo. Você quase nunca digita o número cru — usa os <em>helpers</em>:</li>
+    </ul>
+    <table>
+      <tr><th>Helper</th><th>Converte para</th></tr>
+      <tr><td><code>MMToUnits(mm)</code></td><td>unidade interna (0,1&nbsp;mm) — <b>o que você usa ao montar</b></td></tr>
+      <tr><td><code>MMToPx</code>, <code>MMToPt</code>, <code>MMToTwips</code>, <code>MMToEMU</code></td><td>pixels, pontos, twips, EMU (uso interno dos exports)</td></tr>
+    </table>
+    <p>Ex.: <code>MMToUnits(190)</code> = 1900 (= 190&nbsp;mm da largura útil do A4).</p>
+    <ul>
+      <li><b>Display list única:</b> o motor renderiza para um <code>TrhRenderedDocument</code>. <b>Preview, impressão e todos os exports consomem essa mesma lista</b> → WYSIWYG, e <code>[TOTALPAGES]</code> de graça.</li>
+      <li><b>Dados genéricos:</b> qualquer <code>TDataSet</code> (FireDAC, ADO, dbExpress, memtable…). Sem acoplar driver.</li>
+    </ul>
+
+    <h2 id="instalacao">2. Instalação</h2>
+    <ol>
+      <li>Instale os pacotes <b>ReportsHowieRT</b> (runtime) e <b>ReportsHowieDT</b> (design-time). Só o <code>TrhReport</code> cai na paleta.</li>
+      <li>No projeto consumidor, adicione ao <b>Search Path</b> as pastas usadas:</li>
+    </ol>
+    <pre><code>...\source\core;...\source\model;...\source\render;...\source\preview;...\source\expr;...\source\data;...\source\export\html;...\source\export\pdf;...\source\export\ooxml</code></pre>
+    <p><code>uses</code> típico de uma aplicação:</p>
+    <pre><code>uses
+  rh.Types, rh.Report, rh.Page, rh.Bands, rh.Objects, rh.Model.Types,
+  rh.Render.Intf, rh.Expr.Nodes, rh.Data.Pipeline,
+  rh.Preview.Form,      // ShowPreview / ShowDataPreview (janela)
+  rh.Preview.Control,   // TrhPreviewControl (preview embutida)
+  rh.Export.HTML, rh.Export.PDF, rh.Export.XLSX, rh.Export.DOCX;</code></pre>
+    <blockquote><p>Community Edition não compila por linha de comando — o build é pela IDE.</p></blockquote>
+
+    <h2 id="primeiro">3. Seu primeiro relatório (em código)</h2>
+    <p><b>Exemplo 1 — relatório mínimo com título e banda de dados:</b></p>
+    <pre><code>var
+  Page: TrhPage;
+  Band: TrhBand;
+  T: TrhTextObject;
+begin
+  rhReport1.Clear;
+  rhReport1.Title := 'Ola ReportsHowie';
+  Page := rhReport1.EnsurePage;          // 1a pagina (A4 retrato)
+
+  Band := Page.Bands.AddBand(rhbtReportTitle);
+  Band.Height := MMToUnits(15);
+  T := Band.Objects.AddNew&lt;TrhTextObject&gt;;
+  T.Text := 'Meu primeiro relatorio';
+  T.Left := 0;  T.Top := MMToUnits(2);
+  T.Width := MMToUnits(190);  T.Height := MMToUnits(10);
+  T.Font.Size := 16;
+  T.HAlign := rhhaCenter;
+
+  rhReport1.ShowPreview;                  // mostra na tela (sem dados)
+end;</code></pre>
+    <blockquote><p><b>Left/Top são relativos à área de conteúdo</b> da banda — a margem já é aplicada pelo motor. Largura útil do A4 retrato = 190&nbsp;mm.</p></blockquote>
+    <p>Um <em>helper</em> usado no resto do manual:</p>
+    <pre><code>function NovoTexto(Band: TrhBand; const Texto: string; TopMM, HeightMM: Integer;
+  Align: TrhHAlign = rhhaLeft): TrhTextObject;
+begin
+  Result := Band.Objects.AddNew&lt;TrhTextObject&gt;;
+  Result.Text := Texto;
+  Result.Left := 0;
+  Result.Top := MMToUnits(TopMM);
+  Result.Width := MMToUnits(190);
+  Result.Height := MMToUnits(HeightMM);
+  Result.HAlign := Align;
+end;</code></pre>
+
+    <h2 id="bandas">4. Bandas</h2>
+    <table>
+      <tr><th>Tipo (<code>TrhBandType</code>)</th><th>Aparece</th></tr>
+      <tr><td><code>rhbtReportTitle</code></td><td>uma vez, no início do relatório</td></tr>
+      <tr><td><code>rhbtPageHeader</code></td><td>topo de cada página</td></tr>
+      <tr><td><code>rhbtPageFooter</code></td><td>rodapé de cada página</td></tr>
+      <tr><td><code>rhbtGroupHeader</code></td><td>ao iniciar um grupo (<code>GroupExpression</code>)</td></tr>
+      <tr><td><code>rhbtMasterData</code></td><td><b>uma vez por registro</b> do dataset mestre</td></tr>
+      <tr><td><code>rhbtDetailData</code></td><td>uma vez por registro do dataset detalhe (master-detail)</td></tr>
+      <tr><td><code>rhbtGroupFooter</code></td><td>ao fechar um grupo (subtotais)</td></tr>
+      <tr><td><code>rhbtSummary</code></td><td>uma vez, no fim (totais gerais)</td></tr>
+      <tr><td><code>rhbtChild</code></td><td>banda auxiliar ancorada a outra</td></tr>
+    </table>
+    <p><b>Exemplo 2 — adicionar bandas e definir altura:</b></p>
+    <pre><code>Page := rhReport1.EnsurePage;
+BTitle  := Page.Bands.AddBand(rhbtReportTitle);  BTitle.Height  := MMToUnits(18);
+BData   := Page.Bands.AddBand(rhbtMasterData);   BData.Height   := MMToUnits(6);
+BFooter := Page.Bands.AddBand(rhbtPageFooter);   BFooter.Height := MMToUnits(6);</code></pre>
+    <p>Propriedades úteis: <code>DataSetName</code> (dataset que dirige a iteração), <code>GroupExpression</code> (quebra de grupo), <code>Height</code>.</p>
+
+    <h2 id="objetos">5. Objetos</h2>
+    <p>Todo objeto tem <code>Left/Top/Width/Height</code> (via <code>MMToUnits</code>), <code>Visible</code> e <code>Frame</code>. Adicione com <code>Band.Objects.AddNew&lt;T&gt;</code>.</p>
+    <h3>5.1 Texto — <code>TrhTextObject</code></h3>
+    <pre><code>T := Band.Objects.AddNew&lt;TrhTextObject&gt;;
+T.Text := 'Cliente: [nome]';   // texto fixo + ilhas [expr]
+T.Font.Size := 12;
+T.Font.Style := [fsBold];
+T.HAlign := rhhaRight;         // rhhaLeft | rhhaCenter | rhhaRight
+T.WordWrap := True;
+T.Color := clWhite;            // cor de fundo
+T.Transparent := True;</code></pre>
+    <p>Também aceita <b>bind direto</b> a um campo via <code>DataField</code> (seção 8).</p>
+    <h3>5.2 Imagem — <code>TrhImageObject</code></h3>
+    <p><b>Exemplo 3 — imagem fixa (logo):</b></p>
+    <pre><code>Img := Band.Objects.AddNew&lt;TrhImageObject&gt;;
+Img.Left := 0; Img.Top := 0;
+Img.Width := MMToUnits(40); Img.Height := MMToUnits(20);
+Img.Picture.LoadFromFile('C:\logo.png');
+Img.KeepAspect := True;
+Img.Center := True;</code></pre>
+    <p><b>Exemplo 4 — imagem de um campo (blob):</b></p>
+    <pre><code>Img := Band.Objects.AddNew&lt;TrhImageObject&gt;;
+Img.DataField := 'foto';   // le o campo blob 'foto'
+Img.Stretch := True;</code></pre>
+    <h3>5.3 Linha — <code>TrhLineObject</code></h3>
+    <pre><code>Lin := Band.Objects.AddNew&lt;TrhLineObject&gt;;
+Lin.Left := 0; Lin.Top := MMToUnits(8);
+Lin.Width := MMToUnits(190); Lin.Height := 0;   // Height=0 =&gt; horizontal
+Lin.PenColor := clSilver;
+Lin.PenWidth := MMToUnits(1);</code></pre>
+    <h3>5.4 Forma — <code>TrhShapeObject</code></h3>
+    <pre><code>Shp := Band.Objects.AddNew&lt;TrhShapeObject&gt;;
+Shp.Kind := rhskRoundRect;   // rhskRectangle | rhskRoundRect | rhskEllipse
+Shp.Left := 0; Shp.Top := 0;
+Shp.Width := MMToUnits(190); Shp.Height := MMToUnits(8);
+Shp.PenColor := clGray;
+Shp.BrushColor := $00F5F5F5;   // BGR
+Shp.Transparent := False;      // False =&gt; preenche</code></pre>
+
+    <h2 id="estilo">6. Fonte, alinhamento, cores e moldura</h2>
+    <p><b>Exemplo 5 — cabeçalho com fundo e moldura inferior:</b></p>
+    <pre><code>T := NovoTexto(BGH, 'Categoria: [categoria]', 1, 6);
+T.Font.Name := 'Segoe UI';
+T.Font.Size := 11;
+T.Font.Style := [fsBold];
+T.Font.Color := clNavy;
+T.Color := $00F0F0F0;          // fundo (BGR, nao RGB!)
+T.Transparent := False;
+T.Frame.Sides := [rhfsBottom]; // moldura so embaixo
+T.Frame.Color := clSilver;
+T.Frame.Width := MMToUnits(1);</code></pre>
+    <blockquote><p><b>Cores em Delphi são BGR</b> (<code>$00BBGGRR</code>), não RGB. Use <code>clNavy</code>, <code>clSilver</code> ou <code>RGB(r,g,b)</code>.</p></blockquote>
+    <p>Horizontal: <code>rhhaLeft</code>, <code>rhhaCenter</code>, <code>rhhaRight</code>. Vertical: <code>rhvaTop</code>, <code>rhvaCenter</code>, <code>rhvaBottom</code>.</p>
+
+    <h2 id="expressoes">7. Expressões <code>[ilha]</code></h2>
+    <p>Dentro de <code>Text</code>, tudo entre <code>[</code> e <code>]</code> é <b>expressão avaliada</b>; o resto é literal. Pode haver várias ilhas num objeto.</p>
+    <pre><code>Total: R$ [FORMATFLOAT('#,##0.00', [valor])]   -&gt;   Total: R$ 1.234,50</code></pre>
+    <h3>7.1 Campos</h3>
+    <p><code>[nome_do_campo]</code> lê o campo do registro atual (case-insensitive).</p>
+    <h3>7.2 Operadores</h3>
+    <p>Aritméticos <code>+ - * /</code>, comparação <code>= &lt;&gt; &lt; &lt;= &gt; &gt;=</code>, lógicos <code>and or not</code>, concatenação com <code>+</code>. Parênteses controlam precedência.</p>
+    <h3>7.3 Funções</h3>
+    <table>
+      <tr><th>Categoria</th><th>Funções</th></tr>
+      <tr><td>Texto</td><td><code>UPPER</code>, <code>LOWER</code>, <code>TRIM</code>, <code>LEN</code>, <code>COPY(s,ini,qtd)</code>, <code>POS(sub,s)</code></td></tr>
+      <tr><td>Lógica</td><td><code>IIF(cond,a,b)</code>, <code>COALESCE(a,b,...)</code></td></tr>
+      <tr><td>Número</td><td><code>ROUND</code>, <code>TRUNC</code>, <code>INT</code>, <code>ABS</code></td></tr>
+      <tr><td>Formatação</td><td><code>FORMATFLOAT(masc,x)</code>, <code>FORMATDATETIME(masc,dt)</code>, <code>DATETOSTR</code>, <code>STR</code></td></tr>
+      <tr><td>Data/hora</td><td><code>NOW</code>, <code>DATE</code>/<code>TODAY</code>, <code>TIME</code></td></tr>
+      <tr><td>Agregados</td><td><code>SUM</code>, <code>AVG</code>, <code>COUNT</code>, <code>MIN</code>, <code>MAX</code>, <code>FIRST</code>, <code>LAST</code></td></tr>
+      <tr><td>Constantes</td><td><code>TRUE</code>, <code>FALSE</code>, <code>NULL</code>, <code>PI</code></td></tr>
+    </table>
+    <h3>7.4 Pseudo-variáveis</h3>
+    <p><code>[PAGE]</code> (página atual), <code>[TOTALPAGES]</code> (total — o motor faz 2 passadas).</p>
+    <p><b>Exemplo 6:</b></p>
+    <pre><code>NovoTexto(B, 'Emitido em [FORMATDATETIME(''dd"/"mm"/"yyyy hh":"nn'', NOW)]', 0, 5);
+NovoTexto(B, 'Pagina [PAGE] de [TOTALPAGES]', 0, 5, rhhaRight);
+NovoTexto(B, 'Situacao: [IIF([saldo] &lt; 0, ''DEVEDOR'', ''OK'')]', 0, 5);
+NovoTexto(B, 'Nome: [UPPER(TRIM([nome]))]', 0, 5);</code></pre>
+    <blockquote><p>Dentro de string Pascal, aspas simples dobram: <code>''#,##0.00''</code>.</p></blockquote>
+
+    <h2 id="binding">8. Ligação com dados (data binding)</h2>
+    <p>Dois modos (<b>híbrido</b>) — use o que preferir, inclusive misturados:</p>
+    <h3>8.1 Simples: <code>DataField</code> (estilo DB-aware)</h3>
+    <pre><code>T := Band.Objects.AddNew&lt;TrhTextObject&gt;;
+T.DataField := 'cliente';   // exibe o valor do campo 'cliente'</code></pre>
+    <p><code>DataField</code> tem <b>precedência</b> sobre <code>Text</code> e internamente vira <code>[cliente]</code> (mesmo motor).</p>
+    <h3>8.2 Avançado: ilhas <code>[expr]</code></h3>
+    <pre><code>T.Text := '[cliente] ([uf]) - R$ [FORMATFLOAT(''#,##0.00'', [total])]';</code></pre>
+    <h3>8.3 Ligando o dataset em runtime</h3>
+    <pre><code>BData.DataSetName := 'Pedidos';
+// ...
+rhReport1.SetDataSet('Pedidos', MinhaQuery);   // 'Pedidos' == BData.DataSetName</code></pre>
+    <p><b>Exemplo 7 — relatório de dados (memtable):</b></p>
+    <pre><code>Mem := TFDMemTable.Create(Self);
+Mem.FieldDefs.Add('Cliente', ftString, 40);
+Mem.FieldDefs.Add('Valor', ftCurrency);
+Mem.CreateDataSet;
+Mem.AppendRecord(['ACME Ltda', 1234.50]);
+Mem.First;
+
+rhReport1.Clear;
+Page := rhReport1.EnsurePage;
+BData := Page.Bands.AddBand(rhbtMasterData);
+BData.DataSetName := 'Vendas';
+NovoTexto(BData, '[Cliente] - R$ [FORMATFLOAT(''#,##0.00'', [Valor])]', 0, 6);
+
+rhReport1.SetDataSet('Vendas', Mem);
+rhReport1.ShowDataPreview;   // preview COM dados</code></pre>
+    <blockquote><p><b><code>ShowPreview</code> × <code>ShowDataPreview</code></b>: o primeiro mostra o layout estático; o segundo roda o pipeline (itera, agrupa, agrega). Para banco, use <code>ShowDataPreview</code>.</p></blockquote>
+
+    <h2 id="grupos">9. Agrupamento e agregados</h2>
+    <p>Para agrupar, use um par <b>group header / group footer</b> com a mesma <code>GroupExpression</code>. Os registros precisam vir <b>ordenados</b> pela expressão (contíguos). Agregados: <code>SUM/AVG/COUNT/MIN/MAX/FIRST/LAST</code>; o <b>escopo é a banda</b> (group footer → total do grupo; summary → total geral).</p>
+    <p><b>Exemplo 8 — vendas por categoria com subtotal e total geral:</b></p>
+    <pre><code>BGH := Page.Bands.AddBand(rhbtGroupHeader);
+BGH.GroupExpression := '[categoria]';
+NovoTexto(BGH, 'Categoria: [categoria]', 1, 6).Font.Style := [fsBold];
+
+BData := Page.Bands.AddBand(rhbtMasterData);
+BData.DataSetName := 'Pedidos';
+NovoTexto(BData, '   [produto]  x[quantidade]  =  R$ [FORMATFLOAT(''#,##0.00'', [total])]', 0, 6);
+
+BGF := Page.Bands.AddBand(rhbtGroupFooter);
+BGF.GroupExpression := '[categoria]';
+NovoTexto(BGF, 'Subtotal [categoria]: R$ [FORMATFLOAT(''#,##0.00'', SUM([total]))]', 1, 6, rhhaRight);
+
+BSum := Page.Bands.AddBand(rhbtSummary);
+NovoTexto(BSum, 'TOTAL: R$ [FORMATFLOAT(''#,##0.00'', SUM([total]))]  |  Itens: [COUNT([total])]', 2, 6, rhhaRight);</code></pre>
+
+    <h3 id="aninhados">9.1 Grupos aninhados (multi-nível)</h3>
+    <p>Vários níveis de grupo. A <b>ordem dos cabeçalhos</b> (de cima para baixo) define o aninhamento: o primeiro é o mais <b>externo</b>. Cada nível pode ter rodapé (casado pela <code>GroupExpression</code>). Os subtotais somam o escopo do nível — o total da categoria considera só as linhas <b>daquele cliente e categoria</b>.</p>
+    <figure class="shot missing">
+      <img src="img/relatorio-aninhado.png" alt="Relatório hierárquico Cliente › Categoria › Produtos com subtotais">
+      <div class="ph">[ Print sugerido: <code>img/relatorio-aninhado.png</code> — preview do relatório Cliente › Categoria › Produtos, com subtotais por categoria e total do cliente ]</div>
+      <figcaption>Saída da hierarquia Cliente › Categoria › Produtos › Subtotal categoria › Total do cliente.</figcaption>
+    </figure>
+    <p><b>Exemplo 8.1 — hierarquia Cliente › Categoria › Produtos › totais:</b></p>
+    <pre><code>// nivel externo: Cliente
+BCliH := Page.Bands.AddBand(rhbtGroupHeader);
+BCliH.GroupExpression := '[cliente]';
+NovoTexto(BCliH, 'Cliente: [cliente] ([uf])', 0, 6).Font.Style := [fsBold];
+
+// nivel interno: Categoria
+BCatH := Page.Bands.AddBand(rhbtGroupHeader);
+BCatH.GroupExpression := '[categoria]';
+NovoTexto(BCatH, '   Categoria: [categoria]', 0, 5).Font.Style := [fsItalic];
+
+// detalhe: um produto por linha
+BData := Page.Bands.AddBand(rhbtMasterData);
+BData.DataSetName := 'Pedidos';
+NovoTexto(BData, '      [produto]  x[quantidade]  R$ [FORMATFLOAT(''#,##0.00'', [total])]', 0, 5);
+
+// rodape interno: subtotal da categoria (dentro do cliente)
+BCatF := Page.Bands.AddBand(rhbtGroupFooter);
+BCatF.GroupExpression := '[categoria]';
+NovoTexto(BCatF, '   Subtotal [categoria]: R$ [FORMATFLOAT(''#,##0.00'', SUM([total]))]', 0, 5, rhhaRight);
+
+// rodape externo: total do cliente
+BCliF := Page.Bands.AddBand(rhbtGroupFooter);
+BCliF.GroupExpression := '[cliente]';
+NovoTexto(BCliF, 'Total do cliente [cliente]: R$ [FORMATFLOAT(''#,##0.00'', SUM([total]))]', 0, 6, rhhaRight).Font.Style := [fsBold];</code></pre>
+    <blockquote><p><b>Ordem obrigatória:</b> o SQL vem na ordem dos grupos → <code>ORDER BY cliente, categoria, produto</code>. Sem isso os grupos se fragmentam.</p></blockquote>
+
+    <h2 id="masterdetail">10. Master-detail</h2>
+    <p>Banda <code>rhbtMasterData</code> (mestre) + <code>rhbtDetailData</code> (detalhe) com datasets ligados; o detalhe é filtrado pelo registro corrente do mestre.</p>
+    <pre><code>BMaster := Page.Bands.AddBand(rhbtMasterData);
+BMaster.DataSetName := 'Pedidos';
+NovoTexto(BMaster, 'Pedido #[id] - [cliente]', 0, 6);
+
+BDetail := Page.Bands.AddBand(rhbtDetailData);
+BDetail.DataSetName := 'Itens';
+NovoTexto(BDetail, '   [produto]  x[qtd]  R$ [FORMATFLOAT(''#,##0.00'', [subtotal])]', 0, 5);
+
+rhReport1.SetDataSet('Pedidos', qryPedidos);
+rhReport1.SetDataSet('Itens', qryItens);   // qryItens com MasterSource=qryPedidos</code></pre>
+
+    <h2 id="banco">11. Conectando a um banco (FireDAC/PostgreSQL)</h2>
+    <p>DB-agnóstico: entregue qualquer <code>TDataSet</code> aberto via <code>SetDataSet</code>.</p>
+    <p><b>Exemplo 9 — query com joins:</b></p>
+    <pre><code>Conn := TFDConnection.Create(Self);
+Conn.LoginPrompt := False;
+Conn.Params.Add('DriverID=PG');
+Conn.Params.Add('Server=127.0.0.1');
+Conn.Params.Add('Port=5433');               // confira a porta da sua instancia
+Conn.Params.Add('Database=reportshowie_demo');
+Conn.Params.Add('User_Name=' + User);       // leia de .env, nunca hardcode
+Conn.Params.Add('Password=' + Pass);
+Conn.Params.Add('CharacterSet=UTF8');
+Conn.Open;
+
+Q := TFDQuery.Create(Conn);
+Q.Connection := Conn;
+Q.SQL.Text :=
+  'SELECT c.nome AS cliente, pr.categoria, pr.nome AS produto, p.total ' +
+  'FROM pedidos p ' +
+  'JOIN clientes c  ON c.id  = p.cliente_id ' +
+  'JOIN produtos pr ON pr.id = p.produto_id ' +
+  'ORDER BY c.nome, pr.categoria';           // ordem dos grupos!
+Q.Open;
+
+rhReport1.SetDataSet('Pedidos', Q);
+rhReport1.ShowDataPreview;</code></pre>
+    <blockquote><p>Requisitos FireDAC: adicione <b><code>FireDAC.VCLUI.Wait</code></b> ao <code>uses</code> (registra o <code>TFDGUIxWaitCursor</code>) e garanta que a <b><code>libpq.dll</code> bate com a plataforma</b> do app (Win64 → libpq x64). Ver <a href="#problemas">Solução de problemas</a>.</p></blockquote>
+
+    <h2 id="preview">12. Pré-visualização</h2>
+    <p>Exibir na tela é <b>opcional</b> e tem duas formas independentes.</p>
+    <h3>12.1 Janela de preview (externa/modal)</h3>
+    <pre><code>rhReport1.ShowDataPreview;   // com dados
+rhReport1.ShowPreview;       // layout estatico</code></pre>
+    <h3>12.2 Preview embutida no form — <code>TrhPreviewControl</code></h3>
+    <figure class="shot missing">
+      <img src="img/preview-embutida.png" alt="TrhPreviewControl embutido num form">
+      <div class="ph">[ Print sugerido: <code>img/preview-embutida.png</code> — o controle de preview embutido no form, com a barra de navegação de páginas e zoom ]</div>
+      <figcaption>Preview embutida (<code>TrhPreviewControl</code>) — navegação de páginas e zoom inline.</figcaption>
+    </figure>
+    <p><b>Exemplo 10 — preview sempre visível num painel:</b></p>
+    <pre><code>Prev := TrhPreviewControl.Create(Self);
+Prev.Parent := PanelDireita;
+Prev.Align := alClient;
+
+Doc := TrhDataPipeline.BuildDocument(rhReport1); // display list COM dados
+Prev.LoadDocument(Doc, True);                    // o controle assume a posse do Doc</code></pre>
+    <p>Layout estático: <code>Prev.ShowReport(rhReport1);</code>. <code>LoadDocument</code> sempre <b>substitui</b> o documento exibido.</p>
+
+    <h2 id="exportacao">13. Exportação</h2>
+    <p>Todos consomem a <b>mesma display list</b>. Monte uma vez e exporte para vários formatos.</p>
+    <p><b>Exemplo 11 — 4 formatos:</b></p>
+    <pre><code>Doc := TrhDataPipeline.BuildDocument(rhReport1);
+try
+  TrhHtmlExporter.ExportToFile(Doc, 'saida\rel.html', rhReport1.Title);
+  TrhPdfExporter.ExportToFile(Doc, 'saida\rel.pdf');
+  TrhXlsxExporter.ExportToFile(Doc, 'saida\rel.xlsx', 'Planilha1');
+  TrhDocxExporter.ExportToFile(Doc, 'saida\rel.docx');
+finally
+  Doc.Free;
+end;</code></pre>
+    <table>
+      <tr><th>Formato</th><th>Classe</th><th>Observação</th></tr>
+      <tr><td>HTML</td><td><code>TrhHtmlExporter</code></td><td>divs absolutos em mm; imagens em data-URI</td></tr>
+      <tr><td>PDF</td><td><code>TrhPdfExporter</code></td><td>PDF 1.4 puro-Pascal; Helvetica; JPEG via DCTDecode</td></tr>
+      <tr><td>XLSX</td><td><code>TrhXlsxExporter</code></td><td>grade reconstruída por posição das células</td></tr>
+      <tr><td>DOCX</td><td><code>TrhDocxExporter</code></td><td>parágrafos de fluxo</td></tr>
+    </table>
+
+    <h2 id="persistencia">14. Persistência</h2>
+    <p>O template (bandas/objetos, <b>sem dados</b>) é salvo em JSON (<code>.rhr</code>).</p>
+    <pre><code>rhReport1.SaveToFile('modelos\pedidos.rhr');
+rhReport1.LoadFromFile('modelos\pedidos.rhr');
+S := rhReport1.ToJSONString(True);
+rhReport1.LoadFromJSONString(S);</code></pre>
+    <p>No design-time o mesmo JSON viaja no <code>.dfm</code> (propriedade binária <code>ReportData</code>) → round-trip pelo form da IDE.</p>
+
+    <h2 id="designer">15. Designer visual</h2>
+    <p>Com o pacote <b>DT</b> instalado, dê <b>duplo-clique no <code>TrhReport</code></b> para abrir o designer.</p>
+    <figure class="shot missing">
+      <img src="img/designer.png" alt="Designer visual do ReportsHowie">
+      <div class="ph">[ Print sugerido: <code>img/designer.png</code> — o designer aberto: ribbon no topo, painel de dados à esquerda, superfície central com bandas, inspetor à direita ]</div>
+      <figcaption>Designer: ribbon (Arquivo/Zoom/Inserir/Banda/Alinhar/Ver), painel de dados, superfície e inspetor.</figcaption>
+    </figure>
+    <ul>
+      <li><b>Arquivo</b> — Abrir/Salvar template <code>.rhr</code>.</li>
+      <li><b>Zoom</b> — <code>-</code> / <code>+</code>.</li>
+      <li><b>Inserir</b> — Texto, Imagem, Linha, Forma, Excluir.</li>
+      <li><b>Banda</b> — escolher tipo + <code>+ Banda</code> / <code>Excluir</code>.</li>
+      <li><b>Alinhar</b> — alinhar/centralizar/distribuir a seleção múltipla.</li>
+      <li><b>Ver</b> — <code>Preview</code>.</li>
+    </ul>
+    <p>Recursos: seleção múltipla (Shift+clique ou retângulo), snap ao grid, guias de alinhamento, <b>Ctrl+Z</b>, duplo-clique no texto para editar / na imagem para carregar arquivo.</p>
+    <figure class="shot missing">
+      <img src="img/painel-dados.png" alt="Painel de dados do designer">
+      <div class="ph">[ Print sugerido: <code>img/painel-dados.png</code> — o painel &quot;Dados&quot; à esquerda, com a árvore dataset → campos ]</div>
+      <figcaption>Painel de dados: árvore <code>dataset → campos</code>. Duplo-clique num campo insere <code>[campo]</code> na banda selecionada.</figcaption>
+    </figure>
+    <p><b>Ver um relatório de código no designer:</b> salve com <code>SaveToFile('...\pedidos.rhr')</code> e no designer clique <b>Arquivo → Abrir</b>.</p>
+
+    <h2 id="impressao">16. Impressão</h2>
+    <p>Pela janela de preview (botão <b>Imprimir</b>) ou em código:</p>
+    <pre><code>uses rh.Render.VCLCanvas;
+// ...
+Doc := TrhDataPipeline.BuildDocument(rhReport1);
+try
+  TrhVCLRenderer.PrintDocument(Doc, rhReport1.Title);
+finally
+  Doc.Free;
+end;</code></pre>
+
+    <h2 id="receitas">17. Receitas rápidas</h2>
+    <table>
+      <tr><th>#</th><th>Objetivo</th><th>Trecho</th></tr>
+      <tr><td>R1</td><td>Data/hora de emissão</td><td><code>Emitido em [FORMATDATETIME('dd"/"mm"/"yyyy hh":"nn', NOW)]</code></td></tr>
+      <tr><td>R2</td><td>Numeração de página</td><td><code>Pagina [PAGE] de [TOTALPAGES]</code></td></tr>
+      <tr><td>R3</td><td>Moeda BR</td><td><code>R$ [FORMATFLOAT('#,##0.00', [valor])]</code></td></tr>
+      <tr><td>R4</td><td>Percentual</td><td><code>[FORMATFLOAT('0.0"%"', [taxa] * 100)]</code></td></tr>
+      <tr><td>R5</td><td>Texto condicional</td><td><code>[IIF([estoque] &lt; [minimo], 'REPOR', 'OK')]</code></td></tr>
+      <tr><td>R6</td><td>Default p/ nulos</td><td><code>[COALESCE([email], 'sem e-mail')]</code></td></tr>
+      <tr><td>R7</td><td>Maiúsculas/trim</td><td><code>[UPPER(TRIM([nome]))]</code></td></tr>
+      <tr><td>R8</td><td>Subtotal de grupo</td><td><code>Subtotal: R$ [FORMATFLOAT('#,##0.00', SUM([total]))]</code></td></tr>
+      <tr><td>R9</td><td>Contagem e média</td><td><code>Itens: [COUNT([total])] Media: [FORMATFLOAT('#,##0.00', AVG([total]))]</code></td></tr>
+      <tr><td>R10</td><td>Maior/menor</td><td><code>[FORMATFLOAT('#,##0.00', MAX([total]))] / [FORMATFLOAT('#,##0.00', MIN([total]))]</code></td></tr>
+      <tr><td>R11</td><td>Bind simples</td><td><code>T.DataField := 'cliente';</code></td></tr>
+      <tr><td>R12</td><td>Abreviação</td><td><code>[UPPER(COPY([nome], 1, 3))]</code></td></tr>
+      <tr><td>R18</td><td>Título por período</td><td><code>Movimento de [FORMATDATETIME('mmmm"/"yyyy', [data_ini])]</code></td></tr>
+    </table>
+    <p><b>R19 — Relatório ad-hoc sem perturbar um <code>TrhReport</code> já montado:</b> não use <code>rhReport1.Clear</code> (apaga o layout dele); monte num report próprio:</p>
+    <pre><code>R := TrhReport.Create(nil);
+try
+  R.Title := 'Ad-hoc';
+  // ...monta bandas em R...
+  R.SetDataSet('Dados', MinhaQuery);
+  Doc := TrhDataPipeline.BuildDocument(R);   // Doc independente de R
+finally
+  R.Free;                                     // rhReport1 permanece intacto
+end;
+Preview.LoadDocument(Doc, True);              // substitui a visao atual</code></pre>
+
+    <h2 id="problemas">18. Solução de problemas</h2>
+    <table>
+      <tr><th>Sintoma</th><th>Causa</th><th>Solução</th></tr>
+      <tr><td><code>PG-314 ... unsupported architecture [x64]. Required [x86]</code></td><td>app Win32 carregando <code>libpq.dll</code> x64</td><td>compile o app como <b>Win64</b> (ou use libpq de 32 bits)</td></tr>
+      <tr><td><code>Connection refused (10061)</code></td><td>servidor parado ou <b>porta errada</b></td><td>confirme o serviço e a porta (PG às vezes usa <b>5433</b>)</td></tr>
+      <tr><td><code>Object factory ... TFDGUIxWaitCursor is missing</code></td><td>falta o provider de UI do FireDAC</td><td>adicione <b><code>FireDAC.VCLUI.Wait</code></b> ao <code>uses</code></td></tr>
+      <tr><td><code>DS-206. Cannot open dataset</code> (TFDMemTable)</td><td><code>Active=True</code> sem estrutura/dados</td><td>use campos persistentes + <code>Active=False</code>, ou <code>CreateDataSet</code></td></tr>
+      <tr><td><code>PG-310. Cannot execute command returning result sets</code></td><td><code>ExecSQL</code> num comando que retorna linhas</td><td>use <code>Open</code>/<code>ExecSQLScalar</code></td></tr>
+      <tr><td>Acentos saem como <code>Ã©</code>/<code>â€"</code></td><td>literal não-ASCII em <code>.pas</code> lido como ANSI</td><td>salve em UTF-8 com BOM <b>ou</b> use escapes <code>#$XXXX</code></td></tr>
+      <tr><td>Grupo repetido/quebrado</td><td>dataset não ordenado pela <code>GroupExpression</code></td><td>adicione <code>ORDER BY</code> na ordem dos grupos</td></tr>
+      <tr><td>Componente não aparece na paleta</td><td>pacote DT não instalado / form fechado</td><td>instale <code>ReportsHowieDT</code> e abra um form VCL</td></tr>
+    </table>
+
+    <p style="margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:16px">
+      ReportsHowie — <a href="https://github.com/howardroatti/ReportsHowie">github.com/howardroatti/ReportsHowie</a> — LGPL-3.0.
+      Contribuições são bem-vindas; veja <code>CONTRIBUTING.md</code>.
+    </p>
+  </main>
+</div>
+<button class="backtop" id="backtop">↑ Topo</button>
+
+<script>
+(function(){
+  var content = document.getElementById('content');
+  var toc = document.getElementById('toc');
+  var search = document.getElementById('search');
+  var headings = Array.prototype.slice.call(content.querySelectorAll('h2, h3'));
+
+  // ---- monta o indice a partir dos headings ----
+  var ul = document.createElement('ul');
+  var entries = [];
+  headings.forEach(function(h){
+    if(!h.id){ h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#'+h.id;
+    a.textContent = h.textContent;
+    a.className = (h.tagName === 'H3') ? 'h3' : 'h2';
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      document.getElementById(h.id).scrollIntoView({behavior:'smooth', block:'start'});
+      history.replaceState(null,'','#'+h.id);
+      if(window.innerWidth <= 820){ document.getElementById('sidebar').classList.remove('open'); }
+    });
+    li.appendChild(a);
+    ul.appendChild(li);
+    // seção = do heading até o próximo heading (para busca full-text)
+    entries.push({h:h, li:li, a:a, text:''});
+  });
+  toc.appendChild(ul);
+  var noRes = document.createElement('div');
+  noRes.className='no-results'; noRes.textContent='Nenhuma seção encontrada.'; noRes.style.display='none';
+  toc.appendChild(noRes);
+
+  // indexa o texto de cada seção (heading -> proximo heading)
+  entries.forEach(function(en, i){
+    var txt = en.h.textContent + ' ';
+    var node = en.h.nextElementSibling;
+    var stop = entries[i+1] ? entries[i+1].h : null;
+    while(node && node !== stop){ txt += ' ' + (node.textContent||''); node = node.nextElementSibling; }
+    en.text = txt.toLowerCase();
+  });
+
+  // ---- destaque de termos no conteudo ----
+  function clearMarks(){
+    content.querySelectorAll('mark').forEach(function(m){
+      var t = document.createTextNode(m.textContent);
+      m.parentNode.replaceChild(t, m);
+    });
+    content.normalize();
+  }
+  function highlight(q){
+    if(q.length < 2) return;
+    var rx = new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+    var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
+      acceptNode:function(n){
+        if(!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        var p = n.parentNode.nodeName;
+        if(p==='PRE'||p==='CODE'||p==='SCRIPT'||p==='STYLE'||p==='MARK') return NodeFilter.FILTER_REJECT;
+        return rx.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var targets=[], n;
+    while(n = walker.nextNode()){ targets.push(n); }
+    targets.forEach(function(node){
+      var span = document.createElement('span');
+      span.innerHTML = node.nodeValue.replace(rx, '<mark>$1</mark>');
+      node.parentNode.replaceChild(span, node);
+      while(span.firstChild){ span.parentNode.insertBefore(span.firstChild, span); }
+      span.parentNode.removeChild(span);
+    });
+  }
+
+  // ---- busca: filtra o indice + destaca no conteudo ----
+  var timer;
+  search.addEventListener('input', function(){
+    var q = search.value.trim().toLowerCase();
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      clearMarks();
+      var visible = 0;
+      entries.forEach(function(en){
+        var match = !q || en.text.indexOf(q) !== -1;
+        en.li.classList.toggle('hidden', !match);
+        if(match) visible++;
+      });
+      noRes.style.display = (q && visible===0) ? 'block' : 'none';
+      if(q){ highlight(q);
+        var first = entries.find(function(en){ return !en.li.classList.contains('hidden'); });
+      }
+    }, 120);
+  });
+
+  // ---- scrollspy: marca a seção ativa no indice ----
+  var spy = new IntersectionObserver(function(items){
+    items.forEach(function(it){
+      if(it.isIntersecting){
+        entries.forEach(function(en){ en.a.classList.toggle('active', en.h.id===it.target.id); });
+      }
+    });
+  }, {rootMargin:'0px 0px -75% 0px', threshold:0});
+  headings.forEach(function(h){ spy.observe(h); });
+
+  // ---- imagens ausentes: mostra placeholder ----
+  content.querySelectorAll('figure.shot img').forEach(function(img){
+    img.addEventListener('load', function(){ img.closest('figure').classList.remove('missing'); });
+    // ja iniciam com classe .missing; se carregar, remove
+  });
+
+  // ---- back to top + menu mobile ----
+  var backtop = document.getElementById('backtop');
+  window.addEventListener('scroll', function(){
+    backtop.classList.toggle('show', window.scrollY > 400);
+  });
+  backtop.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+  document.getElementById('menuBtn').addEventListener('click', function(){
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>
