@@ -7,6 +7,11 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 6 — Export HTML)
+- `rh.Export.HTML`: `TrhHtmlExporter` reproduz o `TrhRenderedDocument` como páginas HTML com
+  elementos absolutamente posicionados em mm (WYSIWYG com o preview). Imagens em data-URI base64,
+  molduras/formas/linhas em CSS, e `@media print` com quebra de página.
+
 ### Adicionado (Fase 4 — Pipeline de dados)
 - `rh.Data.Pipeline`: percorre um `TDataSet` genérico emitindo a banda de dados por registro.
 - Grupo (header/footer) com quebra por `GroupExpression`; cabeçalho/rodapé de página; sumário.

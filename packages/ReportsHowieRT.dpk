@@ -69,6 +69,7 @@ contains
   rh.Render.Engine in '..\source\render\rh.Render.Engine.pas',
   rh.Render.VCLCanvas in '..\source\render\rh.Render.VCLCanvas.pas',
   rh.Preview.Form in '..\source\preview\rh.Preview.Form.pas',
-  rh.Data.Pipeline in '..\source\data\rh.Data.Pipeline.pas';
+  rh.Data.Pipeline in '..\source\data\rh.Data.Pipeline.pas',
+  rh.Export.HTML in '..\source\export\html\rh.Export.HTML.pas';
 
 end.

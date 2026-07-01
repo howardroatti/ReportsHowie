@@ -95,6 +95,7 @@
         <DCCReference Include="..\source\render\rh.Render.VCLCanvas.pas"/>
         <DCCReference Include="..\source\preview\rh.Preview.Form.pas"/>
         <DCCReference Include="..\source\data\rh.Data.Pipeline.pas"/>
+        <DCCReference Include="..\source\export\html\rh.Export.HTML.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

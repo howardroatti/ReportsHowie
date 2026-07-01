@@ -80,7 +80,7 @@ end;
 | 3 | Engine de expressões/fórmulas | ✅ |
 | 4 | Pipeline de dados (`TDataSet`, grupos, agregados) | ✅ |
 | 5 | Designer visual em design-time | ⬜ |
-| 6 | Export **HTML** | ⬜ |
+| 6 | Export **HTML** | ✅ |
 | 7 | Export **PDF** | ⬜ |
 | 8 | Export **XLSX** e **DOCX** (OOXML) | ⬜ |
 | 9 | Envio por **e-mail** (SMTP) | ⬜ |
