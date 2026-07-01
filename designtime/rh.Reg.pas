@@ -22,15 +22,16 @@ implementation
 
 uses
   System.Classes,
+  DesignIntf,
   rh.Consts,
-  rh.Report;
+  rh.Report,
+  rh.Design.ComponentEditor;
 
 procedure Register;
 begin
   RegisterComponents(RH_PALETTE_PAGE, [TrhReport]);
-  // Fase 5:
-  //   RegisterComponentEditor(TrhReport, TrhReportComponentEditor);
-  //   RegisterPropertyEditor(...);
+  // Fase 5: duplo-clique / verbos abrem o designer visual.
+  RegisterComponentEditor(TrhReport, TrhReportComponentEditor);
 end;
 
 end.

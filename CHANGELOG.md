@@ -7,6 +7,18 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 5 — Designer visual em design-time, incremento 5a)
+- `rh.Design.Surface`: `TrhDesignSurface` (`TCustomControl` puro VCL, **livre de DesignIntf** —
+  reutilizável no designer runtime da Fase 10). Editor por bandas: faixas empilhadas com rótulo
+  no gutter, grade/snap, seleção de objeto/banda, mover e redimensionar por 8 alças, resize da
+  altura da banda arrastando a borda inferior, e edição do texto por duplo-clique. Coordenadas
+  idênticas às do motor de render (Left/Top relativos à área de conteúdo da banda).
+- `rh.Design.Designer.Form`: `TrhDesignerForm` (construído em código, sem DesignIntf) com toolbar
+  (zoom, inserir Texto/Imagem/Linha/Forma, excluir, inserir/excluir banda, Preview), área rolável
+  e OK/Cancelar. Edita in-place e restaura o snapshot JSON ao cancelar.
+- `rh.Design.ComponentEditor`: `TrhReportComponentEditor` — duplo-clique/verbo abre o designer e,
+  ao confirmar, chama `Designer.Modified` (persiste o template no DFM). `rh.Reg` registra o editor.
+
 ### Adicionado (Fase 8 — Export XLSX e DOCX / OOXML)
 - `rh.OOXML.Zip`: empacotador OOXML minimo sobre `System.Zip` — acumula *parts* XML/binárias e
   grava o `.xlsx`/`.docx` como ZIP (reutilizável entre XLSX e DOCX). Helper `XmlEscape`.
