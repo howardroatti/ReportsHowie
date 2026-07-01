@@ -7,6 +7,26 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 2 — Motor de renderização + preview VCL)
+- `rh.Render.Intf`: display list (`TrhRenderedDocument`/`TrhRenderedPage`/`TrhDrawOp`) —
+  formato intermediário paginado que preview e todos os exports vão compartilhar.
+- `rh.Render.Engine`: `TrhRenderEngine.BuildDocument` — percorre páginas/bandas/objetos e
+  produz a display list (layout estático do template, com quebra de página por transbordo).
+- `rh.Render.VCLCanvas`: `TrhVCLRenderer` — desenha uma página num `TCanvas` (tela/designer)
+  com escala/zoom, e imprime o documento via `TPrinter`.
+- `rh.Preview.Form`: janela de preview (construída em código) com zoom, navegação de páginas,
+  impressão e o class helper `TrhReport.ShowPreview`.
+
+### Adicionado (Fase 1 — Modelo de objetos + persistência)
+- Modelo completo: `TrhReport` (dono das páginas) → `TrhPage` → `TrhBand` → `TrhReportObject`
+  (`TrhTextObject`, `TrhImageObject`, `TrhLineObject`, `TrhShapeObject`).
+- Enums do modelo + conversores string (`rh.Model.Types`): tipo de banda, alinhamento, shape, orientação, molduras.
+- Serialização JSON canônica: arquivo `.rhr` (`SaveToFile`/`LoadFromFile`/`ToJSONString`) e streaming DFM
+  via `DefineProperties` (blob `ReportData`) — o mesmo JSON nos dois envelopes.
+- Coleção polimórfica de objetos com fábrica (`CreateReportObject`) e `AddNew<T>`.
+- Imagens serializadas em base64; fontes/cores em `rh.Serialization`.
+- Round-trip validado no Delphi 12.1 (montar em código → salvar → recarregar).
+
 ### Adicionado (Fase 0 — Esqueleto + estrutura open-source)
 - Estrutura de pastas do projeto (`source/`, `designtime/`, `packages/`, `tests/`, `demos/`, `docs/`).
 - Pacotes Delphi com o split obrigatório **runtime** (`ReportsHowieRT`) e **design-time** (`ReportsHowieDT`), mais o grupo `ReportsHowieGroup.groupproj`.

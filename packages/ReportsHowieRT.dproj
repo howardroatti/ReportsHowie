@@ -85,6 +85,10 @@
         <DCCReference Include="..\source\model\rh.Bands.pas"/>
         <DCCReference Include="..\source\model\rh.Page.pas"/>
         <DCCReference Include="..\source\model\rh.Report.pas"/>
+        <DCCReference Include="..\source\render\rh.Render.Intf.pas"/>
+        <DCCReference Include="..\source\render\rh.Render.Engine.pas"/>
+        <DCCReference Include="..\source\render\rh.Render.VCLCanvas.pas"/>
+        <DCCReference Include="..\source\preview\rh.Preview.Form.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
