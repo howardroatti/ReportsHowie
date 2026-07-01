@@ -19,9 +19,9 @@ interface
 uses
   System.Classes, System.SysUtils,
   Winapi.Windows, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.ComCtrls, Vcl.Dialogs,
+  Vcl.ComCtrls, Vcl.Buttons, Vcl.Dialogs,
   rh.Types, rh.Model.Types, rh.Objects, rh.Bands, rh.Report,
-  rh.Design.Surface, rh.Design.Inspector;
+  rh.Design.Surface, rh.Design.Inspector, rh.Design.Data;
 
 type
   TrhDesignerForm = class(TForm)
@@ -36,9 +36,13 @@ type
     FBandCombo: TComboBox;
     FInspector: TrhInspector;
     FInspHeader: TLabel;
-    function AddButton(const Caption: string; AWidth: Integer;
-      AClick: TNotifyEvent): TButton;
-    procedure AddSeparator;
+    FData: TrhDesignData;
+    FDataTree: TTreeView;
+    FCurGroup: TPanel;
+    FGroupX: Integer;
+    function BeginGroup(const ACaption: string; AWidth: Integer): TPanel;
+    function GBtn(const ACaption, AHint: string; AWidth: Integer;
+      AClick: TNotifyEvent): TSpeedButton;
     procedure DoAddText(Sender: TObject);
     procedure DoAddImage(Sender: TObject);
     procedure DoAddLine(Sender: TObject);
@@ -48,19 +52,28 @@ type
     procedure DoDelBand(Sender: TObject);
     procedure DoZoomIn(Sender: TObject);
     procedure DoZoomOut(Sender: TObject);
+    procedure DoOpenFile(Sender: TObject);
+    procedure DoSaveFile(Sender: TObject);
     procedure DoPreview(Sender: TObject);
+    procedure DoAlign(Sender: TObject);
+    procedure DoDistribute(Sender: TObject);
     procedure DoOK(Sender: TObject);
     procedure DoCancel(Sender: TObject);
     procedure SurfaceModified(Sender: TObject);
     procedure SurfaceSelChanged(Sender: TObject);
     procedure InspectorChanged(Sender: TObject);
+    procedure InspectorBeforeChange(Sender: TObject);
     procedure FormKeyDownHandler(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure BuildUI;
+    procedure BuildDataPanel;
+    procedure DataTreeDblClick(Sender: TObject);
+    procedure DoInsertField(Sender: TObject);
     procedure UpdateZoomLabel;
     procedure UpdateStatus;
   public
-    constructor CreateForReport(AOwner: TComponent; AReport: TrhReport);
-    class function Execute(AReport: TrhReport): Boolean;
+    constructor CreateForReport(AOwner: TComponent; AReport: TrhReport;
+      AData: TrhDesignData);
+    class function Execute(AReport: TrhReport; AData: TrhDesignData = nil): Boolean;
   end;
 
 implementation
@@ -75,10 +88,12 @@ const
 
 { TrhDesignerForm }
 
-constructor TrhDesignerForm.CreateForReport(AOwner: TComponent; AReport: TrhReport);
+constructor TrhDesignerForm.CreateForReport(AOwner: TComponent; AReport: TrhReport;
+  AData: TrhDesignData);
 begin
   inherited CreateNew(AOwner);
   FReport := AReport;
+  FData := AData;
   BuildUI;
   if FReport <> nil then
     FSnapshot := FReport.ToJSONString(False);
@@ -87,11 +102,11 @@ begin
   UpdateStatus;
 end;
 
-class function TrhDesignerForm.Execute(AReport: TrhReport): Boolean;
+class function TrhDesignerForm.Execute(AReport: TrhReport; AData: TrhDesignData): Boolean;
 var
   Form: TrhDesignerForm;
 begin
-  Form := TrhDesignerForm.CreateForReport(nil, AReport);
+  Form := TrhDesignerForm.CreateForReport(nil, AReport, AData);
   try
     Result := Form.ShowModal = mrOk;
     if (not Result) and (AReport <> nil) then
@@ -105,6 +120,7 @@ procedure TrhDesignerForm.BuildUI;
 var
   Bottom, RightPanel: TPanel;
   Splitter: TSplitter;
+  ToolHost: TScrollBox;
   BtnOK, BtnCancel: TButton;
   I: Integer;
 begin
@@ -115,42 +131,85 @@ begin
   KeyPreview := True;
   OnKeyDown := FormKeyDownHandler;
 
-  // ---- toolbar ----
+  // ---- toolbar estilo ribbon (altura fixa; rola na horizontal quando estreita) ----
+  ToolHost := TScrollBox.Create(Self);
+  ToolHost.Parent := Self;
+  ToolHost.Align := alTop;
+  ToolHost.Height := 68;
+  ToolHost.BorderStyle := bsNone;
+  ToolHost.ParentColor := False;
+  ToolHost.Color := clWindow;
+  ToolHost.VertScrollBar.Visible := False;
+  ToolHost.HorzScrollBar.Tracking := True;
+
   FToolbar := TFlowPanel.Create(Self);
-  FToolbar.Parent := Self;
-  FToolbar.Align := alTop;
-  FToolbar.Height := 40;
-  FToolbar.AutoWrap := True;
+  FToolbar.Parent := ToolHost;
+  FToolbar.Left := 0;
+  FToolbar.Top := 0;
+  FToolbar.AutoWrap := False;   // uma linha; excedente vira rolagem horizontal
+  FToolbar.AutoSize := True;    // largura acompanha o conteudo
   FToolbar.BevelOuter := bvNone;
-  FToolbar.Padding.SetBounds(4, 6, 4, 4);
+  FToolbar.ParentBackground := False;
+  FToolbar.ParentColor := False;
+  FToolbar.Color := clWindow;
+  FToolbar.Padding.SetBounds(6, 4, 6, 2);
 
-  AddButton('Zoom -', 60, DoZoomOut);
+  // grupo Arquivo
+  BeginGroup('Arquivo', 130);
+  GBtn('Abrir', 'Abrir um template .rhr', 54, DoOpenFile);
+  GBtn('Salvar', 'Salvar o template atual em .rhr', 58, DoSaveFile);
+
+  // grupo Zoom
+  BeginGroup('Zoom', 150);
+  GBtn('-', 'Diminuir zoom', 30, DoZoomOut);
   FZoomLabel := TLabel.Create(Self);
-  FZoomLabel.Parent := FToolbar;
+  FZoomLabel.Parent := FCurGroup;
+  FZoomLabel.SetBounds(FGroupX, 14, 46, 18);
+  FZoomLabel.Alignment := taCenter;
   FZoomLabel.Layout := tlCenter;
-  FZoomLabel.AlignWithMargins := True;
+  FZoomLabel.Transparent := True;
   FZoomLabel.Caption := '100%';
-  AddButton('Zoom +', 60, DoZoomIn);
-  AddSeparator;
-  AddButton('+ Texto', 66, DoAddText);
-  AddButton('+ Imagem', 74, DoAddImage);
-  AddButton('+ Linha', 62, DoAddLine);
-  AddButton('+ Forma', 66, DoAddShape);
-  AddButton('Excluir Obj', 78, DoDelObj);
-  AddSeparator;
+  Inc(FGroupX, 48);
+  GBtn('+', 'Aumentar zoom', 30, DoZoomIn);
 
+  // grupo Inserir
+  BeginGroup('Inserir', 210);
+  GBtn('Texto', 'Inserir objeto de texto', 54, DoAddText);
+  GBtn('Imagem', 'Inserir imagem', 60, DoAddImage);
+  GBtn('Linha', 'Inserir linha', 50, DoAddLine);
+  GBtn('Forma', 'Inserir forma (retangulo/elipse)', 54, DoAddShape);
+  GBtn('Excluir', 'Excluir objeto(s) selecionado(s)  (Del)', 58, DoDelObj);
+
+  // grupo Banda
+  BeginGroup('Banda', 240);
   FBandCombo := TComboBox.Create(Self);
-  FBandCombo.Parent := FToolbar;
+  FBandCombo.Parent := FCurGroup;
   FBandCombo.Style := csDropDownList;
-  FBandCombo.Width := 150;
-  FBandCombo.AlignWithMargins := True;
+  FBandCombo.SetBounds(FGroupX, 11, 128, 24);
+  FBandCombo.Hint := 'Tipo de banda a inserir';
+  FBandCombo.ShowHint := True;
   for I := Low(BAND_TYPES) to High(BAND_TYPES) do
     FBandCombo.Items.Add(BandCaption(BAND_TYPES[I]));
   FBandCombo.ItemIndex := 3; // Dados
-  AddButton('+ Banda', 66, DoAddBand);
-  AddButton('Excluir Banda', 92, DoDelBand);
-  AddSeparator;
-  AddButton('Preview', 70, DoPreview);
+  Inc(FGroupX, 132);
+  GBtn('+ Banda', 'Inserir banda do tipo escolhido', 62, DoAddBand);
+  GBtn('Excluir', 'Excluir a banda selecionada', 54, DoDelBand);
+
+  // grupo Alinhar (glifos via #$XXXX = seguros no source ANSI)
+  BeginGroup('Alinhar', 250);
+  GBtn(#$21E4, 'Alinhar a esquerda', 32, DoAlign).Tag := Ord(ramLeft);
+  GBtn(#$21D4, 'Centralizar na horizontal', 32, DoAlign).Tag := Ord(ramHCenter);
+  GBtn(#$21E5, 'Alinhar a direita', 32, DoAlign).Tag := Ord(ramRight);
+  GBtn(#$2912, 'Alinhar ao topo', 32, DoAlign).Tag := Ord(ramTop);
+  GBtn(#$21D5, 'Centralizar na vertical', 32, DoAlign).Tag := Ord(ramVCenter);
+  GBtn(#$2913, 'Alinhar a base', 32, DoAlign).Tag := Ord(ramBottom);
+  GBtn(#$2194, 'Distribuir na horizontal', 32, DoDistribute).Tag := 0;
+  GBtn(#$2195, 'Distribuir na vertical', 32, DoDistribute).Tag := 1;
+
+  // grupo Ver
+  BeginGroup('Ver', 80);
+  GBtn('Preview', 'Pre-visualizar o template', 72, DoPreview);
+  FCurGroup.Width := FGroupX + 6; // finaliza o ultimo grupo
 
   // ---- rodape com OK/Cancelar ----
   Bottom := TPanel.Create(Self);
@@ -208,11 +267,15 @@ begin
   FInspector.Parent := RightPanel;
   FInspector.Align := alClient;
   FInspector.OnChanged := InspectorChanged;
+  FInspector.OnBeforeChange := InspectorBeforeChange;
 
   Splitter := TSplitter.Create(Self);
   Splitter.Parent := Self;
   Splitter.Align := alRight;
   Splitter.Width := 4;
+
+  // ---- painel de dados (esquerda), so se houver datasets ----
+  BuildDataPanel;
 
   // ---- area de design ----
   FScroll := TScrollBox.Create(Self);
@@ -230,28 +293,144 @@ begin
   FSurface.OnSelectionChanged := SurfaceSelChanged;
 end;
 
-function TrhDesignerForm.AddButton(const Caption: string; AWidth: Integer;
-  AClick: TNotifyEvent): TButton;
+procedure TrhDesignerForm.BuildDataPanel;
+var
+  LeftPanel: TPanel;
+  Header: TLabel;
+  BtnIns: TButton;
+  Splitter: TSplitter;
+  I, J: Integer;
+  DsNode: TTreeNode;
 begin
-  Result := TButton.Create(Self);
-  Result.Parent := FToolbar;
-  Result.Caption := Caption;
-  Result.Width := AWidth;
-  Result.Height := 26;
-  Result.AlignWithMargins := True;
-  Result.OnClick := AClick;
+  if (FData = nil) or (FData.Count = 0) then Exit;
+
+  LeftPanel := TPanel.Create(Self);
+  LeftPanel.Parent := Self;
+  LeftPanel.Align := alLeft;
+  LeftPanel.Width := 200;
+  LeftPanel.BevelOuter := bvNone;
+
+  Header := TLabel.Create(Self);
+  Header.Parent := LeftPanel;
+  Header.Align := alTop;
+  Header.Height := 22;
+  Header.Alignment := taCenter;
+  Header.Layout := tlCenter;
+  Header.Caption := 'Dados (campos)';
+  Header.Color := clBtnFace;
+  Header.Transparent := False;
+  Header.Font.Style := [fsBold];
+
+  BtnIns := TButton.Create(Self);
+  BtnIns.Parent := LeftPanel;
+  BtnIns.Align := alBottom;
+  BtnIns.Height := 28;
+  BtnIns.Caption := 'Inserir campo na banda';
+  BtnIns.OnClick := DoInsertField;
+
+  FDataTree := TTreeView.Create(Self);
+  FDataTree.Parent := LeftPanel;
+  FDataTree.Align := alClient;
+  FDataTree.ReadOnly := True;
+  FDataTree.HideSelection := False;
+  FDataTree.OnDblClick := DataTreeDblClick;
+
+  // popular: datasets -> campos
+  FDataTree.Items.BeginUpdate;
+  try
+    for I := 0 to FData.Count - 1 do
+    begin
+      DsNode := FDataTree.Items.Add(nil, FData.DatasetName(I));
+      for J := 0 to FData.Fields(I).Count - 1 do
+        FDataTree.Items.AddChild(DsNode, FData.Fields(I)[J]);
+    end;
+  finally
+    FDataTree.Items.EndUpdate;
+  end;
+  if FDataTree.Items.Count > 0 then
+    FDataTree.Items[0].Expand(True);
+
+  Splitter := TSplitter.Create(Self);
+  Splitter.Parent := Self;
+  Splitter.Align := alLeft;
+  Splitter.Width := 4;
 end;
 
-procedure TrhDesignerForm.AddSeparator;
+procedure TrhDesignerForm.DoInsertField(Sender: TObject);
 var
-  P: TPanel;
+  Node: TTreeNode;
 begin
-  P := TPanel.Create(Self);
-  P.Parent := FToolbar;
-  P.Width := 10;
-  P.Height := 26;
-  P.BevelOuter := bvNone;
-  P.Caption := '';
+  if FDataTree = nil then Exit;
+  Node := FDataTree.Selected;
+  if (Node = nil) or (Node.Parent = nil) then
+  begin
+    ShowMessage('Selecione um campo (item filho de um dataset) na arvore.');
+    Exit;
+  end;
+  FSurface.InsertField(Node.Parent.Text, Node.Text);
+end;
+
+procedure TrhDesignerForm.DataTreeDblClick(Sender: TObject);
+var
+  Node: TTreeNode;
+begin
+  Node := FDataTree.Selected;
+  if (Node <> nil) and (Node.Parent <> nil) then
+    FSurface.InsertField(Node.Parent.Text, Node.Text);
+end;
+
+function TrhDesignerForm.BeginGroup(const ACaption: string; AWidth: Integer): TPanel;
+var
+  Cap: TLabel;
+  Divider: TBevel;
+begin
+  if FCurGroup <> nil then
+  begin
+    // finaliza a largura do grupo anterior conforme os botoes adicionados
+    FCurGroup.Width := FGroupX + 6;
+    // divisoria vertical fina entre grupos
+    Divider := TBevel.Create(Self);
+    Divider.Parent := FToolbar;
+    Divider.Shape := bsLeftLine;
+    Divider.Width := 9;
+    Divider.Height := 52;
+  end;
+
+  Result := TPanel.Create(Self);
+  Result.Parent := FToolbar;
+  Result.BevelOuter := bvNone;
+  Result.ParentBackground := False;
+  Result.ParentColor := False;
+  Result.Color := clWindow;
+  Result.Width := AWidth;       // provisorio; ajustado no proximo BeginGroup
+  Result.Height := 56;
+
+  // rotulo do grupo embaixo (estilo faixa do Office)
+  Cap := TLabel.Create(Self);
+  Cap.Parent := Result;
+  Cap.Align := alBottom;
+  Cap.Height := 14;
+  Cap.Caption := ACaption;
+  Cap.Alignment := taCenter;
+  Cap.Font.Color := clGrayText;
+  Cap.Transparent := True;
+
+  FCurGroup := Result;
+  FGroupX := 6;
+end;
+
+function TrhDesignerForm.GBtn(const ACaption, AHint: string; AWidth: Integer;
+  AClick: TNotifyEvent): TSpeedButton;
+begin
+  Result := TSpeedButton.Create(Self);
+  Result.Parent := FCurGroup;
+  Result.Caption := ACaption;
+  Result.Flat := True;
+  Result.SetBounds(FGroupX, 4, AWidth, 34);
+  Result.Hint := AHint;
+  Result.ShowHint := True;
+  Result.OnClick := AClick;
+  Inc(FGroupX, AWidth + 4);
 end;
 
 procedure TrhDesignerForm.DoAddText(Sender: TObject);
@@ -306,10 +485,66 @@ begin
   UpdateZoomLabel;
 end;
 
+procedure TrhDesignerForm.DoOpenFile(Sender: TObject);
+var
+  Dlg: TOpenDialog;
+begin
+  if FReport = nil then Exit;
+  Dlg := TOpenDialog.Create(Self);
+  try
+    Dlg.Filter := 'Relatorio ReportsHowie (*.rhr)|*.rhr|Todos (*.*)|*.*';
+    Dlg.DefaultExt := 'rhr';
+    Dlg.Options := Dlg.Options + [ofFileMustExist];
+    if Dlg.Execute then
+    begin
+      FSurface.PushUndoNow; // permite desfazer o carregamento
+      FReport.LoadFromFile(Dlg.FileName);
+      FSurface.LoadReport(FReport);
+      UpdateZoomLabel;
+      UpdateStatus;
+    end;
+  finally
+    Dlg.Free;
+  end;
+end;
+
+procedure TrhDesignerForm.DoSaveFile(Sender: TObject);
+var
+  Dlg: TSaveDialog;
+begin
+  if FReport = nil then Exit;
+  Dlg := TSaveDialog.Create(Self);
+  try
+    Dlg.Filter := 'Relatorio ReportsHowie (*.rhr)|*.rhr|Todos (*.*)|*.*';
+    Dlg.DefaultExt := 'rhr';
+    Dlg.Options := Dlg.Options + [ofOverwritePrompt];
+    if Dlg.Execute then
+      FReport.SaveToFile(Dlg.FileName);
+  finally
+    Dlg.Free;
+  end;
+end;
+
 procedure TrhDesignerForm.DoPreview(Sender: TObject);
 begin
   if FReport <> nil then
     FReport.ShowPreview;
+end;
+
+procedure TrhDesignerForm.DoAlign(Sender: TObject);
+begin
+  if FSurface.SelectionCount < 2 then
+    ShowMessage('Selecione dois ou mais objetos (Shift+clique ou arraste um retangulo).')
+  else
+    FSurface.AlignSelected(TrhAlignMode(TComponent(Sender).Tag));
+end;
+
+procedure TrhDesignerForm.DoDistribute(Sender: TObject);
+begin
+  if FSurface.SelectionCount < 3 then
+    ShowMessage('Selecione tres ou mais objetos para distribuir.')
+  else
+    FSurface.DistributeSelected(TComponent(Sender).Tag = 0);
 end;
 
 procedure TrhDesignerForm.DoOK(Sender: TObject);
@@ -354,11 +589,24 @@ begin
   UpdateStatus;
 end;
 
+procedure TrhDesignerForm.InspectorBeforeChange(Sender: TObject);
+begin
+  FSurface.PushUndoNow; // snapshot antes de aplicar a mudanca do inspetor
+end;
+
 procedure TrhDesignerForm.FormKeyDownHandler(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
+  // Ctrl+Z: desfazer (nao interceptar se estiver editando texto num TEdit)
+  if (ssCtrl in Shift) and (Key = Ord('Z')) and
+     (not (ActiveControl is TCustomEdit)) then
+  begin
+    FSurface.Undo;
+    Key := 0;
+    Exit;
+  end;
   if (Key = VK_DELETE) and (FSurface.Selected <> nil) and
-     (not (ActiveControl is TComboBox)) then
+     (not (ActiveControl is TCustomEdit)) and (not (ActiveControl is TComboBox)) then
   begin
     FSurface.DeleteSelected;
     Key := 0;

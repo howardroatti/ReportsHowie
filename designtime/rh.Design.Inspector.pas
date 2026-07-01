@@ -18,10 +18,10 @@ interface
 uses
   System.Classes, System.SysUtils, System.TypInfo, System.Generics.Collections,
   Winapi.Windows, Vcl.Controls, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Graphics,
-  Vcl.Dialogs, Vcl.Forms;
+  Vcl.Dialogs, Vcl.ExtDlgs, Vcl.Forms;
 
 type
-  TrhInspKind = (ikStr, ikInt, ikGeom, ikColor, ikEnum, ikBool, ikFont);
+  TrhInspKind = (ikStr, ikInt, ikGeom, ikColor, ikEnum, ikBool, ikFont, ikPicture);
 
   TrhInspRow = record
     Prop: PPropInfo;
@@ -37,7 +37,9 @@ type
     FOwned: TList<TControl>;
     FLoading: Boolean;
     FOnChanged: TNotifyEvent;
+    FOnBeforeChange: TNotifyEvent;
     procedure ClearRows;
+    procedure DoBeforeChange;
     function NewLabel(const ACaption: string; Y: Integer): TLabel;
     procedure AddRow(P: PPropInfo; var Y: Integer);
     function DisplayValue(const Row: TrhInspRow): string;
@@ -46,6 +48,7 @@ type
     procedure ComboChange(Sender: TObject);
     procedure ColorClick(Sender: TObject);
     procedure FontClick(Sender: TObject);
+    procedure PictureClick(Sender: TObject);
     procedure DoChanged;
   public
     constructor Create(AOwner: TComponent); override;
@@ -53,6 +56,8 @@ type
     procedure Inspect(AObj: TPersistent);
     procedure RefreshValues;
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
+    /// <summary>Disparado ANTES de aplicar cada mudanca (para snapshot de undo).</summary>
+    property OnBeforeChange: TNotifyEvent read FOnBeforeChange write FOnBeforeChange;
   end;
 
 implementation
@@ -178,6 +183,8 @@ begin
   end
   else if (Kind = tkClass) and SameText(TypeName, 'TFont') then
     Row.Kind := ikFont
+  else if (Kind = tkClass) and SameText(TypeName, 'TPicture') then
+    Row.Kind := ikPicture
   else
     Exit; // tipo nao suportado (sets, outras classes) — ignora
 
@@ -197,13 +204,16 @@ begin
         Panel.OnClick := ColorClick;
         Row.Ctrl := Panel;
       end;
-    ikFont:
+    ikFont, ikPicture:
       begin
         Btn := TButton.Create(Self);
         Btn.Parent := Self;
         Btn.SetBounds(LABELW, Y + 2, Width - LABELW - PAD, ROWH - 4);
         Btn.Anchors := [akLeft, akTop, akRight];
-        Btn.OnClick := FontClick;
+        if Row.Kind = ikFont then
+          Btn.OnClick := FontClick
+        else
+          Btn.OnClick := PictureClick;
         Row.Ctrl := Btn;
       end;
     ikEnum, ikBool:
@@ -250,7 +260,7 @@ begin
         TPanel(Row.Ctrl).Color := TColor(GetOrdProp(FObj, P));
         TPanel(Row.Ctrl).Caption := DisplayValue(Row);
       end;
-    ikFont:
+    ikFont, ikPicture:
       TButton(Row.Ctrl).Caption := DisplayValue(Row);
     ikEnum:
       TComboBox(Row.Ctrl).ItemIndex := GetOrdProp(FObj, P) - Row.EnumMin;
@@ -284,6 +294,15 @@ begin
           Result := Format('%s, %dpt', [F.Name, F.Size])
         else
           Result := '(fonte)';
+      end;
+    ikPicture:
+      begin
+        if (TPicture(GetObjectProp(FObj, Row.Prop)) <> nil) and
+           (TPicture(GetObjectProp(FObj, Row.Prop)).Graphic <> nil) and
+           (not TPicture(GetObjectProp(FObj, Row.Prop)).Graphic.Empty) then
+          Result := 'Trocar imagem...'
+        else
+          Result := 'Carregar imagem...';
       end;
   else
     Result := '';
@@ -325,15 +344,21 @@ begin
 end;
 
 procedure TrhInspector.EditExit(Sender: TObject);
+var
+  Row: TrhInspRow;
 begin
   if FLoading then Exit;
-  ApplyRow(FRows[TEdit(Sender).Tag]);
+  Row := FRows[TEdit(Sender).Tag];
+  if TEdit(Sender).Text = DisplayValue(Row) then Exit; // nada mudou
+  DoBeforeChange;
+  ApplyRow(Row);
   DoChanged;
 end;
 
 procedure TrhInspector.ComboChange(Sender: TObject);
 begin
   if FLoading then Exit;
+  DoBeforeChange;
   ApplyRow(FRows[TComboBox(Sender).Tag]);
   DoChanged;
 end;
@@ -351,6 +376,7 @@ begin
     Dlg.Color := TColor(GetOrdProp(FObj, Row.Prop));
     if Dlg.Execute then
     begin
+      DoBeforeChange;
       SetOrdProp(FObj, Row.Prop, Integer(Dlg.Color));
       TPanel(Sender).Color := Dlg.Color;
       TPanel(Sender).Caption := DisplayValue(Row);
@@ -376,7 +402,32 @@ begin
     Dlg.Font.Assign(F);
     if Dlg.Execute then
     begin
+      DoBeforeChange;
       F.Assign(Dlg.Font);
+      TButton(Sender).Caption := DisplayValue(Row);
+      DoChanged;
+    end;
+  finally
+    Dlg.Free;
+  end;
+end;
+
+procedure TrhInspector.PictureClick(Sender: TObject);
+var
+  Row: TrhInspRow;
+  Dlg: TOpenPictureDialog;
+  Pic: TPicture;
+begin
+  if FLoading then Exit;
+  Row := FRows[TButton(Sender).Tag];
+  Pic := TPicture(GetObjectProp(FObj, Row.Prop));
+  if Pic = nil then Exit;
+  Dlg := TOpenPictureDialog.Create(nil);
+  try
+    if Dlg.Execute then
+    begin
+      DoBeforeChange;
+      Pic.LoadFromFile(Dlg.FileName);
       TButton(Sender).Caption := DisplayValue(Row);
       DoChanged;
     end;
@@ -399,7 +450,7 @@ begin
             TPanel(Row.Ctrl).Color := TColor(GetOrdProp(FObj, Row.Prop));
             TPanel(Row.Ctrl).Caption := DisplayValue(Row);
           end;
-        ikFont:
+        ikFont, ikPicture:
           TButton(Row.Ctrl).Caption := DisplayValue(Row);
         ikEnum:
           TComboBox(Row.Ctrl).ItemIndex := GetOrdProp(FObj, Row.Prop) - Row.EnumMin;
@@ -416,6 +467,11 @@ end;
 procedure TrhInspector.DoChanged;
 begin
   if Assigned(FOnChanged) then FOnChanged(Self);
+end;
+
+procedure TrhInspector.DoBeforeChange;
+begin
+  if Assigned(FOnBeforeChange) then FOnBeforeChange(Self);
 end;
 
 end.

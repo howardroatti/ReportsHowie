@@ -91,6 +91,7 @@
         <DCCReference Include="vcl.dcp"/>
         <DCCReference Include="designide.dcp"/>
         <DCCReference Include="ReportsHowieRT.dcp"/>
+        <DCCReference Include="..\designtime\rh.Design.Data.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Surface.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Inspector.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Designer.Form.pas"/>

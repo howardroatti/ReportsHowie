@@ -7,7 +7,56 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 4 — Grupos aninhados / multi-nível)
+- **Agrupamento em vários níveis** no pipeline de dados (`rh.Data.Pipeline`): antes só havia
+  1 nível de grupo; agora `Classify` coleta **todos** os `GroupHeader`/`GroupFooter` (a ordem dos
+  cabeçalhos define o aninhamento: topo = mais externo) e casa header↔footer pela `GroupExpression`.
+  `RunData` passou a rodar o algoritmo clássico de *banded report*: a cada quebra fecha os rodapés do
+  nível **interno→externo** (rótulos lidos na última linha do grupo) e abre os cabeçalhos
+  **externo→interno**. Ex.: **Cliente › Categoria › produtos › Subtotal categoria › Total cliente**.
+  Os agregados já eram multi-escopo (o contexto filtra por N `GroupFilter` em AND), então
+  `SUM`/`COUNT`/etc. somam corretamente o escopo de cada nível (ex.: total da categoria **dentro** do
+  cliente). Requisito: dataset **ordenado na ordem dos grupos** (ex.: `ORDER BY cliente, categoria`).
+  Retrocompatível: relatórios de 1 nível (ou sem grupos) continuam idênticos.
+
+### Adicionado (Documentação)
+- **Manual de uso** (`docs/MANUAL.md`): guia completo com dezenas de exemplos — conceitos, instalação,
+  bandas, objetos (texto/imagem/linha/forma), fonte/cores/moldura, expressões e funções, data binding
+  híbrido, agrupamento/agregados, master-detail, conexão a banco (FireDAC/PostgreSQL), preview embutida
+  vs. externa, exportação (HTML/PDF/XLSX/DOCX), persistência, designer, impressão, receitas rápidas e
+  solução de problemas. Linkado no README.
+
+### Adicionado (Fase 5.2a — Data binding híbrido)
+- **`DataField` no `TrhTextObject`:** bind direto a um campo do dataset da banda (modo simples, estilo
+  DB-aware), convivendo com as ilhas `[expr]` do `Text`. Quando preenchido, tem precedência e compila
+  para a mesma ilha `[campo]` (motor único). Novo `DisplayExpression` centraliza a resolução; o render
+  passa a usá-lo. Persistido em JSON (`dataField`) e copiado no `Assign`. Retrocompatível.
+
+### Adicionado (Fase 5.1 — Designer: Arquivo + preview embutida)
+- **Abrir/Salvar `.rhr` no designer:** novo grupo **"Arquivo"** no ribbon (`Abrir`/`Salvar`) usando
+  `TrhReport.LoadFromFile`/`SaveToFile`, com refresh da superfície e undo. Permite abrir no design-time
+  um template montado em código (salvo em `.rhr`).
+- **`TrhPreviewControl` (`rh.Preview.Control`):** controle de preview **embutível** (não modal) que
+  desenha um `TrhRenderedDocument` inline em qualquer form/painel, com navegação de páginas e zoom,
+  reutilizando o mesmo `TrhVCLRenderer` (WYSIWYG). Complementa a janela `TrhPreviewForm`.
+
 ### Adicionado (Fase 5 — Designer visual em design-time)
+- **5.1 — Vínculo de dados no designer:** o component editor varre os `TDataSet` do form/data module
+  (nomes + campos, via `Fields`/`FieldDefs`) e os entrega ao designer. Novo painel **"Dados"** (árvore
+  datasets→campos) à esquerda; **duplo-clique** (ou botão) num campo insere um texto `[Campo]` na banda
+  selecionada e já define o `DataSetName` dela. `rh.Design.Data` (`TrhDesignData`) é o portador reutilizável
+  no designer runtime (Fase 10). Mantém a filosofia DB-agnóstica: o binding de dados vivo continua sendo
+  `TrhReport.SetDataSet` em runtime.
+- **5c — Seleção múltipla, guias, alinhar/distribuir, undo, imagens e toolbar ribbon:**
+  - Seleção múltipla (Shift+clique alterna; *marquee* por área na banda); arrastar move o grupo.
+  - **Guias de alinhamento** vermelhas ao mover (bordas/centros vs. irmãos) com *snap*.
+  - **Alinhar** (esq./centro-H/dir./topo/centro-V/base) e **distribuir** (H/V).
+  - **Desfazer (Ctrl+Z)** com histórico de 50 passos (snapshots JSON) cobrindo mover, redimensionar,
+    inserir/excluir objeto e banda, alinhar/distribuir, editar texto, carregar imagem e edições do inspetor.
+  - **Carregar imagem** real: duplo-clique num objeto imagem ou botão "Carregar imagem..." no inspetor
+    (BMP/JPG/PNG), serializada em base64 no template.
+  - **Toolbar estilo ribbon**: grupos (Zoom/Inserir/Banda/Alinhar/Ver) com botões *flat*, rótulo de
+    seção, divisórias e tooltips; altura fixa com rolagem horizontal quando a janela estreita.
 - **5b — Inspetor de propriedades (RTTI):** `rh.Design.Inspector` (`TrhInspector`, VCL puro).
   Lista as propriedades publicadas do objeto/banda selecionado e edita conforme o tipo: string,
   inteiro, geometria em **mm** (Left/Top/Width/Height), enumeração e booleano (combo), cor

@@ -203,6 +203,15 @@ end;
 // ---------------------------------------------------------------------------
 
 type
+  // Um nivel de agrupamento: par cabecalho/rodape identificado pela expressao.
+  // A ordem dos cabecalhos na pagina define o aninhamento (topo = mais externo).
+  TrhGroupLevel = record
+    Expr: string;
+    Header: TrhBand;
+    Footer: TrhBand;
+    PrevVal: Variant;
+  end;
+
   TPipeline = class
   private
     FReport: TrhReport;
@@ -213,10 +222,10 @@ type
     FBodyBottom: TrhUnit;
     FCtx: IrhEvalContext;
     FCtxObj: TrhReportContext;
-    FTitle, FPageHeader, FPageFooter, FSummary, FMaster,
-    FGroupHeader, FGroupFooter: TrhBand;
-    FGroupExpr: string;
+    FTitle, FPageHeader, FPageFooter, FSummary, FMaster: TrhBand;
+    FLevels: TArray<TrhGroupLevel>; // grupos aninhados (indice 0 = mais externo)
     procedure Classify;
+    procedure SetGroupFiltersUpTo(Level: Integer);
     procedure StartPage;
     procedure FinishPage;
     procedure EmitFlow(Band: TrhBand);
@@ -244,9 +253,14 @@ end;
 procedure TPipeline.Classify;
 var
   Band: TrhBand;
+  I, N: Integer;
+  Matched: Boolean;
 begin
   FTitle := nil; FPageHeader := nil; FPageFooter := nil;
-  FSummary := nil; FMaster := nil; FGroupHeader := nil; FGroupFooter := nil;
+  FSummary := nil; FMaster := nil;
+  SetLength(FLevels, 0);
+
+  // 1a passada: cada GroupHeader (na ordem do topo p/ baixo) vira um nivel.
   for Band in FPage.Bands do
   begin
     if not Band.Visible then Continue;
@@ -254,18 +268,56 @@ begin
       rhbtReportTitle: if FTitle = nil then FTitle := Band;
       rhbtPageHeader:  if FPageHeader = nil then FPageHeader := Band;
       rhbtPageFooter:  if FPageFooter = nil then FPageFooter := Band;
-      rhbtGroupHeader: if FGroupHeader = nil then FGroupHeader := Band;
-      rhbtGroupFooter: if FGroupFooter = nil then FGroupFooter := Band;
       rhbtMasterData:  if FMaster = nil then FMaster := Band;
       rhbtSummary:     if FSummary = nil then FSummary := Band;
+      rhbtGroupHeader:
+        begin
+          N := Length(FLevels);
+          SetLength(FLevels, N + 1);
+          FLevels[N].Expr := Band.GroupExpression;
+          FLevels[N].Header := Band;
+          FLevels[N].Footer := nil;
+          FLevels[N].PrevVal := Null;
+        end;
     end;
   end;
-  if FGroupHeader <> nil then
-    FGroupExpr := FGroupHeader.GroupExpression
-  else if FGroupFooter <> nil then
-    FGroupExpr := FGroupFooter.GroupExpression
-  else
-    FGroupExpr := '';
+
+  // 2a passada: casa cada GroupFooter ao nivel de mesma expressao; se nao houver
+  // header correspondente (agrupamento so-rodape), cria um nivel novo.
+  for Band in FPage.Bands do
+  begin
+    if (not Band.Visible) or (Band.BandType <> rhbtGroupFooter) then Continue;
+    Matched := False;
+    for I := 0 to High(FLevels) do
+      if (FLevels[I].Footer = nil) and
+         SameText(Trim(FLevels[I].Expr), Trim(Band.GroupExpression)) then
+      begin
+        FLevels[I].Footer := Band;
+        Matched := True;
+        Break;
+      end;
+    if not Matched then
+    begin
+      N := Length(FLevels);
+      SetLength(FLevels, N + 1);
+      FLevels[N].Expr := Band.GroupExpression;
+      FLevels[N].Header := nil;
+      FLevels[N].Footer := Band;
+      FLevels[N].PrevVal := Null;
+    end;
+  end;
+end;
+
+// Ativa os filtros de agregacao para o escopo do nivel: todos os niveis
+// externos ate 'Level' (inclusive), com os valores do grupo corrente. Assim um
+// rodape de Categoria dentro de Cliente soma so as linhas daquele cliente+categoria.
+procedure TPipeline.SetGroupFiltersUpTo(Level: Integer);
+var
+  I: Integer;
+begin
+  FCtxObj.ClearGroupFilters;
+  for I := 0 to Level do
+    FCtxObj.AddGroupFilter(FLevels[I].Expr, FLevels[I].PrevVal);
 end;
 
 procedure TPipeline.StartPage;
@@ -301,13 +353,14 @@ end;
 
 procedure TPipeline.RunData(DS: TDataSet);
 var
-  First: Boolean;
-  CurGroup, PrevGroup: Variant;
-  HasGroup: Boolean;
+  First, HasGroup: Boolean;
+  nLevels, I, ChangeLevel: Integer;
+  CurKeys: array of Variant;
 begin
-  HasGroup := (FGroupHeader <> nil) or (FGroupFooter <> nil);
+  nLevels := Length(FLevels);
+  HasGroup := nLevels > 0;
+  SetLength(CurKeys, nLevels);
   First := True;
-  PrevGroup := Null;
 
   DS.DisableControls;
   try
@@ -318,22 +371,49 @@ begin
 
       if HasGroup then
       begin
-        CurGroup := rhEvalExpr(FGroupExpr, FCtx);
-        if First or not VarSameValue(CurGroup, PrevGroup) then
+        for I := 0 to nLevels - 1 do
+          CurKeys[I] := rhEvalExpr(FLevels[I].Expr, FCtx);
+
+        // nivel mais externo cuja chave mudou (nLevels = nenhum mudou)
+        if First then
+          ChangeLevel := 0
+        else
         begin
-          if not First and (FGroupFooter <> nil) then
+          ChangeLevel := nLevels;
+          for I := 0 to nLevels - 1 do
+            if not VarSameValue(CurKeys[I], FLevels[I].PrevVal) then
+            begin
+              ChangeLevel := I;
+              Break;
+            end;
+        end;
+
+        if ChangeLevel < nLevels then
+        begin
+          // fecha rodapes dos grupos que terminaram: interno -> ChangeLevel,
+          // lendo os rotulos na ULTIMA linha do grupo anterior.
+          if not First then
           begin
+            DS.Prior;
+            for I := nLevels - 1 downto ChangeLevel do
+              if FLevels[I].Footer <> nil then
+              begin
+                SetGroupFiltersUpTo(I);      // usa PrevVal (= grupo que terminou)
+                FCtxObj.DataSet := DS;
+                EmitFlow(FLevels[I].Footer);
+              end;
             FCtxObj.ClearGroupFilters;
-            FCtxObj.AddGroupFilter(FGroupExpr, PrevGroup);
-            DS.Prior; // ultima linha do grupo que terminou (rotulos leem o grupo certo)
-            EmitFlow(FGroupFooter);
-            DS.Next;  // volta para a linha de quebra (1a do novo grupo)
-            FCtxObj.ClearGroupFilters;
+            DS.Next; // volta para a 1a linha do novo grupo
           end;
-          PrevGroup := CurGroup;
+
+          // abre cabecalhos externo -> interno e atualiza os valores do grupo
           FCtxObj.DataSet := DS;
-          if FGroupHeader <> nil then
-            EmitFlow(FGroupHeader);
+          for I := ChangeLevel to nLevels - 1 do
+          begin
+            FLevels[I].PrevVal := CurKeys[I];
+            if FLevels[I].Header <> nil then
+              EmitFlow(FLevels[I].Header);
+          end;
         end;
       end;
 
@@ -343,13 +423,17 @@ begin
       First := False;
     end;
 
-    if (not First) and (FGroupFooter <> nil) then
+    // fim dos dados: fecha todos os rodapes do ultimo registro (interno -> externo)
+    if (not First) and HasGroup then
     begin
-      FCtxObj.ClearGroupFilters;
-      FCtxObj.AddGroupFilter(FGroupExpr, PrevGroup);
-      if DS.Eof then DS.Last; // ultima linha do ultimo grupo (rotulo correto)
-      FCtxObj.DataSet := DS;
-      EmitFlow(FGroupFooter);
+      if DS.Eof then DS.Last;
+      for I := nLevels - 1 downto 0 do
+        if FLevels[I].Footer <> nil then
+        begin
+          SetGroupFiltersUpTo(I);
+          FCtxObj.DataSet := DS;
+          EmitFlow(FLevels[I].Footer);
+        end;
       FCtxObj.ClearGroupFilters;
     end;
   finally

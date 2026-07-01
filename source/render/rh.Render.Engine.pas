@@ -62,9 +62,9 @@ begin
     Op := RP.AddOp(rhdkText);
     Op.Rect := TrhRectU.Create(L, T, Obj.Width, Obj.Height);
     if Ctx <> nil then
-      Op.Text := rhEvalText(Txt.Text, Ctx)
+      Op.Text := rhEvalText(Txt.DisplayExpression, Ctx)
     else
-      Op.Text := Txt.Text;
+      Op.Text := Txt.DisplayExpression;
     Op.FontName := Txt.Font.Name;
     Op.FontSize := Txt.Font.Size;
     Op.FontStyle := Txt.Font.Style;

@@ -20,6 +20,8 @@ uses
 
 type
   TrhReportComponentEditor = class(TComponentEditor)
+  private
+    function CollectDesignData: TObject; // retorna TrhDesignData
   public
     procedure Edit; override;
     function GetVerbCount: Integer; override;
@@ -30,7 +32,50 @@ type
 implementation
 
 uses
-  rh.Report, rh.Design.Designer.Form, rh.Preview.Form;
+  System.Classes, Data.DB,
+  rh.Report, rh.Design.Designer.Form, rh.Design.Data, rh.Preview.Form;
+
+function TrhReportComponentEditor.CollectDesignData: TObject;
+var
+  Data: TrhDesignData;
+  Root: TComponent;
+  I, J: Integer;
+  DS: TDataSet;
+  Flds: TStringList;
+begin
+  Data := TrhDesignData.Create;
+  Result := Data;
+  if Designer = nil then Exit;
+  Root := Designer.Root;
+  if Root = nil then Exit;
+  Flds := TStringList.Create;
+  try
+    for I := 0 to Root.ComponentCount - 1 do
+      if Root.Components[I] is TDataSet then
+      begin
+        DS := TDataSet(Root.Components[I]);
+        Flds.Clear;
+        try
+          if DS.Fields.Count > 0 then
+          begin
+            for J := 0 to DS.Fields.Count - 1 do
+              Flds.Add(DS.Fields[J].FieldName);
+          end
+          else
+          begin
+            DS.FieldDefs.Update;
+            for J := 0 to DS.FieldDefs.Count - 1 do
+              Flds.Add(DS.FieldDefs[J].Name);
+          end;
+        except
+          // dataset fechado/sem conexao: fica so o nome, sem campos
+        end;
+        Data.AddDataset(DS.Name, Flds);
+      end;
+  finally
+    Flds.Free;
+  end;
+end;
 
 procedure TrhReportComponentEditor.Edit;
 begin
@@ -53,13 +98,22 @@ begin
 end;
 
 procedure TrhReportComponentEditor.ExecuteVerb(Index: Integer);
+var
+  Data: TrhDesignData;
 begin
   if not (Component is TrhReport) then Exit;
   case Index of
     0:
-      if TrhDesignerForm.Execute(TrhReport(Component)) then
-        if Designer <> nil then
-          Designer.Modified;
+      begin
+        Data := TrhDesignData(CollectDesignData);
+        try
+          if TrhDesignerForm.Execute(TrhReport(Component), Data) then
+            if Designer <> nil then
+              Designer.Modified;
+        finally
+          Data.Free;
+        end;
+      end;
     1:
       TrhReport(Component).ShowPreview;
   end;

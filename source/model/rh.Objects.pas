@@ -74,6 +74,7 @@ type
   TrhTextObject = class(TrhReportObject)
   private
     FText: string;
+    FDataField: string;
     FFont: TFont;
     FHAlign: TrhHAlign;
     FVAlign: TrhVAlign;
@@ -87,8 +88,15 @@ type
     class function ObjectType: string; override;
     procedure SaveToJSON(O: TJSONObject); override;
     procedure LoadFromJSON(O: TJSONObject); override;
+    /// <summary>Expressao efetiva a avaliar: se DataField estiver preenchido,
+    ///  vale '[DataField]' (bind simples estilo DB-aware); senao, usa Text (que
+    ///  pode conter varias ilhas [expr]). Um unico motor para os dois modos.</summary>
+    function DisplayExpression: string;
   published
     property Text: string read FText write FText;
+    /// <summary>Bind direto a um campo do dataset da banda (modo simples). Quando
+    ///  preenchido, tem precedencia sobre Text. Vazio = usa Text com [expr].</summary>
+    property DataField: string read FDataField write FDataField;
     property Font: TFont read FFont;
     property HAlign: TrhHAlign read FHAlign write FHAlign default rhhaLeft;
     property VAlign: TrhVAlign read FVAlign write FVAlign default rhvaTop;
@@ -332,6 +340,7 @@ begin
   begin
     Src := TrhTextObject(Source);
     FText := Src.FText;
+    FDataField := Src.FDataField;
     FFont.Assign(Src.FFont);
     FHAlign := Src.FHAlign;
     FVAlign := Src.FVAlign;
@@ -346,12 +355,21 @@ begin
   Result := 'text';
 end;
 
+function TrhTextObject.DisplayExpression: string;
+begin
+  if FDataField <> '' then
+    Result := '[' + FDataField + ']'
+  else
+    Result := FText;
+end;
+
 procedure TrhTextObject.SaveToJSON(O: TJSONObject);
 var
   FontObj: TJSONObject;
 begin
   inherited SaveToJSON(O);
   O.AddPair('text', FText);
+  O.AddPair('dataField', FDataField);
   FontObj := TJSONObject.Create;
   FontToJSON(FFont, FontObj);
   O.AddPair('font', FontObj);
@@ -366,6 +384,7 @@ procedure TrhTextObject.LoadFromJSON(O: TJSONObject);
 begin
   inherited LoadFromJSON(O);
   FText := JGetStr(O, 'text', '');
+  FDataField := JGetStr(O, 'dataField', '');
   FontFromJSON(JGetObj(O, 'font'), FFont);
   FHAlign := StrToHAlign(JGetStr(O, 'hAlign', 'left'));
   FVAlign := StrToVAlign(JGetStr(O, 'vAlign', 'top'));

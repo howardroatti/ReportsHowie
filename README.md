@@ -25,6 +25,7 @@
 - **Zero dependências externas** — os exportadores (PDF, OOXML, HTML) são escritos em **Pascal puro**, usando apenas o que já vem com o Delphi (RTL, `System.Zip`, `System.ZLib`, GDI/`Vcl.Graphics`, Indy para SMTP).
 - **`TDataSet` genérico** — funciona com FireDAC, ADO, dbExpress, ClientDataSet… sem acoplar a nenhum driver.
 - **Uma engine de renderização compartilhada** — o *preview* na tela e todos os exports partem exatamente da mesma display list, garantindo WYSIWYG.
+- **Pronto para IA (*AI-native*)** — o template é um **JSON (`.rhr`) limpo e serializável**, pensado para ser gerado e editado por LLMs. Um futuro **servidor MCP** (+ CLI `rhtool`) permitirá que assistentes como Claude, ChatGPT e Gemini criem, validem e renderizem relatórios diretamente, reutilizando o próprio motor de expressões e os exportadores. Ver [roadmap](#roadmap) (Fase 12).
 
 ## Status
 
@@ -70,6 +71,11 @@ begin
 end;
 ```
 
+## Documentação
+
+- 📘 **[Manual de uso](./docs/MANUAL.md)** — guia completo com dezenas de exemplos: bandas, objetos, expressões, data binding, agrupamento/agregados, banco de dados, preview, exportação, designer e receitas prontas.
+- 🏗️ [Arquitetura](./docs/ARCHITECTURE.md) — visão interna do componente.
+
 ## Roadmap
 
 | Fase | Entrega | Status |
@@ -79,13 +85,21 @@ end;
 | 2 | Abstração de render + preview VCL | ✅ |
 | 3 | Engine de expressões/fórmulas | ✅ |
 | 4 | Pipeline de dados (`TDataSet`, grupos, agregados) | ✅ |
-| 5 | Designer visual em design-time | ⬜ |
+| 4.1 | **Grupos aninhados** (multi-nível: Cliente › Categoria › … com subtotais por nível) | ✅ |
+| 5 | Designer visual em design-time (selecionar/mover/redimensionar, inspetor, guias, alinhar, undo, imagens) | 🚧 |
+| 5.1 | Vínculo de dados no designer (painel de campos, inserir campo, `DataSetName` por lista) + Abrir/Salvar `.rhr` no designer + preview embutida (`TrhPreviewControl`) | 🚧 |
+| 5.2a | **Data binding híbrido**: propriedade `DataField` no texto (bind simples estilo DB-aware) além das ilhas `[expr]` | ✅ |
+| 5.2b | Drag-to-bind no designer + indicador visual de campo vinculado | ⬜ |
+| 5.3 | Árvore de estrutura (página→banda→objeto) | ⬜ |
 | 6 | Export **HTML** | ✅ |
 | 7 | Export **PDF** | ✅ |
 | 8 | Export **XLSX** e **DOCX** (OOXML) | ✅ |
 | 9 | Envio por **e-mail** (SMTP) | ⬜ |
 | 10 | Designer *runtime* + release público multi-versão | ⬜ |
 | 11 | Export **ODT** / **ODS** (OpenDocument) — *opcional* | ⬜ |
+| 12.a | **`rhtool` CLI** (render/validate/export por linha de comando) + **JSON Schema** do `.rhr` | ⬜ |
+| 12.b | **Servidor MCP** (tools: schema, funções, criar/editar/validar/renderizar template) + manifesto Claude | ⬜ |
+| 12.c | Adaptadores de IA: **ChatGPT** (Actions/OpenAPI) e **Gemini** (function declarations) | ⬜ |
 
 ## Como contribuir
 
