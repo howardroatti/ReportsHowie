@@ -7,6 +7,18 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 7 — Export PDF nativo)
+- `rh.Export.PDF`: `TrhPdfExporter` escreve um **PDF 1.4 puro-Pascal** (sem dependências) a
+  partir do `TrhRenderedDocument`: objetos indiretos, tabela `xref` com offsets de bytes reais,
+  `trailer` (`/Root`+`/Size`) e árvore `/Catalog → /Pages → /Page`.
+- Content stream por página mapeando a display list para operadores PDF: texto (`BT/Tf/Tm/Tj/ET`),
+  retângulos/linhas (`re`/`m`/`l`/`S`/`B`) e elipses via 4 curvas de Bézier; cores (`rg`/`RG`);
+  eixo Y invertido (origem PDF é o canto inferior-esquerdo).
+- Fontes: as **Type1 padrão** da família Helvetica (normal/bold/italic/bold-italic, `WinAnsiEncoding`)
+  — sem embutir arquivo de fonte.
+- Alinhamento horizontal (esq./centro/dir.) calculado por métricas GDI; múltiplas linhas por objeto.
+- Imagens embutidas como XObject `/DCTDecode` (JPEG).
+
 ### Adicionado (Fase 6 — Export HTML)
 - `rh.Export.HTML`: `TrhHtmlExporter` reproduz o `TrhRenderedDocument` como páginas HTML com
   elementos absolutamente posicionados em mm (WYSIWYG com o preview). Imagens em data-URI base64,

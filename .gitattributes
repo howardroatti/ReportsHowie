@@ -20,3 +20,6 @@
 *.ico   binary
 *.bpl   binary
 *.dcp   binary
+*.pdf   binary
+*.xlsx  binary
+*.docx  binary

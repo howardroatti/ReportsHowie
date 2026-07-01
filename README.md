@@ -81,7 +81,7 @@ end;
 | 4 | Pipeline de dados (`TDataSet`, grupos, agregados) | ✅ |
 | 5 | Designer visual em design-time | ⬜ |
 | 6 | Export **HTML** | ✅ |
-| 7 | Export **PDF** | ⬜ |
+| 7 | Export **PDF** | ✅ |
 | 8 | Export **XLSX** e **DOCX** (OOXML) | ⬜ |
 | 9 | Envio por **e-mail** (SMTP) | ⬜ |
 | 10 | Designer *runtime* + release público multi-versão | ⬜ |

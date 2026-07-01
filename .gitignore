@@ -61,3 +61,7 @@ modules/
 
 # Instrucoes locais do Claude Code (contem conta/paths especificos da maquina)
 CLAUDE.md
+
+# Saidas geradas pelo app de teste (regeneradas a cada execucao)
+demos/vendas.*
+demos/exemplo.rhr
