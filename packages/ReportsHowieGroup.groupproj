@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{A1B2C3D4-0000-4000-8000-ReportsHowieGrp}</ProjectGuid>
+        <ProjectGuid>{A1B2C3D4-0000-4000-8000-000000000000}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
         <!-- A ordem importa: o runtime deve ser compilado antes do design-time,
