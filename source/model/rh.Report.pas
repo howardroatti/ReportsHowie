@@ -5,41 +5,64 @@
 {******************************************************************************}
 
 /// <summary>
-///   TrhReport: o componente que o usuario solta no form. Raiz do modelo de
-///   relatorio e ponto de entrada da API publica (preview/export/email).
+///   TrhReport: o componente que o usuario solta no form e raiz do modelo.
+///   Dono das paginas/bandas/objetos e ponto de entrada da persistencia.
 ///
-///   FASE 0: esqueleto instalavel. As colecoes de paginas/bandas/objetos, a
-///   persistencia JSON (.rhr) e o streaming DFM via DefineProperties entram
-///   na Fase 1; preview/export/email nas fases seguintes.
+///   Persistencia (um serializador canonico, dois envelopes):
+///     - Arquivo .rhr (runtime) via SaveToFile/LoadFromFile -> JSON.
+///     - Streaming no DFM (design-time) via DefineProperties -> o MESMO JSON
+///       gravado como blob binario ('ReportData'), fazendo o relatorio fazer
+///       round-trip pelo .dfm do form.
 /// </summary>
 unit rh.Report;
 
 interface
 
 uses
-  System.Classes,
-  rh.Consts;
+  System.Classes, System.JSON,
+  rh.Consts, rh.Page;
 
 type
   TrhReport = class(TComponent)
   private
     FTitle: string;
+    FAuthor: string;
     FFormatVersion: Integer;
+    FPages: TrhPageList;
+    procedure ReadReportData(Stream: TStream);
+    procedure WriteReportData(Stream: TStream);
   protected
-    // Fase 1: procedure DefineProperties(Filer: TFiler); override;
+    procedure DefineProperties(Filer: TFiler); override;
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
 
-    /// <summary>Retorna a versao do ReportsHowie em runtime.</summary>
+    /// <summary>Esvazia o relatorio (remove todas as paginas).</summary>
+    procedure Clear;
+    /// <summary>Garante ao menos uma pagina e a retorna.</summary>
+    function EnsurePage: TrhPage;
+
+    // --- serializacao ---
+    function ToJSONString(Pretty: Boolean = True): string;
+    procedure LoadFromJSONString(const S: string);
+    procedure SaveToStream(Stream: TStream);
+    procedure LoadFromStream(Stream: TStream);
+    procedure SaveToFile(const FileName: string);
+    procedure LoadFromFile(const FileName: string);
+
     class function LibraryVersion: string;
+
+    property Pages: TrhPageList read FPages;
   published
-    /// <summary>Titulo logico do relatorio (aparece em metadados de export).</summary>
     property Title: string read FTitle write FTitle;
-    /// <summary>Versao do formato de serializacao deste relatorio (somente leitura em runtime).</summary>
+    property Author: string read FAuthor write FAuthor;
     property FormatVersion: Integer read FFormatVersion write FFormatVersion default RH_FORMAT_VERSION;
   end;
 
 implementation
+
+uses
+  System.SysUtils;
 
 { TrhReport }
 
@@ -47,11 +70,152 @@ constructor TrhReport.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FFormatVersion := RH_FORMAT_VERSION;
+  FPages := TrhPageList.Create;
+  FPages.AddPage; // um relatorio novo ja nasce com uma pagina
+end;
+
+destructor TrhReport.Destroy;
+begin
+  FPages.Free;
+  inherited Destroy;
+end;
+
+procedure TrhReport.Clear;
+begin
+  FPages.Clear;
+end;
+
+function TrhReport.EnsurePage: TrhPage;
+begin
+  if FPages.Count = 0 then
+    FPages.AddPage;
+  Result := FPages[0];
 end;
 
 class function TrhReport.LibraryVersion: string;
 begin
   Result := RH_VERSION;
+end;
+
+function TrhReport.ToJSONString(Pretty: Boolean): string;
+var
+  Root: TJSONObject;
+  Pages: TJSONArray;
+begin
+  Root := TJSONObject.Create;
+  try
+    Root.AddPair('formatVersion', TJSONNumber.Create(FFormatVersion));
+    Root.AddPair('generator', 'ReportsHowie ' + RH_VERSION);
+    Root.AddPair('title', FTitle);
+    Root.AddPair('author', FAuthor);
+    Pages := TJSONArray.Create;
+    FPages.SaveToJSON(Pages);
+    Root.AddPair('pages', Pages);
+    if Pretty then
+      Result := Root.Format(2)
+    else
+      Result := Root.ToJSON;
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TrhReport.LoadFromJSONString(const S: string);
+var
+  Value: TJSONValue;
+  Root: TJSONObject;
+  PagesArr: TJSONArray;
+begin
+  if Trim(S) = '' then
+  begin
+    Clear;
+    Exit;
+  end;
+  Value := TJSONObject.ParseJSONValue(S);
+  if not (Value is TJSONObject) then
+  begin
+    Value.Free;
+    raise Exception.Create('ReportsHowie: JSON de relatorio invalido.');
+  end;
+  Root := TJSONObject(Value);
+  try
+    if Root.Values['formatVersion'] is TJSONNumber then
+      FFormatVersion := TJSONNumber(Root.Values['formatVersion']).AsInt;
+    if Root.Values['title'] is TJSONString then
+      FTitle := TJSONString(Root.Values['title']).Value;
+    if Root.Values['author'] is TJSONString then
+      FAuthor := TJSONString(Root.Values['author']).Value;
+    if Root.Values['pages'] is TJSONArray then
+      PagesArr := TJSONArray(Root.Values['pages'])
+    else
+      PagesArr := nil;
+    FPages.LoadFromJSON(PagesArr);
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TrhReport.SaveToStream(Stream: TStream);
+var
+  Bytes: TBytes;
+begin
+  Bytes := TEncoding.UTF8.GetBytes(ToJSONString(True));
+  if Length(Bytes) > 0 then
+    Stream.WriteBuffer(Bytes[0], Length(Bytes));
+end;
+
+procedure TrhReport.LoadFromStream(Stream: TStream);
+var
+  Bytes: TBytes;
+  Size: Int64;
+begin
+  Size := Stream.Size - Stream.Position;
+  SetLength(Bytes, Size);
+  if Length(Bytes) > 0 then
+    Stream.ReadBuffer(Bytes[0], Length(Bytes));
+  LoadFromJSONString(TEncoding.UTF8.GetString(Bytes));
+end;
+
+procedure TrhReport.SaveToFile(const FileName: string);
+var
+  FS: TFileStream;
+begin
+  FS := TFileStream.Create(FileName, fmCreate);
+  try
+    SaveToStream(FS);
+  finally
+    FS.Free;
+  end;
+end;
+
+procedure TrhReport.LoadFromFile(const FileName: string);
+var
+  FS: TFileStream;
+begin
+  FS := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    LoadFromStream(FS);
+  finally
+    FS.Free;
+  end;
+end;
+
+// --- streaming DFM: grava/le o mesmo JSON como blob binario ---
+
+procedure TrhReport.DefineProperties(Filer: TFiler);
+begin
+  inherited DefineProperties(Filer);
+  Filer.DefineBinaryProperty('ReportData', ReadReportData, WriteReportData, True);
+end;
+
+procedure TrhReport.WriteReportData(Stream: TStream);
+begin
+  SaveToStream(Stream);
+end;
+
+procedure TrhReport.ReadReportData(Stream: TStream);
+begin
+  LoadFromStream(Stream);
 end;
 
 end.

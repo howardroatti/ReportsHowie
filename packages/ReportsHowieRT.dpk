@@ -54,6 +54,11 @@ contains
   rh.Types in '..\source\core\rh.Types.pas',
   rh.Consts in '..\source\core\rh.Consts.pas',
   rh.Classes in '..\source\core\rh.Classes.pas',
+  rh.Model.Types in '..\source\model\rh.Model.Types.pas',
+  rh.Serialization in '..\source\model\rh.Serialization.pas',
+  rh.Objects in '..\source\model\rh.Objects.pas',
+  rh.Bands in '..\source\model\rh.Bands.pas',
+  rh.Page in '..\source\model\rh.Page.pas',
   rh.Report in '..\source\model\rh.Report.pas';
 
 end.
