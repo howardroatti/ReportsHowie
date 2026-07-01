@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{A1B2C3D4-0000-4000-8000-ReportsHowieGrp}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- A ordem importa: o runtime deve ser compilado antes do design-time,
+             pois o DT depende de ReportsHowieRT.dcp. -->
+        <Projects Include="ReportsHowieRT.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="ReportsHowieDT.dproj">
+            <Dependencies>ReportsHowieRT.dproj</Dependencies>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ReportsHowieRT">
+        <MSBuild Projects="ReportsHowieRT.dproj"/>
+    </Target>
+    <Target Name="ReportsHowieRT:Clean">
+        <MSBuild Projects="ReportsHowieRT.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ReportsHowieRT:Make">
+        <MSBuild Projects="ReportsHowieRT.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ReportsHowieDT" DependsOnTargets="ReportsHowieRT">
+        <MSBuild Projects="ReportsHowieDT.dproj"/>
+    </Target>
+    <Target Name="ReportsHowieDT:Clean">
+        <MSBuild Projects="ReportsHowieDT.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ReportsHowieDT:Make">
+        <MSBuild Projects="ReportsHowieDT.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ReportsHowieRT;ReportsHowieDT"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ReportsHowieRT:Clean;ReportsHowieDT:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ReportsHowieRT:Make;ReportsHowieDT:Make"/>
+    </Target>
+</Project>

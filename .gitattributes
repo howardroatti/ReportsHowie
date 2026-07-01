@@ -1,0 +1,22 @@
+# Normalizacao de fim de linha. Fontes Delphi usam CRLF.
+* text=auto
+
+*.pas   text eol=crlf
+*.dfm   text eol=crlf
+*.dpk   text eol=crlf
+*.dpr   text eol=crlf
+*.dproj text eol=crlf
+*.groupproj text eol=crlf
+*.inc   text eol=crlf
+
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Binarios
+*.res   binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.bpl   binary
+*.dcp   binary

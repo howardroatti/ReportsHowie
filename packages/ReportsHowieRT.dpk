@@ -1,0 +1,58 @@
+{******************************************************************************}
+{  ReportsHowie - Pacote RUNTIME                                               }
+{                                                                              }
+{  Contem TODO o codigo que roda na aplicacao do usuario final: modelo,        }
+{  engine, renderizadores, exportadores, preview e e-mail. NAO pode referenciar}
+{  DesignIntf/DesignEditors. E este BPL que a app cliente redistribui.         }
+{                                                                              }
+{  {$LIBSUFFIX AUTO} => o BPL recebe o sufixo da versao do Delphi              }
+{  (ex.: ReportsHowieRT290.bpl), permitindo instalar em varias versoes.        }
+{******************************************************************************}
+
+package ReportsHowieRT;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'ReportsHowie - Report Generator (Runtime)'}
+{$RUNONLY}
+{$LIBSUFFIX AUTO}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vcl,
+  vcldb,
+  IndySystem,
+  IndyProtocols,
+  IndyCore;
+
+contains
+  rh.Types in '..\source\core\rh.Types.pas',
+  rh.Consts in '..\source\core\rh.Consts.pas',
+  rh.Classes in '..\source\core\rh.Classes.pas',
+  rh.Report in '..\source\model\rh.Report.pas';
+
+end.

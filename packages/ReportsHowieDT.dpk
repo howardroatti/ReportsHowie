@@ -1,0 +1,51 @@
+{******************************************************************************}
+{  ReportsHowie - Pacote DESIGN-TIME                                           }
+{                                                                              }
+{  Carregado DENTRO do IDE (bds.exe). Contem apenas registro, component        }
+{  editors, property editors e o form do designer. Referencia designide/       }
+{  DesignIntf e por isso NUNCA pode ser linkado no EXE do usuario final.       }
+{  'requires ReportsHowieRT' => reutiliza o codigo de runtime.                 }
+{******************************************************************************}
+
+package ReportsHowieDT;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'ReportsHowie - Report Generator (Design-Time)'}
+{$DESIGNONLY}
+{$LIBSUFFIX AUTO}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vcl,
+  designide,
+  ReportsHowieRT;
+
+contains
+  rh.Reg in '..\designtime\rh.Reg.pas';
+
+end.
