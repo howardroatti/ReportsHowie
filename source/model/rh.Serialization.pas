@@ -34,7 +34,7 @@ procedure Base64ToPicture(const S: string; Pic: TPicture);
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.NetEncoding,
+  System.SysUtils, System.Classes, System.UITypes, System.NetEncoding,
   Vcl.Imaging.pngimage, Vcl.Imaging.jpeg;
 
 function JGetStr(O: TJSONObject; const Name, Default: string): string;
