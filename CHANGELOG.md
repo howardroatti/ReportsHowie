@@ -7,6 +7,16 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 3 — Motor de expressões/fórmulas)
+- `rh.Expr.Lexer`: tokenizador (campos `[Nome]`, strings, números, operadores, `AND/OR/NOT/MOD`).
+- `rh.Expr.Nodes`: nós da AST + `IrhEvalContext` + avaliador (Variant); nós de agregação delegam ao contexto.
+- `rh.Expr.Functions`: registro extensível de funções (`UPPER`, `LOWER`, `TRIM`, `LEN`, `COPY`, `POS`,
+  `IIF`, `COALESCE`, `ROUND`, `TRUNC`, `INT`, `ABS`, `FORMATFLOAT`, `FORMATDATETIME`, `DATETOSTR`, `STR`, `NOW`).
+- `rh.Expr.Parser`: parser descendente-recursivo com precedência (OR/AND/comparação/±/×÷/unário/primário).
+- `rh.Expr`: fachada `TrhExpression`, `rhEvalText` (ilhas `[expr]` com colchetes balanceados), `TrhDictContext`.
+- Integração no render: `BuildDocument`/`ShowPreview` aceitam `IrhEvalContext` opcional e avaliam os textos.
+- Agregações (`SUM`/`AVG`/`COUNT`/`MIN`/`MAX`) já parseadas; avaliação real na Fase 4.
+
 ### Adicionado (Fase 2 — Motor de renderização + preview VCL)
 - `rh.Render.Intf`: display list (`TrhRenderedDocument`/`TrhRenderedPage`/`TrhDrawOp`) —
   formato intermediário paginado que preview e todos os exports vão compartilhar.

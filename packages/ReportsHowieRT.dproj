@@ -85,6 +85,11 @@
         <DCCReference Include="..\source\model\rh.Bands.pas"/>
         <DCCReference Include="..\source\model\rh.Page.pas"/>
         <DCCReference Include="..\source\model\rh.Report.pas"/>
+        <DCCReference Include="..\source\expr\rh.Expr.Lexer.pas"/>
+        <DCCReference Include="..\source\expr\rh.Expr.Nodes.pas"/>
+        <DCCReference Include="..\source\expr\rh.Expr.Functions.pas"/>
+        <DCCReference Include="..\source\expr\rh.Expr.Parser.pas"/>
+        <DCCReference Include="..\source\expr\rh.Expr.pas"/>
         <DCCReference Include="..\source\render\rh.Render.Intf.pas"/>
         <DCCReference Include="..\source\render\rh.Render.Engine.pas"/>
         <DCCReference Include="..\source\render\rh.Render.VCLCanvas.pas"/>

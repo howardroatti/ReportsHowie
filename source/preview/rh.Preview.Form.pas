@@ -17,7 +17,7 @@ interface
 uses
   System.Classes, Vcl.Forms, Vcl.Controls, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Graphics,
-  rh.Report, rh.Render.Intf;
+  rh.Report, rh.Render.Intf, rh.Expr.Nodes;
 
 type
   TrhPreviewForm = class(TForm)
@@ -51,10 +51,10 @@ type
     destructor Destroy; override;
   end;
 
-  /// <summary>Atalho: abre o preview do relatorio.</summary>
+  /// <summary>Atalho: abre o preview do relatorio. Ctx opcional avalia as expressoes.</summary>
   TrhReportPreviewHelper = class helper for TrhReport
   public
-    procedure ShowPreview;
+    procedure ShowPreview(const Ctx: IrhEvalContext = nil);
   end;
 
 implementation
@@ -261,12 +261,12 @@ end;
 
 { TrhReportPreviewHelper }
 
-procedure TrhReportPreviewHelper.ShowPreview;
+procedure TrhReportPreviewHelper.ShowPreview(const Ctx: IrhEvalContext);
 var
   Doc: TrhRenderedDocument;
   Frm: TrhPreviewForm;
 begin
-  Doc := TrhRenderEngine.BuildDocument(Self);
+  Doc := TrhRenderEngine.BuildDocument(Self, Ctx);
   Frm := TrhPreviewForm.CreateWithDocument(Application, Doc, True, Self.Title);
   try
     Frm.ShowModal;

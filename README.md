@@ -77,7 +77,7 @@ end;
 | 0 | Esqueleto dos pacotes (RT+DT) + estrutura open-source | ✅ |
 | 1 | Modelo de objetos + persistência JSON (`.rhr`) e DFM | ✅ |
 | 2 | Abstração de render + preview VCL | ✅ |
-| 3 | Engine de expressões/fórmulas | ⬜ |
+| 3 | Engine de expressões/fórmulas | ✅ |
 | 4 | Pipeline de dados (`TDataSet`, master-detail, grupos, agregados) | ⬜ |
 | 5 | Designer visual em design-time | ⬜ |
 | 6 | Export **HTML** | ⬜ |

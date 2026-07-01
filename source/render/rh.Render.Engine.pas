@@ -18,21 +18,28 @@ unit rh.Render.Engine;
 interface
 
 uses
-  rh.Report, rh.Render.Intf;
+  rh.Report, rh.Render.Intf, rh.Expr.Nodes;
 
 type
   TrhRenderEngine = class
   public
-    /// <summary>Constroi o documento renderizado a partir do relatorio. O chamador e dono do resultado.</summary>
-    class function BuildDocument(Report: TrhReport): TrhRenderedDocument;
+    /// <summary>
+    ///   Constroi o documento renderizado a partir do relatorio. Se Ctx for
+    ///   informado, os textos com ilhas [expr] sao avaliados; senao ficam
+    ///   literais (util para preview do template em design-time).
+    ///   O chamador e dono do resultado.
+    /// </summary>
+    class function BuildDocument(Report: TrhReport;
+      const Ctx: IrhEvalContext = nil): TrhRenderedDocument;
   end;
 
 implementation
 
 uses
-  Vcl.Graphics, rh.Types, rh.Model.Types, rh.Page, rh.Bands, rh.Objects;
+  Vcl.Graphics, rh.Types, rh.Model.Types, rh.Page, rh.Bands, rh.Objects, rh.Expr;
 
-procedure EmitObject(RP: TrhRenderedPage; Obj: TrhReportObject; OriginX, OriginY: TrhUnit);
+procedure EmitObject(RP: TrhRenderedPage; Obj: TrhReportObject;
+  OriginX, OriginY: TrhUnit; const Ctx: IrhEvalContext);
 var
   Op: TrhDrawOp;
   L, T: TrhUnit;
@@ -50,7 +57,10 @@ begin
     Txt := TrhTextObject(Obj);
     Op := RP.AddOp(rhdkText);
     Op.Rect := TrhRectU.Create(L, T, Obj.Width, Obj.Height);
-    Op.Text := Txt.Text;
+    if Ctx <> nil then
+      Op.Text := rhEvalText(Txt.Text, Ctx)
+    else
+      Op.Text := Txt.Text;
     Op.FontName := Txt.Font.Name;
     Op.FontSize := Txt.Font.Size;
     Op.FontStyle := Txt.Font.Style;
@@ -103,15 +113,17 @@ begin
   end;
 end;
 
-procedure EmitBand(RP: TrhRenderedPage; Band: TrhBand; OriginX, BandTop: TrhUnit);
+procedure EmitBand(RP: TrhRenderedPage; Band: TrhBand; OriginX, BandTop: TrhUnit;
+  const Ctx: IrhEvalContext);
 var
   Obj: TrhReportObject;
 begin
   for Obj in Band.Objects do
-    EmitObject(RP, Obj, OriginX, BandTop);
+    EmitObject(RP, Obj, OriginX, BandTop, Ctx);
 end;
 
-class function TrhRenderEngine.BuildDocument(Report: TrhReport): TrhRenderedDocument;
+class function TrhRenderEngine.BuildDocument(Report: TrhReport;
+  const Ctx: IrhEvalContext): TrhRenderedDocument;
 var
   Page: TrhPage;
   Band: TrhBand;
@@ -138,7 +150,7 @@ begin
         CurY := Page.MarginTop;
       end;
 
-      EmitBand(RP, Band, Page.MarginLeft, CurY);
+      EmitBand(RP, Band, Page.MarginLeft, CurY, Ctx);
       CurY := CurY + Band.Height;
     end;
   end;
