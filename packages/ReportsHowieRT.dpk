@@ -5,7 +5,7 @@
 {  engine, renderizadores, exportadores, preview e e-mail. NAO pode referenciar}
 {  DesignIntf/DesignEditors. E este BPL que a app cliente redistribui.         }
 {                                                                              }
-{  {$LIBSUFFIX AUTO} => o BPL recebe o sufixo da versao do Delphi              }
+{  LIBSUFFIX AUTO => o BPL recebe o sufixo da versao do Delphi                 }
 {  (ex.: ReportsHowieRT290.bpl), permitindo instalar em varias versoes.        }
 {******************************************************************************}
 
