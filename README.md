@@ -91,7 +91,7 @@ end;
 | 5.1 | Vínculo de dados no designer (painel de campos, inserir campo, `DataSetName` por lista) + Abrir/Salvar `.rhr` no designer + preview embutida (`TrhPreviewControl`) | 🚧 |
 | 5.2a | **Data binding híbrido**: propriedade `DataField` no texto (bind simples estilo DB-aware) além das ilhas `[expr]` | ✅ |
 | 5.2b | Drag-to-bind no designer (arrastar campo → objeto) + indicador visual de campo vinculado | ✅ |
-| 5.3 | Árvore de estrutura (página→banda→objeto) | ⬜ |
+| 5.3 | **Árvore de estrutura** (página→banda→objeto, seleção sincronizada) | ✅ |
 | 6 | Export **HTML** | ✅ |
 | 7 | Export **PDF** | ✅ |
 | 8 | Export **XLSX** e **DOCX** (OOXML) | ✅ |

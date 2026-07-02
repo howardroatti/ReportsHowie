@@ -20,7 +20,7 @@ uses
   System.Classes, System.SysUtils,
   Winapi.Windows, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.ComCtrls, Vcl.Buttons, Vcl.Dialogs,
-  rh.Types, rh.Model.Types, rh.Objects, rh.Bands, rh.Report,
+  rh.Types, rh.Model.Types, rh.Objects, rh.Bands, rh.Page, rh.Report,
   rh.Design.Surface, rh.Design.Inspector, rh.Design.Data;
 
 type
@@ -38,6 +38,9 @@ type
     FInspHeader: TLabel;
     FData: TrhDesignData;
     FDataTree: TTreeView;
+    FStructTree: TTreeView;   // outline de estrutura (Fase 5.3)
+    FSyncing: Boolean;        // guarda contra recursao entre outline <-> surface
+    FStructSig: string;       // assinatura da estrutura (rebuild so quando muda)
     FCurGroup: TPanel;
     FGroupX: Integer;
     function BeginGroup(const ACaption: string; AWidth: Integer): TPanel;
@@ -72,6 +75,13 @@ type
     procedure SurfaceDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
     procedure SurfaceDragDrop(Sender, Source: TObject; X, Y: Integer);
+    // outline de estrutura (Fase 5.3)
+    procedure StructTreeChange(Sender: TObject; Node: TTreeNode);
+    procedure RebuildStructTree;
+    procedure SyncStructToSurface;
+    function FindStructNode(Target: TObject): TTreeNode;
+    function StructSignature: string;
+    function ObjOutlineLabel(Obj: TrhReportObject): string;
     procedure UpdateZoomLabel;
     procedure UpdateStatus;
   public
@@ -107,6 +117,7 @@ begin
   if FReport <> nil then
     FSnapshot := FReport.ToJSONString(False);
   FSurface.LoadReport(FReport);
+  RebuildStructTree;
   UpdateZoomLabel;
   UpdateStatus;
 end;
@@ -127,8 +138,9 @@ end;
 
 procedure TrhDesignerForm.BuildUI;
 var
-  Bottom, RightPanel: TPanel;
-  Splitter: TSplitter;
+  Bottom, RightPanel, StructPanel: TPanel;
+  Splitter, StructSplit: TSplitter;
+  StructHeader: TLabel;
   ToolHost: TScrollBox;
   BtnOK, BtnCancel: TButton;
   I: Integer;
@@ -255,12 +267,45 @@ begin
   FStatus.Parent := Self;
   FStatus.SimplePanel := True;
 
-  // ---- inspetor (direita) ----
+  // ---- painel direito: Estrutura (topo) + Propriedades (baixo) ----
   RightPanel := TPanel.Create(Self);
   RightPanel.Parent := Self;
   RightPanel.Align := alRight;
   RightPanel.Width := 250;
   RightPanel.BevelOuter := bvNone;
+
+  // Estrutura (outline pagina -> banda -> objeto) — Fase 5.3
+  StructPanel := TPanel.Create(Self);
+  StructPanel.Parent := RightPanel;
+  StructPanel.Align := alTop;
+  StructPanel.Height := 220;
+  StructPanel.BevelOuter := bvNone;
+
+  StructHeader := TLabel.Create(Self);
+  StructHeader.Parent := StructPanel;
+  StructHeader.Align := alTop;
+  StructHeader.Height := 22;
+  StructHeader.Alignment := taCenter;
+  StructHeader.Layout := tlCenter;
+  StructHeader.Caption := 'Estrutura';
+  StructHeader.Color := clBtnFace;
+  StructHeader.Transparent := False;
+  StructHeader.Font.Style := [fsBold];
+
+  FStructTree := TTreeView.Create(Self);
+  FStructTree.Parent := StructPanel;
+  FStructTree.Align := alClient;
+  FStructTree.ReadOnly := True;
+  FStructTree.HideSelection := False;
+  FStructTree.ShowHint := True;
+  FStructTree.Hint := 'Estrutura do relatorio. Clique para selecionar a banda/objeto na tela.';
+  FStructTree.OnChange := StructTreeChange;
+
+  StructSplit := TSplitter.Create(Self);
+  StructSplit.Parent := RightPanel;
+  StructSplit.Align := alTop;
+  StructSplit.Height := 4;
+  StructSplit.MinSize := 80;
 
   FInspHeader := TLabel.Create(Self);
   FInspHeader.Parent := RightPanel;
@@ -414,6 +459,139 @@ begin
   FSurface.DropField(X, Y, Node.Parent.Text, Node.Text);
 end;
 
+{ ---- outline de estrutura (Fase 5.3) ---- }
+
+function TrhDesignerForm.ObjOutlineLabel(Obj: TrhReportObject): string;
+var
+  S: string;
+begin
+  if Obj is TrhTextObject then
+  begin
+    S := TrhTextObject(Obj).DisplayExpression;
+    if S = '' then S := '(vazio)';
+    if Length(S) > 24 then S := Copy(S, 1, 24) + '...';
+    Result := 'Texto: ' + S;
+  end
+  else if Obj is TrhImageObject then Result := 'Imagem'
+  else if Obj is TrhLineObject then Result := 'Linha'
+  else if Obj is TrhShapeObject then Result := 'Forma'
+  else Result := Obj.ClassName;
+end;
+
+function TrhDesignerForm.StructSignature: string;
+var
+  Band: TrhBand;
+  I: Integer;
+  SB: TStringBuilder;
+begin
+  SB := TStringBuilder.Create;
+  try
+    if (FReport <> nil) and (FReport.Pages.Count > 0) then
+      for Band in FReport.Pages[0].Bands do
+      begin
+        SB.Append(Ord(Band.BandType)).Append('#').Append(Band.Objects.Count).Append(';');
+        for I := 0 to Band.Objects.Count - 1 do
+          SB.Append(Band.Objects[I].ClassName).Append(',');
+        SB.Append('|');
+      end;
+    Result := SB.ToString;
+  finally
+    SB.Free;
+  end;
+end;
+
+procedure TrhDesignerForm.RebuildStructTree;
+var
+  Page: TrhPage;
+  Band: TrhBand;
+  I: Integer;
+  PageNode, BandNode: TTreeNode;
+begin
+  if FStructTree = nil then Exit;
+  FSyncing := True;
+  FStructTree.Items.BeginUpdate;
+  try
+    FStructTree.Items.Clear;
+    if (FReport <> nil) and (FReport.Pages.Count > 0) then
+    begin
+      Page := FReport.Pages[0];
+      PageNode := FStructTree.Items.AddChildObject(nil, 'Pagina', nil);
+      for Band in Page.Bands do
+      begin
+        BandNode := FStructTree.Items.AddChildObject(PageNode,
+          BandCaption(Band.BandType), Pointer(Band));
+        for I := 0 to Band.Objects.Count - 1 do
+          FStructTree.Items.AddChildObject(BandNode,
+            ObjOutlineLabel(Band.Objects[I]), Pointer(Band.Objects[I]));
+      end;
+      PageNode.Expand(True);
+    end;
+  finally
+    FStructTree.Items.EndUpdate;
+    FSyncing := False;
+  end;
+  FStructSig := StructSignature;
+  SyncStructToSurface; // realca o no correspondente a selecao atual da tela
+end;
+
+function TrhDesignerForm.FindStructNode(Target: TObject): TTreeNode;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (FStructTree = nil) or (Target = nil) then Exit;
+  for I := 0 to FStructTree.Items.Count - 1 do
+    if TObject(FStructTree.Items[I].Data) = Target then
+      Exit(FStructTree.Items[I]);
+end;
+
+procedure TrhDesignerForm.SyncStructToSurface;
+var
+  Target: TObject;
+  Node: TTreeNode;
+begin
+  if FSyncing or (FStructTree = nil) then Exit;
+  if FSurface.Selected <> nil then
+    Target := FSurface.Selected
+  else
+    Target := FSurface.SelectedBand;
+  FSyncing := True;
+  try
+    Node := FindStructNode(Target);
+    if Node <> nil then
+      Node.Selected := True
+    else
+      FStructTree.Selected := nil;
+  finally
+    FSyncing := False;
+  end;
+end;
+
+procedure TrhDesignerForm.StructTreeChange(Sender: TObject; Node: TTreeNode);
+var
+  Obj: TObject;
+  Band: TrhBand;
+begin
+  if FSyncing or (Node = nil) or (Node.Data = nil) then Exit;
+  Obj := TObject(Node.Data);
+  FSyncing := True;
+  try
+    if Obj is TrhReportObject then
+    begin
+      if (Node.Parent <> nil) and (Node.Parent.Data <> nil) and
+         (TObject(Node.Parent.Data) is TrhBand) then
+        Band := TrhBand(Node.Parent.Data)
+      else
+        Band := nil;
+      FSurface.SelectInOutline(Band, TrhReportObject(Obj));
+    end
+    else if Obj is TrhBand then
+      FSurface.SelectInOutline(TrhBand(Obj), nil);
+  finally
+    FSyncing := False;
+  end;
+end;
+
 function TrhDesignerForm.BeginGroup(const ACaption: string; AWidth: Integer): TPanel;
 var
   Cap: TLabel;
@@ -535,6 +713,7 @@ begin
       FSurface.PushUndoNow; // permite desfazer o carregamento
       FReport.LoadFromFile(Dlg.FileName);
       FSurface.LoadReport(FReport);
+      RebuildStructTree;
       UpdateZoomLabel;
       UpdateStatus;
     end;
@@ -618,6 +797,10 @@ procedure TrhDesignerForm.SurfaceModified(Sender: TObject);
 begin
   FInspector.RefreshValues;
   UpdateStatus;
+  // rebuild do outline SO quando a estrutura muda (nao a cada move/resize),
+  // evitando flicker durante o arraste (OnModified dispara no MouseMove).
+  if StructSignature <> FStructSig then
+    RebuildStructTree;
 end;
 
 procedure TrhDesignerForm.SurfaceSelChanged(Sender: TObject);
@@ -638,12 +821,14 @@ begin
     FInspector.Inspect(nil);
   end;
   UpdateStatus;
+  SyncStructToSurface; // reflete a selecao da tela no outline
 end;
 
 procedure TrhDesignerForm.InspectorChanged(Sender: TObject);
 begin
   FSurface.RebuildLayout; // props podem mudar altura de banda/geometria
   UpdateStatus;
+  RebuildStructTree;      // rotulos do outline (ex.: texto/DataField) podem ter mudado
 end;
 
 procedure TrhDesignerForm.InspectorBeforeChange(Sender: TObject);

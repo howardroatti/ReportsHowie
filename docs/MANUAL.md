@@ -581,9 +581,11 @@ Com o pacote **DT** instalado, dê **duplo-clique no `TrhReport`** do form para 
 - **Inserir** — Texto, Imagem, Linha, Forma, Excluir.
 - **Banda** — escolher tipo + `+ Banda` / `Excluir`.
 - **Alinhar** — alinhar/centralizar/distribuir a seleção múltipla.
-- **Ver** — `Preview`.
+- **Ver** — `Preview` e `Ajuda` (abre esta documentação).
 
 Recursos: seleção múltipla (Shift+clique ou retângulo), snap ao grid, guias de alinhamento, **Ctrl+Z** (desfazer), duplo-clique no texto para editar / na imagem para carregar arquivo.
+
+**Painel Estrutura** (à direita, acima de *Propriedades*): árvore **Página → Bandas → Objetos** que espelha o relatório. A seleção é **sincronizada nos dois sentidos** — clicar num nó seleciona a banda/objeto na tela (e atualiza o inspetor); selecionar na superfície realça o nó correspondente. Ótimo para navegar em relatórios com muitas bandas/objetos sobrepostos. O *splitter* entre Estrutura e Propriedades ajusta a altura.
 
 **Painel de dados** (à esquerda, quando há datasets no form): lista `dataset → campos`. Duplo-clique num campo insere um texto `[campo]` na banda selecionada e ajusta o `DataSetName`.
 

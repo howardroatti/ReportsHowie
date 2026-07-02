@@ -7,6 +7,19 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 5.3 — Árvore de estrutura no designer)
+- **Outline de estrutura** na coluna direita do designer (acima do inspetor, com *splitter*): um
+  `TTreeView` que reflete **Página → Bandas → Objetos** (o rótulo do objeto mostra o tipo e, para
+  textos, a expressão efetiva `DisplayExpression`/`[campo]`).
+- **Seleção sincronizada nos dois sentidos**, com guarda anti-recursão (`FSyncing`): clicar num nó
+  seleciona a banda/objeto na superfície e atualiza o inspetor; selecionar na tela realça o nó
+  correspondente. Novo método público `TrhDesignSurface.SelectInOutline(Band, Obj)` (mantém o
+  `FSelBand` coerente, que o setter `Selected` sozinho não ajustava).
+- **Rebuild inteligente:** a árvore só é reconstruída quando a *estrutura* muda (comparação por
+  assinatura), evitando *flicker* ao arrastar/redimensionar objetos (o `OnModified` dispara no
+  `MouseMove`). Reconstrói ao abrir/carregar `.rhr`, inserir/excluir objeto ou banda, no drag-to-bind
+  e ao editar propriedades (para refrescar os rótulos).
+
 ### Adicionado (Fase 5.2b — Drag-to-bind no designer)
 - **Arrastar campo → objeto** na superfície do designer: a árvore de dados (`FDataTree`) passou a
   `DragMode = dmAutomatic`; a superfície (`TrhDesignSurface`) recebe `OnDragOver`/`OnDragDrop` e expõe

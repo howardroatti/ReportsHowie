@@ -119,6 +119,9 @@ type
     procedure PushUndoNow;
     function CanUndo: Boolean;
     function SelectionCount: Integer;
+    /// <summary>Seleciona banda/objeto a partir do outline de estrutura (Fase 5.3).
+    ///  Mantem FSelBand coerente — o setter Selected sozinho nao ajusta a banda.</summary>
+    procedure SelectInOutline(ABand: TrhBand; AObj: TrhReportObject);
     property Report: TrhReport read FReport;
     property Selected: TrhReportObject read FSelObj write SetSelObj;
     property SelectedBand: TrhBand read FSelBand;
@@ -1093,6 +1096,14 @@ procedure TrhDesignSurface.SetSelObj(V: TrhReportObject);
 begin
   SelectSingle(V);
   DoSelChanged;
+end;
+
+procedure TrhDesignSurface.SelectInOutline(ABand: TrhBand; AObj: TrhReportObject);
+begin
+  FSelBand := ABand;
+  SelectSingle(AObj); // nil-safe: limpa a selecao quando AObj = nil (banda pura)
+  DoSelChanged;
+  Invalidate;
 end;
 
 procedure TrhDesignSurface.SelectSingle(Obj: TrhReportObject);

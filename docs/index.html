@@ -462,7 +462,7 @@ rhReport1.LoadFromJSONString(S);</code></pre>
       <li><b>Inserir</b> — Texto, Imagem, Linha, Forma, Excluir.</li>
       <li><b>Banda</b> — escolher tipo + <code>+ Banda</code> / <code>Excluir</code>.</li>
       <li><b>Alinhar</b> — alinhar/centralizar/distribuir a seleção múltipla.</li>
-      <li><b>Ver</b> — <code>Preview</code>.</li>
+      <li><b>Ver</b> — <code>Preview</code> e <code>Ajuda</code> (abre esta documentação).</li>
     </ul>
     <p>Recursos: seleção múltipla (Shift+clique ou retângulo), snap ao grid, guias de alinhamento, <b>Ctrl+Z</b>, duplo-clique no texto para editar / na imagem para carregar arquivo.</p>
     <figure class="shot missing">
@@ -471,6 +471,7 @@ rhReport1.LoadFromJSONString(S);</code></pre>
       <figcaption>Painel de dados: árvore <code>dataset → campos</code>. Duplo-clique num campo insere <code>[campo]</code> na banda selecionada.</figcaption>
     </figure>
     <p><b>Drag-to-bind (arrastar campo):</b> arraste um campo da árvore para a superfície — <b>sobre um texto</b> seta o <code>DataField</code> dele; <b>em área vazia</b> cria um texto já vinculado no ponto do drop. Objetos vinculados exibem um <b>triângulo azul</b> no canto superior esquerdo e mostram <code>[campo]</code> no design-time.</p>
+    <p><b>Painel Estrutura</b> (à direita, acima de <i>Propriedades</i>): árvore <b>Página → Bandas → Objetos</b> que espelha o relatório. A seleção é <b>sincronizada nos dois sentidos</b> — clicar num nó seleciona a banda/objeto na tela (e atualiza o inspetor); selecionar na superfície realça o nó correspondente. Útil para navegar em relatórios com muitas bandas/objetos sobrepostos; o <i>splitter</i> ajusta a altura entre Estrutura e Propriedades.</p>
     <p><b>Ver um relatório de código no designer:</b> salve com <code>SaveToFile('...\pedidos.rhr')</code> e no designer clique <b>Arquivo → Abrir</b>.</p>
 
     <h2 id="impressao">16. Impressão</h2>
