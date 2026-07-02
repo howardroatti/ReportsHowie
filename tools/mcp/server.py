@@ -179,7 +179,15 @@ def info(template: dict) -> dict:
             pass
 
 
-def export(template: dict, out_path: str, fmt: str = "pdf") -> dict:
+def _write_temp_json(obj: Any, prefix: str) -> str:
+    fd, path = tempfile.mkstemp(suffix=".json", prefix=prefix)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+    return path
+
+
+def export(template: dict, out_path: str, fmt: str = "pdf",
+           data: Optional[dict] = None) -> dict:
     fmt = (fmt or "pdf").lower().lstrip(".")
     if fmt not in ("pdf", "html", "xlsx", "docx"):
         return {"ok": False, "error": f"formato invalido: {fmt} "
@@ -194,16 +202,22 @@ def export(template: dict, out_path: str, fmt: str = "pdf") -> dict:
     out_abs = str(Path(out_path).resolve())
     Path(out_abs).parent.mkdir(parents=True, exist_ok=True)
     tmp = _write_temp_rhr(template)
+    data_tmp = _write_temp_json(data, "rh_data_") if data else None
     try:
-        res = _run_rhtool(["export", tmp, out_abs])
+        args = ["export", tmp, out_abs]
+        if data_tmp:
+            args += ["--data", data_tmp]
+        res = _run_rhtool(args)
         if res.get("ok"):
             res["output"] = out_abs
         return res
     finally:
-        try:
-            os.remove(tmp)
-        except OSError:
-            pass
+        for p in (tmp, data_tmp):
+            if p:
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
 
 
 # --------------------------------------------------------------------------- #
@@ -244,11 +258,15 @@ def build_server():
         return info(template)
 
     @mcp.tool()
-    def export_template(template: dict, out_path: str, fmt: str = "pdf") -> dict:
+    def export_template(template: dict, out_path: str, fmt: str = "pdf",
+                        data: Optional[dict] = None) -> dict:
         """Valida e renderiza o template, exportando para um arquivo.
         fmt: 'pdf' | 'html' | 'xlsx' | 'docx'. Retorna {ok, output|error}.
-        Obs.: sem dados ligados, bandas de dados nao geram linhas (so o layout)."""
-        return export(template, out_path, fmt)
+
+        data (opcional): dados para as bandas, no formato
+        {"NomeDataset": [ {campo: valor, ...}, ... ]}. O nome do dataset casa com
+        o dataSetName das bandas. Sem data, bandas de dados nao geram linhas."""
+        return export(template, out_path, fmt, data)
 
     return mcp
 

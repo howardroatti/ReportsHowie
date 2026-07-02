@@ -11,9 +11,10 @@ O executável sai em `tools\rhtool\Win64\Debug\rhtool.exe` (ou conforme a plataf
 ## Uso
 
 ```text
-rhtool validate <arquivo.rhr>            valida o template (parse do modelo)
-rhtool info <arquivo.rhr>                mostra a estrutura (paginas/bandas/objetos)
-rhtool export <arquivo.rhr> <saida.ext>  exporta para .pdf / .html / .xlsx / .docx
+rhtool validate <arquivo.rhr>                        valida o template (parse do modelo)
+rhtool info <arquivo.rhr>                            mostra a estrutura (paginas/bandas/objetos)
+rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>]
+                                                     exporta para .pdf / .html / .xlsx / .docx
 rhtool version
 rhtool help
 ```
@@ -26,9 +27,26 @@ Códigos de saída: `0` sucesso · `1` uso incorreto · `2` erro (ex.: arquivo i
 rhtool validate ..\..\demos\pedidos.rhr
 rhtool info ..\..\demos\pedidos.rhr
 rhtool export ..\..\demos\vendas.rhr saida\vendas.pdf
+rhtool export ..\..\demos\pedidos.rhr saida\pedidos.pdf --data ..\..\demos\pedidos.data.json
 ```
 
-> **Obs.:** `export` renderiza o **layout** do template. Sem dados ligados, as bandas de dados (`masterData`/grupos) não produzem linhas; bandas estáticas (título, sumário com texto fixo, etc.) saem normalmente. Renderização com dados vindos de JSON/CSV é um próximo passo (12.b).
+### Dados (`--data`)
+
+Sem `--data`, `export` renderiza só o **layout** (bandas de dados não geram linhas). Com `--data`, você alimenta datasets em memória e o relatório sai **completo**. O JSON mapeia o **nome do dataset** (igual ao `dataSetName` das bandas) para um array de registros:
+
+```json
+{
+  "Pedidos": [
+    { "cliente": "ACME Ltda", "uf": "SP", "categoria": "Enterais", "produto": "Nutri A", "quantidade": 10, "total": 1250.00 },
+    { "cliente": "ACME Ltda", "uf": "SP", "categoria": "Parenterais", "produto": "Sol P1", "quantidade": 2, "total": 980.00 }
+  ]
+}
+```
+
+- Tipos inferidos por campo: número → `float`, booleano → `boolean`, resto → texto.
+- Para **grupos**, ordene os registros na ordem dos grupos (ex.: por `cliente`, depois `categoria`).
+- Datas: passe como **texto já formatado** (JSON não tem tipo data).
+- Datasets em memória via `TClientDataSet` (linkado com `MidasLib`, sem DLL).
 
 ## JSON Schema
 

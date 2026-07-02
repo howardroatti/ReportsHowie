@@ -7,6 +7,15 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (12.a/12.b — render com dados via JSON)
+- **`rhtool export ... --data <dados.json>`**: alimenta datasets em memória a partir de um JSON
+  `{ "NomeDataset": [ {campo: valor}, ... ] }` (nome casa com o `dataSetName` das bandas), então as
+  bandas de dados/grupos passam a **produzir linhas** — antes o `export` renderizava só o layout.
+  Datasets em memória via `TClientDataSet` (linkado com `MidasLib`, sem DLL); tipos inferidos por campo
+  (número→float, booleano→boolean, resto→texto). Exemplo em `demos/pedidos.data.json`.
+- **MCP `export_template(template, out_path, fmt, data?)`**: novo parâmetro `data` (mesmo formato),
+  repassado ao `rhtool --data`. Verificado ponta a ponta (PDF com dados ~3x maior que só o layout).
+
 ### Adicionado (Fase 12.b — Servidor MCP em Python)
 - **`tools/mcp/server.py`**: servidor **MCP** (Model Context Protocol) que permite a LLMs (Claude/etc.)
   criar, validar e renderizar relatórios `.rhr`. Tools: `get_schema`, `list_functions` (funções/agregados/

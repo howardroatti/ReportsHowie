@@ -17,7 +17,12 @@ uses
   System.SysUtils,
   System.Classes,
   System.UITypes,
+  System.IOUtils,
+  System.JSON,
   Vcl.Graphics,
+  Data.DB,
+  Datasnap.DBClient,
+  MidasLib,
   rh.Types in '..\..\source\core\rh.Types.pas',
   rh.Consts in '..\..\source\core\rh.Consts.pas',
   rh.Classes in '..\..\source\core\rh.Classes.pas',
@@ -50,11 +55,13 @@ begin
   Writeln('Uso:');
   Writeln('  rhtool validate <arquivo.rhr>              valida o template (parse do modelo)');
   Writeln('  rhtool info <arquivo.rhr>                  mostra a estrutura (paginas/bandas/objetos)');
-  Writeln('  rhtool export <arquivo.rhr> <saida.ext>    exporta (.pdf/.html/.xlsx/.docx)');
+  Writeln('  rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>]');
+  Writeln('                                            exporta (.pdf/.html/.xlsx/.docx)');
   Writeln('  rhtool version');
   Writeln('  rhtool help');
   Writeln('');
-  Writeln('Obs.: export renderiza o LAYOUT do template. Sem dados ligados, as');
+  Writeln('Dados (--data): JSON no formato { "NomeDataset": [ {campo: valor, ...}, ... ] }.');
+  Writeln('      O nome do dataset casa com o dataSetName das bandas. Sem --data, as');
   Writeln('      bandas de dados nao produzem linhas (bandas estaticas saem normal).');
 end;
 
@@ -111,31 +118,189 @@ begin
   end;
 end;
 
-procedure CmdExport(const FileName, OutFile: string);
+/// <summary>Cria datasets em memoria (TClientDataSet) a partir de um JSON
+///  { "NomeDataset": [ {campo: valor, ...}, ... ], ... } e os liga ao relatorio
+///  via SetDataSet, para que as bandas de dados produzam linhas. Retorna quantos
+///  datasets foram carregados. Os TClientDataSet pertencem a Owner (liberados junto).</summary>
+function BuildDataSets(R: TrhReport; const DataFile: string; Owner: TComponent): Integer;
+var
+  JRoot: TJSONValue;
+  Root: TJSONObject;
+  DsPair, VPair: TJSONPair;
+  Arr: TJSONArray;
+  Rec: TJSONObject;
+  Cds: TClientDataSet;
+  I, K, MaxLen: Integer;
+  Names: array of string;
+  Types: array of TFieldType;
+  Sizes: array of Integer;
+  JV: TJSONValue;
+  SawStr, SawNum, SawBool: Boolean;
+
+  function IndexOfName(const AName: string): Integer;
+  var
+    N: Integer;
+  begin
+    for N := 0 to High(Names) do
+      if SameText(Names[N], AName) then
+        Exit(N);
+    Result := -1;
+  end;
+
+begin
+  Result := 0;
+  if not FileExists(DataFile) then
+    raise Exception.CreateFmt('arquivo de dados nao encontrado: %s', [DataFile]);
+  JRoot := TJSONObject.ParseJSONValue(TFile.ReadAllText(DataFile, TEncoding.UTF8));
+  if not (JRoot is TJSONObject) then
+  begin
+    JRoot.Free;
+    raise Exception.Create(
+      'JSON de dados invalido: esperado um objeto { "Dataset": [registros] }.');
+  end;
+  Root := TJSONObject(JRoot);
+  try
+    for DsPair in Root do
+    begin
+      if not (DsPair.JsonValue is TJSONArray) then
+        Continue;
+      Arr := TJSONArray(DsPair.JsonValue);
+
+      // 1) descobre os campos (uniao das chaves, preservando a ordem)
+      SetLength(Names, 0);
+      for I := 0 to Arr.Count - 1 do
+        if Arr.Items[I] is TJSONObject then
+          for VPair in TJSONObject(Arr.Items[I]) do
+            if IndexOfName(VPair.JsonString.Value) < 0 then
+            begin
+              SetLength(Names, Length(Names) + 1);
+              Names[High(Names)] := VPair.JsonString.Value;
+            end;
+      SetLength(Types, Length(Names));
+      SetLength(Sizes, Length(Names));
+
+      // 2) infere o tipo de cada campo (numero->float, bool->boolean, resto->string)
+      for K := 0 to High(Names) do
+      begin
+        SawStr := False; SawNum := False; SawBool := False; MaxLen := 0;
+        for I := 0 to Arr.Count - 1 do
+          if Arr.Items[I] is TJSONObject then
+          begin
+            JV := TJSONObject(Arr.Items[I]).GetValue(Names[K]);
+            if (JV = nil) or (JV is TJSONNull) then
+              Continue;
+            if JV is TJSONNumber then
+              SawNum := True
+            else if JV is TJSONBool then
+              SawBool := True
+            else
+            begin
+              SawStr := True;
+              if JV is TJSONString then
+                if Length(TJSONString(JV).Value) > MaxLen then
+                  MaxLen := Length(TJSONString(JV).Value);
+            end;
+          end;
+        if SawStr then
+        begin
+          Types[K] := ftWideString;
+          if MaxLen < 20 then MaxLen := 20;
+          if MaxLen > 8192 then MaxLen := 8192;
+          Sizes[K] := MaxLen;
+        end
+        else if SawBool and not SawNum then
+        begin
+          Types[K] := ftBoolean; Sizes[K] := 0;
+        end
+        else if SawNum then
+        begin
+          Types[K] := ftFloat; Sizes[K] := 0;
+        end
+        else
+        begin
+          Types[K] := ftWideString; Sizes[K] := 20;
+        end;
+      end;
+
+      // 3) cria o dataset em memoria e popula
+      Cds := TClientDataSet.Create(Owner);
+      for K := 0 to High(Names) do
+        Cds.FieldDefs.Add(Names[K], Types[K], Sizes[K]);
+      Cds.CreateDataSet;
+
+      for I := 0 to Arr.Count - 1 do
+        if Arr.Items[I] is TJSONObject then
+        begin
+          Rec := TJSONObject(Arr.Items[I]);
+          Cds.Append;
+          for K := 0 to High(Names) do
+          begin
+            JV := Rec.GetValue(Names[K]);
+            if (JV = nil) or (JV is TJSONNull) then
+              Continue;
+            case Types[K] of
+              ftBoolean:
+                if JV is TJSONBool then
+                  Cds.Fields[K].AsBoolean := TJSONBool(JV).AsBoolean;
+              ftFloat:
+                if JV is TJSONNumber then
+                  Cds.Fields[K].AsFloat := TJSONNumber(JV).AsDouble;
+            else
+              if JV is TJSONString then
+                Cds.Fields[K].AsString := TJSONString(JV).Value
+              else
+                Cds.Fields[K].AsString := JV.Value;
+            end;
+          end;
+          Cds.Post;
+        end;
+      Cds.First;
+
+      R.SetDataSet(DsPair.JsonString.Value, Cds);
+      Inc(Result);
+    end;
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure CmdExport(const FileName, OutFile, DataFile: string);
 var
   R: TrhReport;
   Doc: TrhRenderedDocument;
+  DataOwner: TComponent;
   Ext: string;
+  N: Integer;
 begin
   R := LoadReport(FileName);
   try
-    Doc := TrhDataPipeline.BuildDocument(R);
+    DataOwner := TComponent.Create(nil);
     try
-      Ext := LowerCase(ExtractFileExt(OutFile));
-      if Ext = '.pdf' then
-        TrhPdfExporter.ExportToFile(Doc, OutFile)
-      else if (Ext = '.html') or (Ext = '.htm') then
-        TrhHtmlExporter.ExportToFile(Doc, OutFile, R.Title)
-      else if Ext = '.xlsx' then
-        TrhXlsxExporter.ExportToFile(Doc, OutFile)
-      else if Ext = '.docx' then
-        TrhDocxExporter.ExportToFile(Doc, OutFile)
-      else
-        raise Exception.CreateFmt(
-          'formato nao suportado: "%s" (use .pdf/.html/.xlsx/.docx)', [Ext]);
-      Writeln(Format('OK: exportado para "%s" (%d pagina(s)).', [OutFile, Doc.PageCount]));
+      if DataFile <> '' then
+      begin
+        N := BuildDataSets(R, DataFile, DataOwner);
+        Writeln(Format('dados: %d dataset(s) carregado(s) de "%s".', [N, DataFile]));
+      end;
+      Doc := TrhDataPipeline.BuildDocument(R);
+      try
+        Ext := LowerCase(ExtractFileExt(OutFile));
+        if Ext = '.pdf' then
+          TrhPdfExporter.ExportToFile(Doc, OutFile)
+        else if (Ext = '.html') or (Ext = '.htm') then
+          TrhHtmlExporter.ExportToFile(Doc, OutFile, R.Title)
+        else if Ext = '.xlsx' then
+          TrhXlsxExporter.ExportToFile(Doc, OutFile)
+        else if Ext = '.docx' then
+          TrhDocxExporter.ExportToFile(Doc, OutFile)
+        else
+          raise Exception.CreateFmt(
+            'formato nao suportado: "%s" (use .pdf/.html/.xlsx/.docx)', [Ext]);
+        Writeln(Format('OK: exportado para "%s" (%d pagina(s)).', [OutFile, Doc.PageCount]));
+      finally
+        Doc.Free;
+      end;
     finally
-      Doc.Free;
+      DataOwner.Free; // libera os TClientDataSet criados
     end;
   finally
     R.Free;
@@ -144,7 +309,8 @@ end;
 
 procedure RunCLI;
 var
-  Cmd: string;
+  Cmd, DataFile: string;
+  I: Integer;
 begin
   if ParamCount < 1 then
   begin
@@ -172,8 +338,13 @@ begin
   else if Cmd = 'export' then
   begin
     if ParamCount < 3 then
-      raise Exception.Create('uso: rhtool export <arquivo.rhr> <saida.ext>');
-    CmdExport(ParamStr(2), ParamStr(3));
+      raise Exception.Create(
+        'uso: rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>]');
+    DataFile := '';
+    for I := 4 to ParamCount do
+      if SameText(ParamStr(I), '--data') and (I < ParamCount) then
+        DataFile := ParamStr(I + 1);
+    CmdExport(ParamStr(2), ParamStr(3), DataFile);
   end
   else
     raise Exception.CreateFmt('comando desconhecido: "%s" (use "rhtool help").', [Cmd]);

@@ -10,7 +10,7 @@ Servidor **MCP** (Model Context Protocol) que permite a assistentes como o **Cla
 | `list_functions()` | Funções, agregados e pseudo-variáveis do motor de expressões (para usar em ilhas `[expr]`). |
 | `validate_template(template)` | Valida o JSON do template contra o schema → `{valid, errors}`. |
 | `info_template(template)` | Resumo da estrutura (páginas/bandas/objetos) via `rhtool info`. |
-| `export_template(template, out_path, fmt)` | Valida e renderiza para `pdf`/`html`/`xlsx`/`docx` via `rhtool export`. |
+| `export_template(template, out_path, fmt, data?)` | Valida e renderiza para `pdf`/`html`/`xlsx`/`docx` via `rhtool export`. Com `data` (opcional), alimenta as bandas de dados. |
 
 Também expõe o schema como **recurso** MCP: `schema://reportshowie`.
 
@@ -61,4 +61,16 @@ Use o `python` do ambiente onde instalou as dependências (ex.: o do `.venv`). R
 
 O Claude usa `get_schema`/`list_functions` para montar o JSON, `validate_template` para conferir e `export_template` para gerar o arquivo.
 
-> **Nota:** sem dados ligados, bandas de dados não produzem linhas (o `export` renderiza o *layout*). Alimentar datasets a partir de JSON/CSV é um próximo passo.
+### Com dados
+
+Passe `data` para o `export_template` (mesmo formato do `--data` do `rhtool`) e as bandas de dados saem preenchidas:
+
+```json
+{
+  "Pedidos": [
+    { "cliente": "ACME Ltda", "categoria": "Enterais", "produto": "Nutri A", "quantidade": 10, "total": 1250.00 }
+  ]
+}
+```
+
+O nome do dataset casa com o `dataSetName` das bandas. Sem `data`, o `export` renderiza só o *layout*.

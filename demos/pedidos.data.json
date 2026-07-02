@@ -1,0 +1,10 @@
+{
+  "Pedidos": [
+    { "cliente": "ACME Ltda", "uf": "SP", "categoria": "Enterais", "produto": "Nutri A", "quantidade": 10, "total": 1250.00 },
+    { "cliente": "ACME Ltda", "uf": "SP", "categoria": "Enterais", "produto": "Nutri B", "quantidade": 4, "total": 520.00 },
+    { "cliente": "ACME Ltda", "uf": "SP", "categoria": "Parenterais", "produto": "Sol P1", "quantidade": 2, "total": 980.00 },
+    { "cliente": "Beta Saude", "uf": "RJ", "categoria": "Enterais", "produto": "Nutri A", "quantidade": 6, "total": 750.00 },
+    { "cliente": "Beta Saude", "uf": "RJ", "categoria": "Parenterais", "produto": "Sol P2", "quantidade": 3, "total": 1470.00 },
+    { "cliente": "Gamma Hospital", "uf": "MG", "categoria": "Parenterais", "produto": "Sol P1", "quantidade": 8, "total": 3920.00 }
+  ]
+}
