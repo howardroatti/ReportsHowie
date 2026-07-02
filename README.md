@@ -76,6 +76,8 @@ end;
 - 📘 **[Manual de uso (online)](https://howardroatti.github.io/ReportsHowie/)** — versão HTML navegável com índice lateral, busca e prints (GitHub Pages). Também no repo: **[docs/index.html](./docs/index.html)** e em Markdown **[MANUAL.md](./docs/MANUAL.md)**.
 - Cobre: bandas, objetos, expressões, data binding híbrido, agrupamento/agregados e **grupos aninhados**, banco de dados, preview, exportação, designer e receitas prontas.
 - 🏗️ [Arquitetura](./docs/ARCHITECTURE.md) — visão interna do componente.
+- 🧩 [JSON Schema do `.rhr`](./schema/reportshowie.schema.json) — contrato do formato (draft-07) para validar/gerar templates em qualquer linguagem e como base para LLMs.
+- ⌨️ [`rhtool` CLI](./tools/rhtool/) — validar, inspecionar e exportar `.rhr` sem abrir o IDE (base *headless* do MCP).
 
 ## Roadmap
 
@@ -87,8 +89,8 @@ end;
 | 3 | Engine de expressões/fórmulas | ✅ |
 | 4 | Pipeline de dados (`TDataSet`, grupos, agregados) | ✅ |
 | 4.1 | **Grupos aninhados** (multi-nível: Cliente › Categoria › … com subtotais por nível) | ✅ |
-| 5 | Designer visual em design-time (selecionar/mover/redimensionar, inspetor, guias, alinhar, undo, imagens) | 🚧 |
-| 5.1 | Vínculo de dados no designer (painel de campos, inserir campo, `DataSetName` por lista) + Abrir/Salvar `.rhr` no designer + preview embutida (`TrhPreviewControl`) | 🚧 |
+| 5 | Designer visual em design-time (selecionar/mover/redimensionar, inspetor, guias, alinhar, undo, imagens) | ✅ |
+| 5.1 | Vínculo de dados no designer (painel de campos, inserir campo, `DataSetName` por lista) + Abrir/Salvar `.rhr` no designer + preview embutida (`TrhPreviewControl`) | ✅ |
 | 5.2a | **Data binding híbrido**: propriedade `DataField` no texto (bind simples estilo DB-aware) além das ilhas `[expr]` | ✅ |
 | 5.2b | Drag-to-bind no designer (arrastar campo → objeto) + indicador visual de campo vinculado | ✅ |
 | 5.3 | **Árvore de estrutura** (página→banda→objeto, seleção sincronizada) | ✅ |
@@ -98,7 +100,7 @@ end;
 | 9 | Envio por **e-mail** (SMTP via Indy; TLS plugável OpenSSL/SChannel) | ✅ |
 | 10 | Designer *runtime* + release público multi-versão | ⬜ |
 | 11 | Export **ODT** / **ODS** (OpenDocument) — *opcional* | ⬜ |
-| 12.a | **`rhtool` CLI** (render/validate/export por linha de comando) + **JSON Schema** do `.rhr` | ⬜ |
+| 12.a | **`rhtool` CLI** (validate/info/export por linha de comando) + **JSON Schema** do `.rhr` | ✅ |
 | 12.b | **Servidor MCP** (tools: schema, funções, criar/editar/validar/renderizar template) + manifesto Claude | ⬜ |
 | 12.c | Adaptadores de IA: **ChatGPT** (Actions/OpenAPI) e **Gemini** (function declarations) | ⬜ |
 

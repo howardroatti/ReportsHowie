@@ -7,6 +7,16 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 12.a — `rhtool` CLI + JSON Schema do `.rhr`)
+- **JSON Schema** (`schema/reportshowie.schema.json`, draft-07): contrato completo do formato `.rhr`
+  (páginas, bandas, objetos text/image/line/shape, frame, font; enums de `bandType`/`hAlign`/`vAlign`/
+  `orientation`/`kind`; `oneOf` por tipo de objeto e `additionalProperties:false`). Valida/gera templates
+  em qualquer linguagem (ajv, `jsonschema`) e serve de contrato para LLMs (base do MCP). Verificado contra
+  os `.rhr` de exemplo e com casos negativos.
+- **`rhtool` CLI** (`tools/rhtool/rhtool.dpr`): app de console que **valida**, **inspeciona** (`info`) e
+  **exporta** (`.pdf/.html/.xlsx/.docx`) templates `.rhr` sem abrir o IDE — base *headless* para o servidor
+  MCP (12.b). Linka os fontes `rh.*` estaticamente; exit codes 0/1/2.
+
 ### Adicionado (Fase 9 — Envio por e-mail / SMTP)
 - **`rh.Email` (`TrhMailer`)**: `SendReport(Report, Formato, Destinatários, Assunto, Corpo, Settings, [NomeAnexo])`
   renderiza o relatório (PDF/HTML/XLSX/DOCX) a partir da mesma display list dos exportadores, grava num
