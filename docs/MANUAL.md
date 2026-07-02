@@ -554,6 +554,53 @@ end;
 | XLSX | `TrhXlsxExporter` | grade reconstruída por posição das células |
 | DOCX | `TrhDocxExporter` | parágrafos de fluxo |
 
+### 13.1 Envio por e-mail (SMTP)
+
+`TrhMailer` (unit `rh.Email`) renderiza o relatório no formato pedido, grava num arquivo temporário e o **anexa** a uma mensagem enviada por SMTP (Indy). Ligue os datasets **antes** (o envio reusa o pipeline).
+
+```pascal
+uses rh.Email;
+var Mailer: TrhMailer; Cfg: TrhSMTPSettings;
+begin
+  rhReport1.SetDataSet('Pedidos', FDQuery1);
+  Cfg := TrhSMTPSettings.Create('smtp.exemplo.com', 587,
+    'usuario', 'senha', 'remetente@exemplo.com', rssStartTLS, 'Nome Remetente');
+  Mailer := TrhMailer.Create(nil);
+  try
+    Mailer.SendReport(rhReport1, rrfPDF, ['destino@exemplo.com'],
+      'Relatorio de Pedidos', 'Segue em anexo.', Cfg);
+  finally
+    Mailer.Free;
+  end;
+end;
+```
+
+- **Formato do anexo:** `rrfPDF | rrfHTML | rrfXLSX | rrfDOCX`. O nome do anexo sai do `Report.Title` (ou informe o último parâmetro `AttachmentName`).
+- **`TrhSMTPSettings`:** host, porta, usuário/senha (deixe vazios para servidor sem autenticação), remetente e **`Security`** = `rssNone` (25) / `rssStartTLS` (587) / `rssImplicitTLS` (465).
+
+**TLS desacoplado (zero dependências):** o `rh.Email` **não** referencia nenhuma biblioteca SSL. Para transporte seguro, atribua o IOHandler que preferir (OpenSSL **ou** SChannel) pelo evento **`OnConfigureSMTP`**:
+
+```pascal
+uses IdSMTP, IdSSLOpenSSL, IdExplicitTLSClientServerBase;
+
+procedure TForm1.ConfigTLS(Sender: TObject; SMTP: TIdSMTP);
+var SSL: TIdSSLIOHandlerSocketOpenSSL;
+begin
+  if SMTP.UseTLS = utNoTLSSupport then Exit;      // sem TLS -> dispensa IOHandler
+  SSL := TIdSSLIOHandlerSocketOpenSSL.Create(SMTP);
+  SSL.Host := SMTP.Host; SSL.Port := SMTP.Port;
+  SSL.Destination := SMTP.Host + ':' + IntToStr(SMTP.Port);
+  SSL.SSLOptions.SSLVersions := [sslvTLSv1_2];
+  SSL.SSLOptions.Mode := sslmClient;
+  SMTP.IOHandler := SSL;
+end;
+// ...  Mailer.OnConfigureSMTP := ConfigTLS;
+```
+
+Se pedir TLS (`Security <> rssNone`) sem atribuir um IOHandler, `SendReport` lança `ErhEmail` com instrução. Para OpenSSL, as DLLs **libssl/libcrypto** precisam estar no PATH do app; no Gmail use **senha de app** (2FA).
+
+> **Dica de teste:** suba um SMTP local de captura (**Papercut-SMTP**, **smtp4dev**, **MailHog** ou um sink em Python com `aiosmtpd`) em `127.0.0.1:25` e use `rssNone` — valida render + anexo + envio sem TLS/DLLs.
+
 ---
 
 ## 14. Persistência

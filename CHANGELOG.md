@@ -7,6 +7,19 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 9 — Envio por e-mail / SMTP)
+- **`rh.Email` (`TrhMailer`)**: `SendReport(Report, Formato, Destinatários, Assunto, Corpo, Settings, [NomeAnexo])`
+  renderiza o relatório (PDF/HTML/XLSX/DOCX) a partir da mesma display list dos exportadores, grava num
+  arquivo temporário e o anexa a uma mensagem SMTP (Indy `TIdSMTP`/`TIdMessage`), apagando o temporário
+  ao final. Novos tipos `TrhReportFormat`, `TrhSMTPSecurity` (`rssNone`/`rssStartTLS`/`rssImplicitTLS`) e
+  o record `TrhSMTPSettings` (com `Create` de conveniência) para host/porta/credenciais/remetente.
+- **TLS desacoplado (mantém "zero dependências externas"):** a unit **não** referencia nenhuma biblioteca
+  SSL. Para transporte seguro, a aplicação atribui o IOHandler que preferir (OpenSSL **ou** SChannel) via
+  o evento `OnConfigureSMTP`; se TLS for pedido sem IOHandler, `SendReport` lança `ErhEmail` explicativo.
+  `rh.Email` adicionado ao pacote runtime `ReportsHowieRT` (que já requeria Indy).
+- **Exemplo** no app de testes (`Button4` "Enviar por e-mail (PDF)") + **sink SMTP** em Python
+  (`aiosmtpd`) para captura local; documentado no manual (seção 13.1, MD e HTML).
+
 ### Adicionado (Fase 5.3 — Árvore de estrutura no designer)
 - **Outline de estrutura** na coluna direita do designer (acima do inspetor, com *splitter*): um
   `TTreeView` que reflete **Página → Bandas → Objetos** (o rótulo do objeto mostra o tipo e, para

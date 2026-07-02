@@ -95,7 +95,7 @@ end;
 | 6 | Export **HTML** | ✅ |
 | 7 | Export **PDF** | ✅ |
 | 8 | Export **XLSX** e **DOCX** (OOXML) | ✅ |
-| 9 | Envio por **e-mail** (SMTP) | ⬜ |
+| 9 | Envio por **e-mail** (SMTP via Indy; TLS plugável OpenSSL/SChannel) | ✅ |
 | 10 | Designer *runtime* + release público multi-versão | ⬜ |
 | 11 | Export **ODT** / **ODS** (OpenDocument) — *opcional* | ⬜ |
 | 12.a | **`rhtool` CLI** (render/validate/export por linha de comando) + **JSON Schema** do `.rhr` | ⬜ |

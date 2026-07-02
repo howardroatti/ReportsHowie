@@ -74,6 +74,7 @@ contains
   rh.Export.PDF in '..\source\export\pdf\rh.Export.PDF.pas',
   rh.OOXML.Zip in '..\source\export\ooxml\rh.OOXML.Zip.pas',
   rh.Export.XLSX in '..\source\export\ooxml\rh.Export.XLSX.pas',
-  rh.Export.DOCX in '..\source\export\ooxml\rh.Export.DOCX.pas';
+  rh.Export.DOCX in '..\source\export\ooxml\rh.Export.DOCX.pas',
+  rh.Email in '..\source\email\rh.Email.pas';
 
 end.

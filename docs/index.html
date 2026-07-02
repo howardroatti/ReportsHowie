@@ -441,6 +441,44 @@ end;</code></pre>
       <tr><td>DOCX</td><td><code>TrhDocxExporter</code></td><td>parágrafos de fluxo</td></tr>
     </table>
 
+    <h3 id="email">13.1 Envio por e-mail (SMTP)</h3>
+    <p><code>TrhMailer</code> (unit <code>rh.Email</code>) renderiza o relatório no formato pedido, grava num arquivo temporário e o <b>anexa</b> a uma mensagem enviada por SMTP (Indy). Ligue os datasets <b>antes</b> (o envio reusa o pipeline).</p>
+    <pre><code>uses rh.Email;
+var Mailer: TrhMailer; Cfg: TrhSMTPSettings;
+begin
+  rhReport1.SetDataSet('Pedidos', FDQuery1);
+  Cfg := TrhSMTPSettings.Create('smtp.exemplo.com', 587,
+    'usuario', 'senha', 'remetente@exemplo.com', rssStartTLS, 'Nome Remetente');
+  Mailer := TrhMailer.Create(nil);
+  try
+    Mailer.SendReport(rhReport1, rrfPDF, ['destino@exemplo.com'],
+      'Relatorio de Pedidos', 'Segue em anexo.', Cfg);
+  finally
+    Mailer.Free;
+  end;
+end;</code></pre>
+    <ul>
+      <li><b>Formato do anexo:</b> <code>rrfPDF | rrfHTML | rrfXLSX | rrfDOCX</code>. O nome sai do <code>Report.Title</code> (ou passe <code>AttachmentName</code>).</li>
+      <li><b><code>TrhSMTPSettings</code>:</b> host, porta, usuário/senha (vazios = sem autenticação), remetente e <b><code>Security</code></b> = <code>rssNone</code> (25) / <code>rssStartTLS</code> (587) / <code>rssImplicitTLS</code> (465).</li>
+    </ul>
+    <p><b>TLS desacoplado (zero dependências):</b> o <code>rh.Email</code> <b>não</b> referencia biblioteca SSL alguma. Para transporte seguro, atribua o IOHandler que preferir (OpenSSL <b>ou</b> SChannel) pelo evento <code>OnConfigureSMTP</code>:</p>
+    <pre><code>uses IdSMTP, IdSSLOpenSSL, IdExplicitTLSClientServerBase;
+
+procedure TForm1.ConfigTLS(Sender: TObject; SMTP: TIdSMTP);
+var SSL: TIdSSLIOHandlerSocketOpenSSL;
+begin
+  if SMTP.UseTLS = utNoTLSSupport then Exit;      // sem TLS -> dispensa IOHandler
+  SSL := TIdSSLIOHandlerSocketOpenSSL.Create(SMTP);
+  SSL.Host := SMTP.Host; SSL.Port := SMTP.Port;
+  SSL.Destination := SMTP.Host + ':' + IntToStr(SMTP.Port);
+  SSL.SSLOptions.SSLVersions := [sslvTLSv1_2];
+  SSL.SSLOptions.Mode := sslmClient;
+  SMTP.IOHandler := SSL;
+end;
+// ...  Mailer.OnConfigureSMTP := ConfigTLS;</code></pre>
+    <p>Se pedir TLS sem atribuir IOHandler, <code>SendReport</code> lança <code>ErhEmail</code> com instrução. OpenSSL exige as DLLs <b>libssl/libcrypto</b> no PATH; no Gmail use <b>senha de app</b> (2FA).</p>
+    <p><b>Dica de teste:</b> suba um SMTP local de captura (<b>Papercut-SMTP</b>, <b>smtp4dev</b>, <b>MailHog</b> ou um sink em Python com <code>aiosmtpd</code>) em <code>127.0.0.1:25</code> e use <code>rssNone</code> — valida render + anexo + envio sem TLS/DLLs.</p>
+
     <h2 id="persistencia">14. Persistência</h2>
     <p>O template (bandas/objetos, <b>sem dados</b>) é salvo em JSON (<code>.rhr</code>).</p>
     <pre><code>rhReport1.SaveToFile('modelos\pedidos.rhr');
