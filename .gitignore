@@ -65,3 +65,17 @@ CLAUDE.md
 # Saidas geradas pelo app de teste (regeneradas a cada execucao)
 demos/vendas.*
 demos/exemplo.rhr
+
+# Python (servidor MCP / scripts utilitarios)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Saidas geradas pelas ferramentas de linha de comando (rhtool / mcp)
+tools/rhtool/*.pdf
+tools/rhtool/*.html
+tools/rhtool/*.xlsx
+tools/rhtool/*.docx
+tools/mcp/*.pdf
+tools/mcp/inbox/

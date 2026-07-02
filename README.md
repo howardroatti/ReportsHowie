@@ -78,6 +78,7 @@ end;
 - 🏗️ [Arquitetura](./docs/ARCHITECTURE.md) — visão interna do componente.
 - 🧩 [JSON Schema do `.rhr`](./schema/reportshowie.schema.json) — contrato do formato (draft-07) para validar/gerar templates em qualquer linguagem e como base para LLMs.
 - ⌨️ [`rhtool` CLI](./tools/rhtool/) — validar, inspecionar e exportar `.rhr` sem abrir o IDE (base *headless* do MCP).
+- 🤖 [Servidor MCP](./tools/mcp/) — conecte o **Claude** para criar/validar/renderizar relatórios (reusa o schema + `rhtool`).
 
 ## Roadmap
 
@@ -101,7 +102,7 @@ end;
 | 10 | Designer *runtime* + release público multi-versão | ⬜ |
 | 11 | Export **ODT** / **ODS** (OpenDocument) — *opcional* | ⬜ |
 | 12.a | **`rhtool` CLI** (validate/info/export por linha de comando) + **JSON Schema** do `.rhr` | ✅ |
-| 12.b | **Servidor MCP** (tools: schema, funções, criar/editar/validar/renderizar template) + manifesto Claude | ⬜ |
+| 12.b | **Servidor MCP** (Python; tools: schema, funções, validar, info, exportar template) | ✅ |
 | 12.c | Adaptadores de IA: **ChatGPT** (Actions/OpenAPI) e **Gemini** (function declarations) | ⬜ |
 
 ## Como contribuir

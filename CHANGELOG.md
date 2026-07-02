@@ -7,6 +7,16 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 12.b — Servidor MCP em Python)
+- **`tools/mcp/server.py`**: servidor **MCP** (Model Context Protocol) que permite a LLMs (Claude/etc.)
+  criar, validar e renderizar relatórios `.rhr`. Tools: `get_schema`, `list_functions` (funções/agregados/
+  pseudo-vars do motor de expressões), `validate_template` (via JSON Schema), `info_template` e
+  `export_template` (pdf/html/xlsx/docx). Expõe o schema como recurso `schema://reportshowie`.
+- **Adaptador fino:** reusa o JSON Schema (12.a) e o `rhtool` CLI (12.a) — o núcleo em Pascal não muda.
+  Lógica de núcleo isolada em funções testáveis; verificada de ponta a ponta contra o `rhtool` real
+  (validação positiva/negativa, `info` e `export` de PDF) e com *smoke test* do servidor FastMCP.
+- Instruções para conectar ao **Claude Code** e **Claude Desktop** no `tools/mcp/README.md`.
+
 ### Adicionado (Fase 12.a — `rhtool` CLI + JSON Schema do `.rhr`)
 - **JSON Schema** (`schema/reportshowie.schema.json`, draft-07): contrato completo do formato `.rhr`
   (páginas, bandas, objetos text/image/line/shape, frame, font; enums de `bandType`/`hAlign`/`vAlign`/
