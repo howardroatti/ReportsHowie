@@ -7,6 +7,19 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (Fase 5.2b — Drag-to-bind no designer)
+- **Arrastar campo → objeto** na superfície do designer: a árvore de dados (`FDataTree`) passou a
+  `DragMode = dmAutomatic`; a superfície (`TrhDesignSurface`) recebe `OnDragOver`/`OnDragDrop` e expõe
+  `DropField(X, Y, Dataset, Campo)` — se o campo cai **sobre um texto**, seta o `DataField` dele; se cai
+  em **área vazia** de uma banda, cria um texto vinculado na posição do drop (e ajusta o `DataSetName`
+  da banda). Duplo-clique no campo continua inserindo (comportamento da 5.1).
+- **Indicador visual de vínculo**: objetos com `DataField` preenchido ganham um triângulo azul no canto
+  superior esquerdo; no design-time o texto mostra a expressão efetiva (`DisplayExpression` → `[campo]`).
+  A propriedade `DataField` já aparece no inspetor (RTTI).
+- **Botão "Ajuda"** no ribbon (grupo Ver): abre a documentação — tenta o `docs/index.html` local
+  (procurando a partir do executável) e cai na versão online em HTML (GitHub Pages:
+  `https://howardroatti.github.io/ReportsHowie/`) se não achar. Manual publicado via Pages (branch `main`, `/docs`).
+
 ### Adicionado (Fase 4 — Grupos aninhados / multi-nível)
 - **Agrupamento em vários níveis** no pipeline de dados (`rh.Data.Pipeline`): antes só havia
   1 nível de grupo; agora `Classify` coleta **todos** os `GroupHeader`/`GroupFooter` (a ordem dos

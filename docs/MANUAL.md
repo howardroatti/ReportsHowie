@@ -587,6 +587,12 @@ Recursos: seleção múltipla (Shift+clique ou retângulo), snap ao grid, guias 
 
 **Painel de dados** (à esquerda, quando há datasets no form): lista `dataset → campos`. Duplo-clique num campo insere um texto `[campo]` na banda selecionada e ajusta o `DataSetName`.
 
+**Drag-to-bind (arrastar campo):** arraste um campo da árvore direto para a superfície:
+- **Sobre um objeto de texto** → seta o `DataField` dele (vincula o objeto existente).
+- **Em área vazia de uma banda** → cria um texto já vinculado na posição do drop.
+
+Objetos vinculados mostram um **triângulo azul** no canto superior esquerdo; no design-time o texto exibe a expressão efetiva (`[campo]`). O `DataField` também é editável no inspetor.
+
 **Fluxo para ver um relatório montado em código no designer:** salve-o com `SaveToFile('...\pedidos.rhr')`, depois no designer clique **Arquivo → Abrir** e escolha o `.rhr`.
 
 ---

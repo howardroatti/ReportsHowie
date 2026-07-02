@@ -55,6 +55,7 @@ type
     procedure DoOpenFile(Sender: TObject);
     procedure DoSaveFile(Sender: TObject);
     procedure DoPreview(Sender: TObject);
+    procedure DoHelp(Sender: TObject);
     procedure DoAlign(Sender: TObject);
     procedure DoDistribute(Sender: TObject);
     procedure DoOK(Sender: TObject);
@@ -68,6 +69,9 @@ type
     procedure BuildDataPanel;
     procedure DataTreeDblClick(Sender: TObject);
     procedure DoInsertField(Sender: TObject);
+    procedure SurfaceDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure SurfaceDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure UpdateZoomLabel;
     procedure UpdateStatus;
   public
@@ -79,9 +83,14 @@ type
 implementation
 
 uses
+  Winapi.ShellAPI, System.IOUtils,
   rh.Preview.Form;
 
 const
+  // documentacao online em HTML (GitHub Pages serve o docs/index.html);
+  // usada quando nao ha o docs\index.html local proximo ao executavel.
+  RH_HELP_URL = 'https://howardroatti.github.io/ReportsHowie/';
+
   BAND_TYPES: array[0..8] of TrhBandType = (
     rhbtReportTitle, rhbtPageHeader, rhbtGroupHeader, rhbtMasterData,
     rhbtDetailData, rhbtGroupFooter, rhbtSummary, rhbtPageFooter, rhbtChild);
@@ -207,8 +216,9 @@ begin
   GBtn(#$2195, 'Distribuir na vertical', 32, DoDistribute).Tag := 1;
 
   // grupo Ver
-  BeginGroup('Ver', 80);
+  BeginGroup('Ver', 150);
   GBtn('Preview', 'Pre-visualizar o template', 72, DoPreview);
+  GBtn('Ajuda', 'Abrir a documentacao (manual)', 60, DoHelp);
   FCurGroup.Width := FGroupX + 6; // finaliza o ultimo grupo
 
   // ---- rodape com OK/Cancelar ----
@@ -291,6 +301,8 @@ begin
   FSurface.Top := 0;
   FSurface.OnModified := SurfaceModified;
   FSurface.OnSelectionChanged := SurfaceSelChanged;
+  FSurface.OnDragOver := SurfaceDragOver; // drag-to-bind (arrastar campo -> objeto)
+  FSurface.OnDragDrop := SurfaceDragDrop;
 end;
 
 procedure TrhDesignerForm.BuildDataPanel;
@@ -334,6 +346,10 @@ begin
   FDataTree.ReadOnly := True;
   FDataTree.HideSelection := False;
   FDataTree.OnDblClick := DataTreeDblClick;
+  FDataTree.DragMode := dmAutomatic; // permite arrastar campo p/ a superficie
+  FDataTree.ShowHint := True;
+  FDataTree.Hint := 'Arraste um campo para a superficie (sobre um objeto = vincula; ' +
+    'em area vazia = cria texto vinculado). Ou duplo-clique para inserir.';
 
   // popular: datasets -> campos
   FDataTree.Items.BeginUpdate;
@@ -377,6 +393,25 @@ begin
   Node := FDataTree.Selected;
   if (Node <> nil) and (Node.Parent <> nil) then
     FSurface.InsertField(Node.Parent.Text, Node.Text);
+end;
+
+procedure TrhDesignerForm.SurfaceDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+  // aceita apenas quando a origem e a arvore de dados e o no e um CAMPO (tem pai)
+  Accept := (Source = FDataTree) and (FDataTree.Selected <> nil) and
+    (FDataTree.Selected.Parent <> nil);
+end;
+
+procedure TrhDesignerForm.SurfaceDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  Node: TTreeNode;
+begin
+  if Source <> FDataTree then Exit;
+  Node := FDataTree.Selected;
+  if (Node = nil) or (Node.Parent = nil) then Exit;
+  // Node.Parent.Text = dataset ; Node.Text = campo
+  FSurface.DropField(X, Y, Node.Parent.Text, Node.Text);
 end;
 
 function TrhDesignerForm.BeginGroup(const ACaption: string; AWidth: Integer): TPanel;
@@ -529,6 +564,28 @@ procedure TrhDesignerForm.DoPreview(Sender: TObject);
 begin
   if FReport <> nil then
     FReport.ShowPreview;
+end;
+
+procedure TrhDesignerForm.DoHelp(Sender: TObject);
+var
+  Dir, Cand: string;
+  I: Integer;
+begin
+  // 1) documentacao LOCAL: procura docs\index.html subindo a partir do executavel
+  Dir := ExtractFilePath(ParamStr(0));
+  for I := 0 to 7 do
+  begin
+    Cand := TPath.Combine(Dir, TPath.Combine('docs', 'index.html'));
+    if TFile.Exists(Cand) then
+    begin
+      ShellExecute(0, 'open', PChar(Cand), nil, nil, SW_SHOWNORMAL);
+      Exit;
+    end;
+    Dir := ExtractFilePath(ExcludeTrailingPathDelimiter(Dir));
+    if Dir = '' then Break;
+  end;
+  // 2) fallback: documentacao online
+  ShellExecute(0, 'open', PChar(RH_HELP_URL), nil, nil, SW_SHOWNORMAL);
 end;
 
 procedure TrhDesignerForm.DoAlign(Sender: TObject);

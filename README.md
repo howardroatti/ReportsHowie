@@ -73,7 +73,7 @@ end;
 
 ## Documentação
 
-- 📘 **[Manual de uso (HTML)](./docs/index.html)** — versão navegável com índice lateral, busca e prints (abra o arquivo no navegador). Mesmo conteúdo em Markdown: **[MANUAL.md](./docs/MANUAL.md)**.
+- 📘 **[Manual de uso (online)](https://howardroatti.github.io/ReportsHowie/)** — versão HTML navegável com índice lateral, busca e prints (GitHub Pages). Também no repo: **[docs/index.html](./docs/index.html)** e em Markdown **[MANUAL.md](./docs/MANUAL.md)**.
 - Cobre: bandas, objetos, expressões, data binding híbrido, agrupamento/agregados e **grupos aninhados**, banco de dados, preview, exportação, designer e receitas prontas.
 - 🏗️ [Arquitetura](./docs/ARCHITECTURE.md) — visão interna do componente.
 
@@ -90,7 +90,7 @@ end;
 | 5 | Designer visual em design-time (selecionar/mover/redimensionar, inspetor, guias, alinhar, undo, imagens) | 🚧 |
 | 5.1 | Vínculo de dados no designer (painel de campos, inserir campo, `DataSetName` por lista) + Abrir/Salvar `.rhr` no designer + preview embutida (`TrhPreviewControl`) | 🚧 |
 | 5.2a | **Data binding híbrido**: propriedade `DataField` no texto (bind simples estilo DB-aware) além das ilhas `[expr]` | ✅ |
-| 5.2b | Drag-to-bind no designer + indicador visual de campo vinculado | ⬜ |
+| 5.2b | Drag-to-bind no designer (arrastar campo → objeto) + indicador visual de campo vinculado | ✅ |
 | 5.3 | Árvore de estrutura (página→banda→objeto) | ⬜ |
 | 6 | Export **HTML** | ✅ |
 | 7 | Export **PDF** | ✅ |

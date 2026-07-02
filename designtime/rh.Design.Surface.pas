@@ -107,6 +107,9 @@ type
     procedure RebuildLayout;
     procedure AddObjectOfClass(AClass: TrhReportObjectClass);
     procedure InsertField(const ADatasetName, AFieldName: string);
+    /// <summary>Drag-to-bind: solta um campo em (X,Y) da superficie. Se cair sobre
+    ///  um texto, seta o DataField dele; senao cria um texto vinculado ali.</summary>
+    procedure DropField(X, Y: Integer; const ADatasetName, AFieldName: string);
     procedure DeleteSelected;
     procedure AddBand(BandType: TrhBandType);
     procedure DeleteSelectedBand;
@@ -124,6 +127,9 @@ type
     property GridSize: TrhUnit read FGridSize write FGridSize;
     property OnModified: TNotifyEvent read FOnModified write FOnModified;
     property OnSelectionChanged: TNotifyEvent read FOnSelChanged write FOnSelChanged;
+    // promove a visibilidade (protegidas em TControl) para o form ligar o drop
+    property OnDragOver;
+    property OnDragDrop;
   end;
 
 /// <summary>Rotulo amigavel do tipo de banda (para o gutter).</summary>
@@ -462,6 +468,7 @@ var
   Img: TrhImageObject;
   Flags: Cardinal;
   S: Double;
+  DispTxt: string;
 begin
   if not Obj.Visible then Exit;
   S := Scale;
@@ -515,8 +522,20 @@ begin
         Flags := Flags or DT_TOP;
       end;
     end;
-    DrawText(Canvas.Handle, PChar(Txt.Text), Length(Txt.Text), R, Flags);
+    // no design-time mostra a expressao efetiva (DataField vira [campo])
+    DispTxt := Txt.DisplayExpression;
+    DrawText(Canvas.Handle, PChar(DispTxt), Length(DispTxt), R, Flags);
     Canvas.Brush.Style := bsSolid;
+    // indicador de campo vinculado: triangulo azul no canto superior esquerdo
+    if Txt.DataField <> '' then
+    begin
+      Canvas.Brush.Color := $00C07000; // azul (BGR)
+      Canvas.Brush.Style := bsSolid;
+      Canvas.Pen.Style := psClear;
+      Canvas.Polygon([Point(R.Left, R.Top), Point(R.Left + 9, R.Top),
+        Point(R.Left, R.Top + 9)]);
+      Canvas.Pen.Style := psSolid;
+    end;
   end
   else if Obj is TrhLineObject then
   begin
@@ -956,6 +975,56 @@ begin
   Obj.Height := 60;  // 6 mm
   FSelBand := Band;
   SelectSingle(Obj);
+  DoSelChanged;
+  Recalc;
+  Invalidate;
+  DoModified;
+end;
+
+procedure TrhDesignSurface.DropField(X, Y: Integer; const ADatasetName, AFieldName: string);
+var
+  Lay: TrhBandLayout;
+  Band: TrhBand;
+  Hit: TrhReportObject;
+  Txt: TrhTextObject;
+  I: Integer;
+  S: Double;
+begin
+  if FPage = nil then Exit;
+  if not FindBandAtY(Y, Lay) then Exit;
+  Band := Lay.Band;
+
+  // texto sob o ponto do drop (do topo da pilha para baixo)
+  Hit := nil;
+  for I := Band.Objects.Count - 1 downto 0 do
+    if Band.Objects[I].Visible and (Band.Objects[I] is TrhTextObject) and
+       PtInRect(ObjRectPx(Lay, Band.Objects[I]), Point(X, Y)) then
+    begin
+      Hit := Band.Objects[I];
+      Break;
+    end;
+
+  PushUndoNow;
+  // vincula a banda ao dataset do campo, se ainda nao tiver
+  if (Band.DataSetName = '') and (ADatasetName <> '') then
+    Band.DataSetName := ADatasetName;
+
+  if Hit <> nil then
+    Txt := TrhTextObject(Hit)          // VINCULA o objeto existente
+  else
+  begin
+    // CRIA um texto vinculado na posicao do drop
+    S := Scale;
+    Txt := Band.Objects.AddNew<TrhTextObject>;
+    Txt.Left := Max(0, SnapU(Round((X - RH_GUTTER) / S)));
+    Txt.Top  := Max(0, SnapU(Round((Y - Lay.TopPx) / S)));
+    Txt.Width := 400;  // 40 mm
+    Txt.Height := 60;  // 6 mm
+  end;
+  Txt.DataField := AFieldName;
+
+  FSelBand := Band;
+  SelectSingle(Txt);
   DoSelChanged;
   Recalc;
   Invalidate;
