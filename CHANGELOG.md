@@ -7,6 +7,23 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (expressoes: funcoes de string + demo fiscal DANFE)
+- **Funcoes de string no motor de expressoes** (#1): `LEFT`, `RIGHT`, `REPLACE`,
+  `REPLICATE`, `PADLEFT`, `PADRIGHT`, `PROPER`, `CONCAT`, `CONTAINS`, `STARTSWITH`,
+  `ENDSWITH`, `ONLYDIGITS`, `MASK`, `CHR`, `ASC`. `MASK(valor,'##.###.###/####-##')`
+  formata CNPJ/CPF/CEP/chave; `ONLYDIGITS` limpa nao-digitos.
+- **Demo DANFE** (#22): `demos/danfe.rhr` + `demos/danfe.data.json`, um Documento
+  Auxiliar da NF-e (layout fiscal brasileiro) com emitente, caixa DANFE, codigo de
+  barras da chave de acesso, destinatario, calculo do imposto, tabela de itens
+  (banda de detalhe) e dados adicionais. Gerado por `demos/danfe_build.py`
+  (reproduzivel); usa `MASK`/`FORMATFLOAT`.
+
+### Corrigido (PDF: quebra de linha por largura)
+- O exportador **PDF** agora faz **word-wrap** de textos que excedem a largura do
+  objeto (quando `wordWrap` esta ligado), espelhando o `DT_WORDBREAK` do preview e o
+  `pre-wrap` do HTML. Antes o PDF so quebrava em `#10` explicitos e o texto transbordava
+  para a direita.
+
 ### Adicionado (importador FastReport nativo + conversor frx2rhr)
 - **Conversor `tools/frx2rhr`** (Python puro): le um template FastReport VCL (`.frx`, XML)
   e gera o `.rhr`. Cobre pagina, bandas, memo/linha/forma/imagem/barcode e ilhas

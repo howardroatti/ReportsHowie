@@ -1,0 +1,79 @@
+{
+  "Nota": [
+    {
+      "tipo": "1",
+      "numero": "000.123.456",
+      "serie": "001",
+      "natureza": "VENDA DE MERCADORIA",
+      "protocolo": "135240000123456 - 01/07/2026 10:32",
+      "chave": "35240712345678000199550010001234561123456780",
+      "emit_nome": "COMERCIAL EXEMPLO LTDA",
+      "emit_end": "AV. DAS INDUSTRIAS, 1500",
+      "emit_bairro": "DISTRITO INDUSTRIAL",
+      "emit_mun": "SERRA",
+      "emit_uf": "ES",
+      "emit_cep": "29160000",
+      "emit_fone": "(27) 3333-4444",
+      "emit_cnpj": "12345678000199",
+      "emit_ie": "082345678",
+      "dest_nome": "CLIENTE DEMONSTRACAO S/A",
+      "dest_cnpj": "98765432000155",
+      "dest_end": "RUA DO COMERCIO, 200",
+      "dest_bairro": "CENTRO",
+      "dest_cep": "29010000",
+      "dest_mun": "VITORIA",
+      "dest_uf": "ES",
+      "dest_fone": "(27) 3222-1111",
+      "dest_ie": "081112223",
+      "dt_emissao": "01/07/2026",
+      "dt_saida": "01/07/2026",
+      "base_icms": 2450.0,
+      "valor_icms": 441.0,
+      "valor_produtos": 2450.0,
+      "valor_total": 2450.0,
+      "info_complementar": "Documento emitido por ME/EPP optante pelo Simples Nacional. Nao gera direito a credito fiscal de ICMS e de ISS. Pedido 4567 - Vendedor: Ana."
+    }
+  ],
+  "Itens": [
+    {
+      "codigo": "1001",
+      "descricao": "PARAFUSO SEXTAVADO M8 x 40MM ACO INOX",
+      "ncm": "73181500",
+      "cfop": "5102",
+      "un": "PC",
+      "qtd": 500.0,
+      "valor_unit": 1.2,
+      "valor_total": 600.0
+    },
+    {
+      "codigo": "1002",
+      "descricao": "PORCA SEXTAVADA M8 ACO INOX",
+      "ncm": "73181600",
+      "cfop": "5102",
+      "un": "PC",
+      "qtd": 500.0,
+      "valor_unit": 0.7,
+      "valor_total": 350.0
+    },
+    {
+      "codigo": "2050",
+      "descricao": "ARRUELA LISA 5/16 GALVANIZADA",
+      "ncm": "73182200",
+      "cfop": "5102",
+      "un": "PC",
+      "qtd": 1000.0,
+      "valor_unit": 0.15,
+      "valor_total": 150.0
+    },
+    {
+      "codigo": "3100",
+      "descricao": "CHAPA ACO CARBONO 2MM 1000x2000",
+      "ncm": "72104900",
+      "cfop": "5102",
+      "un": "KG",
+      "qtd": 45.0,
+      "valor_unit": 30.0,
+      "valor_total": 1350.0
+    }
+  ]
+}
