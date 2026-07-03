@@ -7,6 +7,17 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (importador FastReport nativo + conversor frx2rhr)
+- **Conversor `tools/frx2rhr`** (Python puro): le um template FastReport VCL (`.frx`, XML)
+  e gera o `.rhr`. Cobre pagina, bandas, memo/linha/forma/imagem/barcode e ilhas
+  `[Dataset."campo"]` -> `[campo]`. Reduz o retrabalho de migracao de bases legadas. Ref #21.
+- **Importador nativo `rh.Import.FastReport`** (`TrhFastReportImporter`, Delphi puro via
+  `Xml.XMLDoc`): importa `.frx` direto para um `TrhReport` vivo, sem depender do script
+  Python — `Imp.ImportFile('template.frx', Report)`. Espelha o mapa de conversao do frx2rhr.
+- **`rhtool import <entrada.frx> <saida.rhr> [--dpi 96]`**: importa um `.frx` pela CLI.
+- Melhorias abertas a comunidade na issue #23 (imagens embutidas, mais tipos de objeto,
+  traducao de funcoes de expressao, QuickReport/Rave).
+
 ### Melhorado (barcode/QR como imagem + imagens no XLSX)
 - **Barcode e QR viram uma imagem** rasterizada (alta resolucao) no motor de render, em vez
   de dezenas/centenas de retangulos. Uma imagem unica funciona em **todos** os alvos —

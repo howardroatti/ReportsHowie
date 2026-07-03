@@ -50,7 +50,8 @@ uses
   rh.Export.PDF in '..\..\source\export\pdf\rh.Export.PDF.pas',
   rh.OOXML.Zip in '..\..\source\export\ooxml\rh.OOXML.Zip.pas',
   rh.Export.XLSX in '..\..\source\export\ooxml\rh.Export.XLSX.pas',
-  rh.Export.DOCX in '..\..\source\export\ooxml\rh.Export.DOCX.pas';
+  rh.Export.DOCX in '..\..\source\export\ooxml\rh.Export.DOCX.pas',
+  rh.Import.FastReport in '..\..\source\import\rh.Import.FastReport.pas';
 
 procedure PrintUsage;
 begin
@@ -61,6 +62,8 @@ begin
   Writeln('  rhtool info <arquivo.rhr>                  mostra a estrutura (paginas/bandas/objetos)');
   Writeln('  rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>]');
   Writeln('                                            exporta (.pdf/.html/.xlsx/.docx)');
+  Writeln('  rhtool import <entrada.frx> <saida.rhr> [--dpi 96]');
+  Writeln('                                            importa template FastReport (.frx)');
   Writeln('  rhtool version');
   Writeln('  rhtool help');
   Writeln('');
@@ -311,10 +314,41 @@ begin
   end;
 end;
 
+procedure CmdImport(const FrxFile, OutFile: string; Dpi: Integer);
+var
+  Imp: TrhFastReportImporter;
+  R: TrhReport;
+  W: string;
+begin
+  if not FileExists(FrxFile) then
+    raise Exception.CreateFmt('arquivo nao encontrado: %s', [FrxFile]);
+  R := TrhReport.Create(nil);
+  try
+    Imp := TrhFastReportImporter.Create;
+    try
+      Imp.Dpi := Dpi;
+      Imp.ImportFile(FrxFile, R);
+      R.SaveToFile(OutFile);
+      Writeln(Format('OK: "%s" -> "%s" (%d pagina(s)).',
+        [FrxFile, OutFile, R.Pages.Count]));
+      if Imp.Warnings.Count > 0 then
+      begin
+        Writeln(Format('Avisos (%d):', [Imp.Warnings.Count]));
+        for W in Imp.Warnings do
+          Writeln('  - ', W);
+      end;
+    finally
+      Imp.Free;
+    end;
+  finally
+    R.Free;
+  end;
+end;
+
 procedure RunCLI;
 var
   Cmd, DataFile: string;
-  I: Integer;
+  I, Dpi: Integer;
 begin
   if ParamCount < 1 then
   begin
@@ -349,6 +383,17 @@ begin
       if SameText(ParamStr(I), '--data') and (I < ParamCount) then
         DataFile := ParamStr(I + 1);
     CmdExport(ParamStr(2), ParamStr(3), DataFile);
+  end
+  else if Cmd = 'import' then
+  begin
+    if ParamCount < 3 then
+      raise Exception.Create(
+        'uso: rhtool import <entrada.frx> <saida.rhr> [--dpi 96]');
+    Dpi := 96;
+    for I := 4 to ParamCount do
+      if SameText(ParamStr(I), '--dpi') and (I < ParamCount) then
+        Dpi := StrToIntDef(ParamStr(I + 1), 96);
+    CmdImport(ParamStr(2), ParamStr(3), Dpi);
   end
   else
     raise Exception.CreateFmt('comando desconhecido: "%s" (use "rhtool help").', [Cmd]);
