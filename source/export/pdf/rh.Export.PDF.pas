@@ -63,6 +63,48 @@ begin
   Result := MeasureBmp.Canvas.TextWidth(Text) * 72 / 96;
 end;
 
+// Quebra S em sublinhas que cabem em MaxWpt (pontos), greedy por palavra. Uma
+// palavra sozinha mais larga que a caixa vira uma linha propria (transborda,
+// mas nao ha quebra por caractere). Espelha o DT_WORDBREAK do preview/VCLCanvas.
+function WrapToWidth(const S: string; MaxWpt: Double; const FontName: string;
+  SizePt: Integer; Style: TFontStyles): TArray<string>;
+var
+  Words: TArray<string>;
+  Cur, Test, Wd: string;
+  I: Integer;
+
+  procedure AddLine(const L: string);
+  begin
+    SetLength(Result, Length(Result) + 1);
+    Result[High(Result)] := L;
+  end;
+
+begin
+  SetLength(Result, 0);
+  if (MaxWpt <= 0) or (MeasureTextPt(S, FontName, SizePt, Style) <= MaxWpt) then
+  begin
+    AddLine(S);
+    Exit;
+  end;
+  Words := S.Split([' ']);
+  Cur := '';
+  for I := 0 to High(Words) do
+  begin
+    if Cur = '' then Test := Words[I] else Test := Cur + ' ' + Words[I];
+    if (Cur <> '') and (MeasureTextPt(Test, FontName, SizePt, Style) > MaxWpt) then
+    begin
+      AddLine(Cur);
+      Cur := Words[I];
+    end
+    else
+      Cur := Test;
+  end;
+  if Cur <> '' then
+    AddLine(Cur);
+  if Length(Result) = 0 then
+    AddLine(S);
+end;
+
 /// <summary>Indice da fonte (1..4) conforme o estilo: 1 normal, 2 bold, 3 italico, 4 bold+italico.</summary>
 function FontIndex(Style: TFontStyles): Integer;
 begin
@@ -332,8 +374,8 @@ end;
 function TPdfBuilder.TextOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
 var
   LeftPt, TopPt, WPt, LineH, X, BaseY, R, G, B: Double;
-  Lines: TArray<string>;
-  I, Idx: Integer;
+  Lines, Wrapped, Sub: TArray<string>;
+  I, K, Idx: Integer;
   LineWidth: Double;
   ang, ca, sa, cxp, cyp, sxp, syp: Double;
   Txt: string;
@@ -371,6 +413,22 @@ begin
   end;
 
   Lines := Op.Text.Replace(#13#10, #10).Split([#10]);
+
+  // word-wrap: expande cada linha explicita em sublinhas que cabem na largura
+  if Op.WordWrap and (WPt > 0) then
+  begin
+    SetLength(Wrapped, 0);
+    for I := 0 to High(Lines) do
+    begin
+      Sub := WrapToWidth(Lines[I], WPt, Op.FontName, Op.FontSize, Op.FontStyle);
+      for K := 0 to High(Sub) do
+      begin
+        SetLength(Wrapped, Length(Wrapped) + 1);
+        Wrapped[High(Wrapped)] := Sub[K];
+      end;
+    end;
+    Lines := Wrapped;
+  end;
 
   Result := Result + RawByteString(Format('%s %s %s rg'#10, [NS(R), NS(G), NS(B)]));
   Result := Result + RawByteString(Format('BT /F%d %d Tf'#10, [Idx, Op.FontSize]));
