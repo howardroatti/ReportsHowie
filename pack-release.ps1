@@ -69,13 +69,20 @@ foreach ($Plat in $Platforms) {
   $StagePlat = Join-Path $StageBase $Plat
   New-Item -ItemType Directory -Force -Path $StagePlat | Out-Null
 
-  $bpl = Join-Path $BplRoot $Plat
-  $dcp = Join-Path $DcpRoot $Plat
+  # Layout do Delphi: Win32 sai direto em Bpl\ e Dcp\; Win64 numa subpasta Win64\.
+  if ($Plat -eq "Win32") {
+    $bpl = $BplRoot
+    $dcp = $DcpRoot
+  } else {
+    $bpl = Join-Path $BplRoot $Plat
+    $dcp = Join-Path $DcpRoot $Plat
+  }
 
+  # O .bpl leva o sufixo LIBSUFFIX (ex.: 290); o .dcp NAO leva sufixo.
   Copy-Checked (Join-Path $bpl "ReportsHowieRT$Suffix.bpl") $StagePlat
   Copy-Checked (Join-Path $bpl "ReportsHowieDT$Suffix.bpl") $StagePlat
-  Copy-Checked (Join-Path $dcp "ReportsHowieRT$Suffix.dcp") $StagePlat
-  Copy-Checked (Join-Path $dcp "ReportsHowieDT$Suffix.dcp") $StagePlat
+  Copy-Checked (Join-Path $dcp "ReportsHowieRT.dcp") $StagePlat
+  Copy-Checked (Join-Path $dcp "ReportsHowieDT.dcp") $StagePlat
 }
 
 # Documentos que acompanham o pacote.

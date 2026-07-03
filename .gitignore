@@ -67,6 +67,9 @@ CLAUDE.md
 demos/vendas.docx
 demos/vendas.xlsx
 
+# Artefatos de empacotamento do release (pack-release.ps1)
+dist/
+
 # Python (servidor MCP / scripts utilitarios)
 __pycache__/
 *.pyc
