@@ -34,7 +34,7 @@ dependências externas — os exportadores são escritos em Pascal puro.
   **JSON Schema** (draft-07) do `.rhr` e **servidor MCP** (Python) para Claude
   criar/validar/renderizar relatórios.
 
-Veja o [CHANGELOG](../CHANGELOG.md#010---2026-07-02) para a lista completa.
+Veja o [CHANGELOG](../CHANGELOG.md#010---2026-07-03) para a lista completa.
 
 ## Instalação
 

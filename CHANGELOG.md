@@ -7,15 +7,7 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
-### Melhorado (designer — descoberta de datasets em DataModules)
-- O painel de campos do designer agora encontra datasets por **três caminhos**, com dedup:
-  (1) `TDataSet` no próprio form/DM sendo desenhado; (2) seguindo os **`TDataSource`** do
-  form (resolve datasets em outro `DataModule`); e (3) **enumerando todos os DataModules/
-  forms abertos no IDE via ToolsAPI** — pega datasets de um `DataModule` mesmo **sem**
-  nenhum `TDataSource` no form. Antes só listava (1). Requer os módulos **abertos no IDE**;
-  falhas de ToolsAPI são silenciadas (segue com o que encontrou).
-
-## [0.1.0] - 2026-07-02
+## [0.1.0] - 2026-07-03
 
 Primeiro lançamento público. Componente **TrhReport** instalável (RT+DT), com
 modelo/persistência `.rhr`, engine de expressões, pipeline de dados com grupos
@@ -32,6 +24,17 @@ e o ecossistema de IA (`rhtool` CLI + JSON Schema + servidor MCP).
 - **Click-to-place**: os botões de *Inserir* (Texto/Imagem/Linha/Forma/Barras/Gráfico) agora **armam a
   ferramenta** — o próximo clique na superfície posiciona o objeto onde o usuário clicou (cursor de mira;
   Esc ou clique direito cancela), em vez de cair sempre numa posição fixa. `TrhDesignSurface.ArmTool`.
+
+### Adicionado (designer — descoberta de datasets em DataModules)
+- O painel de campos do designer encontra datasets por **três caminhos**, com dedup:
+  (1) `TDataSet` no próprio form/DM sendo desenhado; (2) seguindo os **`TDataSource`** do
+  form (resolve datasets em outro `DataModule`); e (3) **enumerando todos os DataModules/
+  forms abertos no IDE via ToolsAPI** — pega datasets de um `DataModule` mesmo **sem**
+  nenhum `TDataSource` no form. Requer os módulos **abertos no IDE**; falhas de ToolsAPI
+  são silenciadas (segue com o que encontrou).
+- **Botão "Atualizar"** no painel de dados: recoleta os datasets sob demanda (callback do
+  component editor; o form do designer segue livre de `DesignIntf` para reuso em runtime) e
+  confirma na barra de status quantos datasets foram encontrados.
 
 ### Adicionado (Objetos visuais — marca d'água, códigos de barras/QR e gráficos)
 - **Marca d'água** (`rh.Watermark`, `TrhReport.Watermark`): texto diagonal repetido ao fundo de cada
