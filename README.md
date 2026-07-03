@@ -58,28 +58,47 @@ baixe o `.zip` da sua versão do Delphi, instale o `ReportsHowieDT<sufixo>.bpl` 
 > ```
 > Para publicar uma nova versão, veja **[RELEASING.md](./RELEASING.md)**.
 
-## Exemplo mínimo (API pretendida)
-
-> A API abaixo é o alvo das próximas fases; hoje `TrhReport` é o esqueleto instalável.
+## Getting Started: primeiro relatório com dados
 
 ```pascal
-uses rh.Report;
+uses
+  Data.DB,
+  rh.Types, rh.Report, rh.Page, rh.Bands, rh.Objects, rh.Model.Types,
+  rh.Data.Pipeline, rh.Preview.Form, rh.Export.PDF, rh.Render.Intf;
 
+procedure EmitirRelatorioVendas(DS: TDataSet);
 var
-  Rep: TrhReport;
+  Rep: TrhReport; Page: TrhPage; Band: TrhBand;
+  Txt: TrhTextObject; Doc: TrhRenderedDocument;
 begin
   Rep := TrhReport.Create(nil);
   try
-    Rep.LoadFromFile('vendas.rhr');   // template desenhado no designer
-    // Rep.DataLinks['Master'].DataSet := qryVendas;  // TDataSet genérico
-    Rep.ShowPreview;                  // preview VCL
-    Rep.ExportToFile('vendas.pdf');   // PDF / HTML / DOCX / XLSX
-    // Rep.SendByEmail(...);          // via Indy SMTP
+    Rep.Title := 'Vendas';
+    Rep.SetDataSet('Vendas', DS);            // DS deve estar aberto
+    Page := Rep.EnsurePage;
+    Band := Page.Bands.AddBand(rhbtMasterData);
+    Band.DataSetName := 'Vendas';
+    Band.Height := MMToUnits(8);
+    Txt := Band.Objects.AddNew<TrhTextObject>;
+    Txt.Text := '[cliente] - [valor]';       // ilhas avaliadas no dataset
+    Txt.Width := Page.ContentWidth;
+    Txt.Height := Band.Height;
+    Rep.ShowDataPreview;
+    Doc := TrhDataPipeline.BuildDocument(Rep);
+    try
+      TrhPdfExporter.ExportToFile(Doc, 'saida.pdf');
+    finally
+      Doc.Free;
+    end;
   finally
     Rep.Free;
   end;
 end;
 ```
+
+Se você já soltou um `TrhReport` no form, use o componente existente no lugar de
+`Rep` e mantenha o mesmo fluxo: `SetDataSet`, banda `masterData`,
+`ShowDataPreview` e exportação a partir de `TrhDataPipeline.BuildDocument`.
 
 ## Documentação
 
