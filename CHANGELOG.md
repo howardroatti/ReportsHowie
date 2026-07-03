@@ -7,6 +7,48 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (designer — descoberta de datasets em DataModules)
+- O painel de campos do designer agora encontra datasets por **três caminhos**, com dedup:
+  (1) `TDataSet` no próprio form/DM sendo desenhado; (2) seguindo os **`TDataSource`** do
+  form (resolve datasets em outro `DataModule`); e (3) **enumerando todos os DataModules/
+  forms abertos no IDE via ToolsAPI** — pega datasets de um `DataModule` mesmo **sem**
+  nenhum `TDataSource` no form. Antes só listava (1). Requer os módulos **abertos no IDE**;
+  falhas de ToolsAPI são silenciadas (segue com o que encontrou).
+
+## [0.1.0] - 2026-07-02
+
+Primeiro lançamento público. Componente **TrhReport** instalável (RT+DT), com
+modelo/persistência `.rhr`, engine de expressões, pipeline de dados com grupos
+aninhados e agregados, **preview VCL embutível** (`TrhPreviewControl`), designer
+visual em design-time, exportadores puro-Pascal **PDF/HTML/XLSX/DOCX**, envio por
+e-mail (SMTP/Indy), objetos visuais (marca d'água, códigos de barras/QR, gráficos)
+e o ecossistema de IA (`rhtool` CLI + JSON Schema + servidor MCP).
+
+### Adicionado (Fase 5 — designer: refazer, reordenar bandas e click-to-place)
+- **Refazer (Ctrl+Y)**: o designer agora mantém pilha de refazer além do desfazer (Ctrl+Z). Uma nova
+  edição invalida o ramo de refazer; ambos limitados a 50 passos. `TrhDesignSurface.Redo`/`CanRedo`.
+- **Reordenar bandas**: botões ▲/▼ no grupo *Banda* (e `MoveBand(Delta)`) sobem/descem a banda
+  selecionada, mudando a ordem de renderização — via `TrhBandList.Move` (herdado de `TObjectList`).
+- **Click-to-place**: os botões de *Inserir* (Texto/Imagem/Linha/Forma/Barras/Gráfico) agora **armam a
+  ferramenta** — o próximo clique na superfície posiciona o objeto onde o usuário clicou (cursor de mira;
+  Esc ou clique direito cancela), em vez de cair sempre numa posição fixa. `TrhDesignSurface.ArmTool`.
+
+### Adicionado (Objetos visuais — marca d'água, códigos de barras/QR e gráficos)
+- **Marca d'água** (`rh.Watermark`, `TrhReport.Watermark`): texto diagonal repetido ao fundo de cada
+  página (fonte/ângulo configuráveis; padrão Arial 72 bold cinza a 45°). Renderizada por baixo das bandas
+  na tela, no PDF (matriz de texto) e no HTML (`transform:rotate`).
+- **Códigos de barras 1D** (`TrhBarcodeObject`, `rh.Barcode`): **Code128** (Set B) e **Code39**, com texto
+  legível opcional. Encoders puro-Pascal validados contra `python-barcode`.
+- **QR Code** (`rh.QRCode`): modo byte, correção **M**, versões 1–10 (Reed–Solomon/GF(256), 8 máscaras com
+  scoring). Validado byte a byte contra `segno` + leitura no OpenCV. Barras/módulos viram `rhdkRect` na
+  display list (coalescidos por linha), compartilhados por preview e todos os exports.
+- **Gráficos** (`TrhChartObject`): **barras**, **linhas** e **pizza**, com a série **agregada do dataset da
+  banda** (SUM/AVG/COUNT/MIN/MAX por categoria) — escopo geral no Summary, escopo do grupo no GroupFooter.
+  Novo primitivo `rhdkPolygon` na display list, com desenho de polígono no VCL (`Polygon`), PDF (path
+  `m/l/h` + `f/B/S`) e HTML (SVG `<polygon>`). Título, rótulos de valor, legenda (pizza) e paleta.
+- **Designer**: botões *Barras* e *Gráfico* na paleta *Inserir*; a superfície desenha QR/1D reais e um
+  esquema ilustrativo do gráfico. **Schema `.rhr`** estendido com `barcodeObject` e `chartObject`.
+
 ### Melhorado (12.a/12.b — render com dados via JSON)
 - **`rhtool export ... --data <dados.json>`**: alimenta datasets em memória a partir de um JSON
   `{ "NomeDataset": [ {campo: valor}, ... ] }` (nome casa com o `dataSetName` das bandas), então as
@@ -219,4 +261,5 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Componente `TrhReport` (esqueleto instalável) e registro na paleta **ReportsHowie** (`rh.Reg`).
 - Estrutura open-source: `LICENSE` (LGPL-3.0), `COPYING.GPL`, `README`, `CONTRIBUTING`, `CODE_OF_CONDUCT`, `.gitignore`/`.gitattributes` para Delphi, templates de issue/PR e workflow de CI (`.github/workflows/ci.yml`).
 
-[Unreleased]: https://github.com/howardroatti/ReportsHowie/commits/main
+[Unreleased]: https://github.com/howardroatti/ReportsHowie/compare/v0.1.0...main
+[0.1.0]: https://github.com/howardroatti/ReportsHowie/releases/tag/v0.1.0

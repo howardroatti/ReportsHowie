@@ -6,7 +6,7 @@
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](./LICENSE)
 [![Delphi](https://img.shields.io/badge/Delphi-12.1%20Athens%2B-E62431.svg)](https://www.embarcadero.com/products/delphi)
-[![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow.svg)](#roadmap)
+[![Release](https://img.shields.io/github/v/release/howardroatti/ReportsHowie?sort=semver&color=green)](https://github.com/howardroatti/ReportsHowie/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 ---
@@ -29,11 +29,16 @@
 
 ## Status
 
-🚧 **Em desenvolvimento ativo.** A **Fase 0** (esqueleto instalável dos pacotes + estrutura open-source) está concluída. Veja o [roadmap](#roadmap).
+✅ **v0.1.0 — primeiro lançamento público.** O componente é usável: montar relatórios
+por código ou pelo designer, ligar a `TDataSet`, pré-visualizar (janela **ou** controle
+embutível `TrhPreviewControl`) e exportar para **PDF/HTML/XLSX/DOCX** + e-mail. Veja o
+[roadmap](#roadmap), o [CHANGELOG](./CHANGELOG.md) e as [releases](https://github.com/howardroatti/ReportsHowie/releases).
 
-## Instalação (a partir da Fase 0)
+## Instalação
 
 Requisitos: **RAD Studio / Delphi 12.1 Athens** (ou versão compatível) com a personalidade VCL.
+
+**Opção A — código-fonte (recomendada para desenvolvimento):**
 
 1. Clone o repositório:
    ```sh
@@ -43,10 +48,15 @@ Requisitos: **RAD Studio / Delphi 12.1 Athens** (ou versão compatível) com a p
 3. **Build** o `ReportsHowieRT` (runtime) e depois **Install** o `ReportsHowieDT` (design-time).
 4. O componente **TrhReport** aparecerá na paleta na página **ReportsHowie**.
 
-> Compilação por linha de comando (usada na CI):
+**Opção B — BPLs pré-compilados** (anexos de cada [release](https://github.com/howardroatti/ReportsHowie/releases)):
+baixe o `.zip` da sua versão do Delphi, instale o `ReportsHowieDT<sufixo>.bpl` em
+**Components → Install Packages**, e redistribua o `ReportsHowieRT<sufixo>.bpl` com a sua app.
+
+> Compilação por linha de comando (usada na CI com RAD Studio completo):
 > ```sh
 > msbuild packages/ReportsHowieGroup.groupproj /t:Build /p:Config=Release /p:Platform=Win32
 > ```
+> Para publicar uma nova versão, veja **[RELEASING.md](./RELEASING.md)**.
 
 ## Exemplo mínimo (API pretendida)
 
@@ -99,7 +109,7 @@ end;
 | 7 | Export **PDF** | ✅ |
 | 8 | Export **XLSX** e **DOCX** (OOXML) | ✅ |
 | 9 | Envio por **e-mail** (SMTP via Indy; TLS plugável OpenSSL/SChannel) | ✅ |
-| 10 | Designer *runtime* + release público multi-versão | ⬜ |
+| 10 | Designer *runtime* + release público multi-versão (**v0.1.0**) | 🚧 |
 | 11 | Export **ODT** / **ODS** (OpenDocument) — *opcional* | ⬜ |
 | 12.a | **`rhtool` CLI** (validate/info/export por linha de comando) + **JSON Schema** do `.rhr` | ✅ |
 | 12.b | **Servidor MCP** (Python; tools: schema, funções, validar, info, exportar template) | ✅ |
