@@ -30,8 +30,8 @@ function rhExprFunctionNames: TArray<string>;
 implementation
 
 uses
-  System.SysUtils, System.Variants, System.Math, System.Generics.Collections,
-  System.Classes;
+  System.SysUtils, System.Variants, System.Math, System.StrUtils,
+  System.Generics.Collections, System.Classes;
 
 var
   GFunctions: TDictionary<string, TrhFunctionProc>;
@@ -79,6 +79,79 @@ begin
   if VarIsNull(V) or VarIsEmpty(V) then Result := False else Result := V;
 end;
 
+// mantem so os digitos (util para CNPJ/CPF/chave de acesso antes de mascarar)
+function StrOnlyDigits(const S: string): string;
+var
+  C: Char;
+begin
+  Result := '';
+  for C in S do
+    if CharInSet(C, ['0'..'9']) then
+      Result := Result + C;
+end;
+
+// aplica uma mascara onde cada '#' consome um caractere de Value; o resto e
+// literal. Ex.: MASK('12345678000199','##.###.###/####-##') -> CNPJ formatado.
+function StrApplyMask(const Value, MaskStr: string): string;
+var
+  I, Vi: Integer;
+begin
+  Result := '';
+  Vi := 1;
+  for I := 1 to Length(MaskStr) do
+    if MaskStr[I] = '#' then
+    begin
+      if Vi <= Length(Value) then
+      begin
+        Result := Result + Value[Vi];
+        Inc(Vi);
+      end;
+    end
+    else
+      Result := Result + MaskStr[I];
+end;
+
+// Title Case: primeira letra de cada palavra (delimitada por espaco) em maiuscula
+function StrProper(const S: string): string;
+var
+  I: Integer;
+  AtStart: Boolean;
+begin
+  Result := LowerCase(S);
+  AtStart := True;
+  for I := 1 to Length(Result) do
+    if Result[I] = ' ' then
+      AtStart := True
+    else
+    begin
+      if AtStart then
+        Result[I] := UpperCase(Result[I])[1]; // Unicode-aware (acentos)
+      AtStart := False;
+    end;
+end;
+
+function StrPadLeft(const S: string; N: Integer; Ch: Char): string;
+begin
+  Result := S;
+  while Length(Result) < N do
+    Result := Ch + Result;
+end;
+
+function StrPadRight(const S: string; N: Integer; Ch: Char): string;
+begin
+  Result := S;
+  while Length(Result) < N do
+    Result := Result + Ch;
+end;
+
+function ArgChar(const V: Variant; Default: Char): Char;
+var
+  S: string;
+begin
+  S := VarToStr(V);
+  if S = '' then Result := Default else Result := S[1];
+end;
+
 procedure RegisterBuiltins;
 begin
   rhExprRegisterFunction('UPPER',
@@ -104,6 +177,89 @@ begin
   rhExprRegisterFunction('POS',
     function(const A: TArray<Variant>): Variant
     begin NeedArgs('POS', A, 2, 2); Result := Pos(VarToStr(A[0]), VarToStr(A[1])); end);
+
+  rhExprRegisterFunction('LEFT',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('LEFT', A, 2, 2); Result := LeftStr(VarToStr(A[0]), Integer(A[1])); end);
+
+  rhExprRegisterFunction('RIGHT',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('RIGHT', A, 2, 2); Result := RightStr(VarToStr(A[0]), Integer(A[1])); end);
+
+  rhExprRegisterFunction('REPLACE',
+    function(const A: TArray<Variant>): Variant
+    begin
+      NeedArgs('REPLACE', A, 3, 3);
+      Result := ReplaceStr(VarToStr(A[0]), VarToStr(A[1]), VarToStr(A[2]));
+    end);
+
+  rhExprRegisterFunction('REPLICATE',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('REPLICATE', A, 2, 2); Result := DupeString(VarToStr(A[0]), Integer(A[1])); end);
+
+  rhExprRegisterFunction('PADLEFT',
+    function(const A: TArray<Variant>): Variant
+    var Ch: Char;
+    begin
+      NeedArgs('PADLEFT', A, 2, 3);
+      if Length(A) = 3 then Ch := ArgChar(A[2], ' ') else Ch := ' ';
+      Result := StrPadLeft(VarToStr(A[0]), Integer(A[1]), Ch);
+    end);
+
+  rhExprRegisterFunction('PADRIGHT',
+    function(const A: TArray<Variant>): Variant
+    var Ch: Char;
+    begin
+      NeedArgs('PADRIGHT', A, 2, 3);
+      if Length(A) = 3 then Ch := ArgChar(A[2], ' ') else Ch := ' ';
+      Result := StrPadRight(VarToStr(A[0]), Integer(A[1]), Ch);
+    end);
+
+  rhExprRegisterFunction('PROPER',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('PROPER', A, 1, 1); Result := StrProper(VarToStr(A[0])); end);
+
+  rhExprRegisterFunction('CONCAT',
+    function(const A: TArray<Variant>): Variant
+    var I: Integer;
+    begin
+      Result := '';
+      for I := 0 to High(A) do
+        Result := VarToStr(Result) + VarToStr(A[I]);
+    end);
+
+  rhExprRegisterFunction('CONTAINS',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('CONTAINS', A, 2, 2); Result := ContainsStr(VarToStr(A[0]), VarToStr(A[1])); end);
+
+  rhExprRegisterFunction('STARTSWITH',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('STARTSWITH', A, 2, 2); Result := StartsStr(VarToStr(A[1]), VarToStr(A[0])); end);
+
+  rhExprRegisterFunction('ENDSWITH',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('ENDSWITH', A, 2, 2); Result := EndsStr(VarToStr(A[1]), VarToStr(A[0])); end);
+
+  rhExprRegisterFunction('ONLYDIGITS',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('ONLYDIGITS', A, 1, 1); Result := StrOnlyDigits(VarToStr(A[0])); end);
+
+  rhExprRegisterFunction('MASK',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('MASK', A, 2, 2); Result := StrApplyMask(VarToStr(A[0]), VarToStr(A[1])); end);
+
+  rhExprRegisterFunction('CHR',
+    function(const A: TArray<Variant>): Variant
+    begin NeedArgs('CHR', A, 1, 1); Result := string(Char(Integer(A[0]))); end);
+
+  rhExprRegisterFunction('ASC',
+    function(const A: TArray<Variant>): Variant
+    var S: string;
+    begin
+      NeedArgs('ASC', A, 1, 1);
+      S := VarToStr(A[0]);
+      if S = '' then Result := 0 else Result := Ord(S[1]);
+    end);
 
   rhExprRegisterFunction('IIF',
     function(const A: TArray<Variant>): Variant
