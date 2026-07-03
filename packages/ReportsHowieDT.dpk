@@ -48,6 +48,7 @@ requires
 contains
   rh.Design.Data in '..\designtime\rh.Design.Data.pas',
   rh.Design.Surface in '..\designtime\rh.Design.Surface.pas',
+  rh.Design.ExprEditor in '..\designtime\rh.Design.ExprEditor.pas',
   rh.Design.Inspector in '..\designtime\rh.Design.Inspector.pas',
   rh.Design.Designer.Form in '..\designtime\rh.Design.Designer.Form.pas',
   rh.Design.ComponentEditor in '..\designtime\rh.Design.ComponentEditor.pas',

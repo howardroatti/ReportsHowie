@@ -21,7 +21,8 @@ uses
   Vcl.Dialogs, Vcl.ExtDlgs, Vcl.Forms;
 
 type
-  TrhInspKind = (ikStr, ikInt, ikGeom, ikColor, ikEnum, ikBool, ikFont, ikPicture);
+  TrhInspKind = (ikStr, ikInt, ikGeom, ikColor, ikEnum, ikBool, ikFont,
+    ikPicture, ikExpr);
 
   TrhInspRow = record
     Prop: PPropInfo;
@@ -36,6 +37,7 @@ type
     FRows: TList<TrhInspRow>;
     FOwned: TList<TControl>;
     FLoading: Boolean;
+    FFields: TStringList;   // campos oferecidos ao editor de expressao
     FOnChanged: TNotifyEvent;
     FOnBeforeChange: TNotifyEvent;
     procedure ClearRows;
@@ -49,12 +51,15 @@ type
     procedure ColorClick(Sender: TObject);
     procedure FontClick(Sender: TObject);
     procedure PictureClick(Sender: TObject);
+    procedure ExprClick(Sender: TObject);
     procedure DoChanged;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Inspect(AObj: TPersistent);
     procedure RefreshValues;
+    /// <summary>Define os campos oferecidos no editor de expressao (botao "...").</summary>
+    procedure SetFields(AFields: TStrings);
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
     /// <summary>Disparado ANTES de aplicar cada mudanca (para snapshot de undo).</summary>
     property OnBeforeChange: TNotifyEvent read FOnBeforeChange write FOnBeforeChange;
@@ -62,15 +67,32 @@ type
 
 implementation
 
+uses
+  rh.Design.ExprEditor;
+
 const
   ROWH   = 26;
   LABELW = 92;
   PAD    = 6;
+  EXPRBTNW = 24;   // largura do botao "..." do editor de expressao
 
 function IsGeometry(const Name: string): Boolean;
 begin
   Result := SameText(Name, 'Left') or SameText(Name, 'Top') or
             SameText(Name, 'Width') or SameText(Name, 'Height');
+end;
+
+// Propriedades string que sao expressoes (ganham o botao "..." do editor).
+function IsExprProp(const Name: string): Boolean;
+begin
+  Result := SameText(Name, 'Text') or SameText(Name, 'GroupExpression') or
+            SameText(Name, 'CategoryExpr') or SameText(Name, 'ValueExpr');
+end;
+
+// Modo ilha (texto com [expr]) vs. expressao unica.
+function IsIslandProp(const Name: string): Boolean;
+begin
+  Result := SameText(Name, 'Text');
 end;
 
 { TrhInspector }
@@ -80,6 +102,7 @@ begin
   inherited Create(AOwner);
   FRows := TList<TrhInspRow>.Create;
   FOwned := TList<TControl>.Create;
+  FFields := TStringList.Create;
   BorderStyle := bsNone;
   Color := clWindow;
   ParentColor := False;
@@ -89,9 +112,17 @@ end;
 destructor TrhInspector.Destroy;
 begin
   ClearRows;
+  FFields.Free;
   FOwned.Free;
   FRows.Free;
   inherited Destroy;
+end;
+
+procedure TrhInspector.SetFields(AFields: TStrings);
+begin
+  FFields.Clear;
+  if AFields <> nil then
+    FFields.Assign(AFields);
 end;
 
 procedure TrhInspector.ClearRows;
@@ -169,7 +200,9 @@ begin
 
   // decidir tipo de editor
   if Kind in [tkString, tkLString, tkUString, tkWString] then
-    Row.Kind := ikStr
+  begin
+    if IsExprProp(PName) then Row.Kind := ikExpr else Row.Kind := ikStr;
+  end
   else if Kind = tkInteger then
   begin
     if SameText(TypeName, 'TColor') then Row.Kind := ikColor
@@ -239,6 +272,30 @@ begin
         Combo.OnChange := ComboChange;
         Row.Ctrl := Combo;
       end;
+    ikExpr:
+      begin
+        // edit reduzido + botao "..." que abre o editor de expressao
+        Edit := TEdit.Create(Self);
+        Edit.Parent := Self;
+        Edit.SetBounds(LABELW, Y + 2, Width - LABELW - PAD - EXPRBTNW - 2, ROWH - 4);
+        Edit.Anchors := [akLeft, akTop, akRight];
+        Edit.Enabled := Editable;
+        Edit.OnExit := EditExit;
+
+        Btn := TButton.Create(Self);
+        Btn.Parent := Self;
+        Btn.SetBounds(Width - PAD - EXPRBTNW, Y + 2, EXPRBTNW, ROWH - 4);
+        Btn.Anchors := [akTop, akRight];
+        Btn.Caption := '...';
+        Btn.Hint := 'Editor de expressao (campos, funcoes, validacao)';
+        Btn.ShowHint := True;
+        Btn.Enabled := Editable;
+        Btn.Tag := FRows.Count; // aponta para o row que sera adicionado a seguir
+        Btn.OnClick := ExprClick;
+        FOwned.Add(Btn);
+
+        Row.Ctrl := Edit;
+      end;
   else
     // ikStr, ikInt, ikGeom
     Edit := TEdit.Create(Self);
@@ -279,7 +336,7 @@ var
   F: TFont;
 begin
   case Row.Kind of
-    ikStr:  Result := GetStrProp(FObj, Row.Prop);
+    ikStr, ikExpr:  Result := GetStrProp(FObj, Row.Prop);
     ikInt:  Result := IntToStr(GetOrdProp(FObj, Row.Prop));
     ikGeom: Result := FormatFloat('0.0', GetOrdProp(FObj, Row.Prop) / 10);
     ikColor:
@@ -315,7 +372,7 @@ var
   Combo: TComboBox;
 begin
   case Row.Kind of
-    ikStr:
+    ikStr, ikExpr:
       SetStrProp(FObj, Row.Prop, TEdit(Row.Ctrl).Text);
     ikInt:
       begin
@@ -433,6 +490,27 @@ begin
     end;
   finally
     Dlg.Free;
+  end;
+end;
+
+procedure TrhInspector.ExprClick(Sender: TObject);
+var
+  Row: TrhInspRow;
+  Edit: TEdit;
+  PName, Res: string;
+begin
+  if FLoading then Exit;
+  Row := FRows[TButton(Sender).Tag];
+  if Row.Prop^.SetProc = nil then Exit;
+  Edit := TEdit(Row.Ctrl);
+  PName := string(Row.Prop^.Name);
+  if TrhExprEditorForm.Execute(PName, Edit.Text, FFields, IsIslandProp(PName), Res) then
+  begin
+    if Res = Edit.Text then Exit; // nada mudou
+    DoBeforeChange;
+    Edit.Text := Res;
+    ApplyRow(Row);
+    DoChanged;
   end;
 end;
 

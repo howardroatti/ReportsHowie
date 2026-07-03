@@ -23,10 +23,15 @@ procedure rhExprRegisterFunction(const Name: string; const Proc: TrhFunctionProc
 function rhExprCallFunction(const Name: string; const Args: TArray<Variant>;
   out Res: Variant): Boolean;
 
+/// <summary>Nomes das funcoes registradas (maiusculas), em ordem alfabetica.
+///  Util para UIs (editor de expressao) e para o list_functions do MCP.</summary>
+function rhExprFunctionNames: TArray<string>;
+
 implementation
 
 uses
-  System.SysUtils, System.Variants, System.Math, System.Generics.Collections;
+  System.SysUtils, System.Variants, System.Math, System.Generics.Collections,
+  System.Classes;
 
 var
   GFunctions: TDictionary<string, TrhFunctionProc>;
@@ -44,6 +49,23 @@ begin
   Result := GFunctions.TryGetValue(UpperCase(Name), Proc);
   if Result then
     Res := Proc(Args);
+end;
+
+function rhExprFunctionNames: TArray<string>;
+var
+  Names: TStringList;
+  Key: string;
+begin
+  Names := TStringList.Create;
+  try
+    Names.Sorted := True;
+    Names.Duplicates := dupIgnore;
+    for Key in GFunctions.Keys do
+      Names.Add(Key);
+    Result := Names.ToStringArray;
+  finally
+    Names.Free;
+  end;
 end;
 
 procedure NeedArgs(const FuncName: string; const Args: TArray<Variant>; MinN, MaxN: Integer);

@@ -7,6 +7,15 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (designer — editor de expressao)
+- **Diálogo de edição de expressão** (`rh.Design.ExprEditor`): botão **"..."** no inspetor
+  para as propriedades de expressão (`Text`, `GroupExpression`, `CategoryExpr`, `ValueExpr`).
+  Traz **lista de campos** (dos datasets) e **de funções/agregados** (via `rhExprFunctionNames`)
+  com inserção por duplo-clique, e **validação** pelo próprio motor de expressões (parse sem
+  avaliar). Dois modos: expressão única e texto com ilhas `[expr]` (valida só as ilhas). O form
+  é livre de `DesignIntf` (reuso no designer runtime). Fecha #6.
+- **`rhExprFunctionNames`** exposto em `rh.Expr.Functions` (nomes das funções registradas).
+
 ## [0.1.0] - 2026-07-03
 
 Primeiro lançamento público. Componente **TrhReport** instalável (RT+DT), com

@@ -79,6 +79,7 @@ type
     procedure BuildUI;
     procedure BuildDataPanel;
     procedure PopulateDataTree;
+    procedure UpdateInspectorFields;
     procedure DoRefreshData(Sender: TObject);
     procedure DataTreeDblClick(Sender: TObject);
     procedure DoInsertField(Sender: TObject);
@@ -131,6 +132,7 @@ begin
     FSnapshot := FReport.ToJSONString(False);
   FSurface.LoadReport(FReport);
   RebuildStructTree;
+  UpdateInspectorFields;
   UpdateZoomLabel;
   UpdateStatus;
 end;
@@ -471,6 +473,28 @@ begin
     FDataTree.Items[0].Expand(True);
 end;
 
+// Junta (dedup) os campos de todos os datasets e entrega ao inspetor, para o
+// editor de expressao (botao "...") oferecer os campos disponiveis.
+procedure TrhDesignerForm.UpdateInspectorFields;
+var
+  Fields: TStringList;
+  I, J: Integer;
+begin
+  if FInspector = nil then Exit;
+  Fields := TStringList.Create;
+  try
+    Fields.Duplicates := dupIgnore;
+    Fields.Sorted := True;
+    if FData <> nil then
+      for I := 0 to FData.Count - 1 do
+        for J := 0 to FData.Fields(I).Count - 1 do
+          Fields.Add(FData.Fields(I)[J]);
+    FInspector.SetFields(Fields);
+  finally
+    Fields.Free;
+  end;
+end;
+
 procedure TrhDesignerForm.DoRefreshData(Sender: TObject);
 var
   NewData: TrhDesignData;
@@ -483,6 +507,7 @@ begin
   FOwnedData := NewData;
   FData := NewData;
   PopulateDataTree;
+  UpdateInspectorFields;
   // feedback: confirma que a coleta rodou e quantos datasets estao visiveis
   // (sem esse aviso, clicar e nao ver mudanca parece que "nao funcionou").
   if FStatus <> nil then
