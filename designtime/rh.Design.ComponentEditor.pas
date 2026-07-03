@@ -22,6 +22,7 @@ type
   TrhReportComponentEditor = class(TComponentEditor)
   private
     function CollectDesignData: TObject; // retorna TrhDesignData
+    procedure ImportFastReport;          // verbo "Importar FastReport (.frx)..."
   public
     procedure Edit; override;
     function GetVerbCount: Integer; override;
@@ -32,8 +33,20 @@ type
 implementation
 
 uses
-  System.Classes, System.SysUtils, Data.DB, ToolsAPI,
-  rh.Report, rh.Design.Designer.Form, rh.Design.Data, rh.Preview.Form;
+  System.Classes, System.SysUtils, System.UITypes, Data.DB, ToolsAPI,
+  Vcl.Dialogs,
+  rh.Report, rh.Page, rh.Import.FastReport,
+  rh.Design.Designer.Form, rh.Design.Data, rh.Preview.Form;
+
+function ReportHasContent(R: TrhReport): Boolean;
+var
+  P: Integer;
+begin
+  Result := False;
+  for P := 0 to R.Pages.Count - 1 do
+    if R.Pages[P].Bands.Count > 0 then
+      Exit(True);
+end;
 
 function TrhReportComponentEditor.CollectDesignData: TObject;
 var
@@ -143,7 +156,7 @@ end;
 
 function TrhReportComponentEditor.GetVerbCount: Integer;
 begin
-  Result := 2;
+  Result := 3;
 end;
 
 function TrhReportComponentEditor.GetVerb(Index: Integer): string;
@@ -151,6 +164,7 @@ begin
   case Index of
     0: Result := 'Abrir &Designer...';
     1: Result := 'Pre&view do template';
+    2: Result := 'Importar &FastReport (.frx)...';
   else
     Result := '';
   end;
@@ -180,6 +194,53 @@ begin
       end;
     1:
       TrhReport(Component).ShowPreview;
+    2:
+      ImportFastReport;
+  end;
+end;
+
+procedure TrhReportComponentEditor.ImportFastReport;
+var
+  Dlg: TOpenDialog;
+  FileName: string;
+  Imp: TrhFastReportImporter;
+begin
+  Dlg := TOpenDialog.Create(nil);
+  try
+    Dlg.Title := 'Importar template FastReport';
+    Dlg.Filter := 'FastReport (*.frx)|*.frx|Todos os arquivos (*.*)|*.*';
+    Dlg.Options := Dlg.Options + [ofFileMustExist, ofPathMustExist];
+    if not Dlg.Execute then Exit;
+    FileName := Dlg.FileName;
+  finally
+    Dlg.Free;
+  end;
+
+  // importar SUBSTITUI o conteudo atual (ImportXML chama Clear): confirma se houver
+  if ReportHasContent(TrhReport(Component)) then
+    if MessageDlg('Importar vai SUBSTITUIR o conteudo atual do relatorio.'#13#10 +
+         'Deseja continuar?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+      Exit;
+
+  Imp := TrhFastReportImporter.Create;
+  try
+    try
+      Imp.ImportFile(FileName, TrhReport(Component));
+      if Designer <> nil then
+        Designer.Modified;
+      if Imp.Warnings.Count > 0 then
+        MessageDlg(Format('Importado com %d aviso(s):'#13#10#13#10'%s',
+          [Imp.Warnings.Count, Imp.Warnings.Text]), mtWarning, [mbOK], 0)
+      else
+        MessageDlg('Template FastReport importado com sucesso.',
+          mtInformation, [mbOK], 0);
+    except
+      on E: Exception do
+        MessageDlg('Falha ao importar "' + FileName + '":'#13#10 + E.Message,
+          mtError, [mbOK], 0);
+    end;
+  finally
+    Imp.Free;
   end;
 end;
 

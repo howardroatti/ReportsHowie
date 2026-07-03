@@ -62,13 +62,13 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <DCC_UsePackage>vcl;rtl;ReportsHowieRT;$(DCC_UsePackage)</DCC_UsePackage>
+        <DCC_UsePackage>vcl;rtl;ReportsHowieRT;xmlrtl;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <DCC_UsePackage>vcl;rtl;$(DCC_UsePackage)</DCC_UsePackage>
+        <DCC_UsePackage>vcl;rtl;xmlrtl;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64x)'!=''">
-        <DCC_UsePackage>vcl;rtl;$(DCC_UsePackage)</DCC_UsePackage>
+        <DCC_UsePackage>vcl;rtl;xmlrtl;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
@@ -89,10 +89,13 @@
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="vcl.dcp"/>
+        <DCCReference Include="xmlrtl.dcp"/>
         <DCCReference Include="designide.dcp"/>
         <DCCReference Include="ReportsHowieRT.dcp"/>
+        <DCCReference Include="..\source\import\rh.Import.FastReport.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Data.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Surface.pas"/>
+        <DCCReference Include="..\designtime\rh.Design.ExprEditor.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Inspector.pas"/>
         <DCCReference Include="..\designtime\rh.Design.Designer.Form.pas"/>
         <DCCReference Include="..\designtime\rh.Design.ComponentEditor.pas"/>

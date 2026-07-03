@@ -42,10 +42,12 @@ package ReportsHowieDT;
 requires
   rtl,
   vcl,
+  xmlrtl,
   designide,
   ReportsHowieRT;
 
 contains
+  rh.Import.FastReport in '..\source\import\rh.Import.FastReport.pas',
   rh.Design.Data in '..\designtime\rh.Design.Data.pas',
   rh.Design.Surface in '..\designtime\rh.Design.Surface.pas',
   rh.Design.ExprEditor in '..\designtime\rh.Design.ExprEditor.pas',
