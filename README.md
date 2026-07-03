@@ -186,10 +186,9 @@ Contribuições são muito bem-vindas! 🎉 Este projeto nasceu para dar à comu
 
 Novo por aqui? Estes são pequenos, bem delimitados e ótimos para começar (cada um traz contexto, tarefa e ponteiros de arquivo):
 
-- [#1 — Expressões: funções de string `LEFT`/`RIGHT`/`MID`/`POS`/`REPLACE`](https://github.com/howardroatti/ReportsHowie/issues/1)
 - [#2 — Demos: novos exemplos (fatura, matricial, mala direta)](https://github.com/howardroatti/ReportsHowie/issues/2)
 - [#3 — Designer: restringir a descoberta ToolsAPI a DataModules](https://github.com/howardroatti/ReportsHowie/issues/3)
-- [#4 — Docs: seção *Getting Started* no README](https://github.com/howardroatti/ReportsHowie/issues/4)
+- [#23 — Conversor: evoluir o `frx2rhr` (FastReport → ReportsHowie)](https://github.com/howardroatti/ReportsHowie/issues/23)
 
 Veja também os issues marcados como [`good first issue`](https://github.com/howardroatti/ReportsHowie/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) e [`help wanted`](https://github.com/howardroatti/ReportsHowie/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
 
