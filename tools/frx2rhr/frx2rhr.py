@@ -176,12 +176,20 @@ def convert_object(el, dpi, warnings):
 
     if tag == "TfrxShapeView":
         shp = el.get("Shape", "skRectangle")
+        if shp in ("skEllipse", "skCircle"):
+            kind = "ellipse"
+        elif shp == "skRoundRectangle":
+            kind = "roundRect"
+        else:
+            kind = "rectangle"
+        # o modelo do ReportsHowie usa type="shape" com discriminador "kind"
         base.update(
-            type="ellipse" if shp == "skEllipse" else "rect",
+            type="shape",
+            kind=kind,
             penColor=frx_color_to_rh(el.get("Frame.Color", "0")),
             penWidth=max(1, int(round(float(el.get("Frame.Width", "1")) * 2))),
             brushColor=frx_color_to_rh(el.get("Color", "16777215")),
-            brushTransparent=el.get("Color", "clNone") == "clNone",
+            transparent=el.get("Color", "clNone") == "clNone",
         )
         return base
 
