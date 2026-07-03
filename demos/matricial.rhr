@@ -1,0 +1,865 @@
+{
+  "formatVersion": 1,
+  "generator": "matricial_build.py",
+  "title": "Posicao de Estoque (matricial, multi-pagina)",
+  "author": "ReportsHowie",
+  "pages": [
+    {
+      "name": "Estoque",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "landscape",
+      "marginLeft": 80,
+      "marginTop": 80,
+      "marginRight": 80,
+      "marginBottom": 80,
+      "bands": [
+        {
+          "bandType": "pageHeader",
+          "name": "Cab",
+          "height": 130,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 0,
+              "width": 2000,
+              "height": 60,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "POSICAO DE ESTOQUE",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 13,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 2110,
+              "top": 10,
+              "width": 700,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Emitido em [FORMATDATETIME('dd\"/\"mm\"/\"yyyy', NOW)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 70,
+              "width": 2810,
+              "height": 0,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 80,
+              "width": 180,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "CODIGO",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 210,
+              "top": 80,
+              "width": 860,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "DESCRICAO",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1090,
+              "top": 80,
+              "width": 80,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "UN",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1190,
+              "top": 80,
+              "width": 220,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "ESTOQUE",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1430,
+              "top": 80,
+              "width": 260,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "CUSTO UNIT",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1710,
+              "top": 80,
+              "width": 260,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "PRECO VENDA",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1990,
+              "top": 80,
+              "width": 300,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "VALOR ESTOQUE",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 2310,
+              "top": 80,
+              "width": 490,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "FORNECEDOR",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 125,
+              "width": 2810,
+              "height": 0,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            }
+          ]
+        },
+        {
+          "bandType": "groupHeader",
+          "name": "GrpCat",
+          "height": 60,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "[categoria]",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 10,
+              "width": 2000,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": ">> CATEGORIA: [categoria]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 9,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "masterData",
+          "name": "Estoque",
+          "height": 44,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Estoque",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 4,
+              "width": 180,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[codigo]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 210,
+              "top": 4,
+              "width": 860,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[descricao]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1090,
+              "top": 4,
+              "width": 80,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[un]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1190,
+              "top": 4,
+              "width": 220,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0', estoque)]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1430,
+              "top": 4,
+              "width": 260,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', custo)]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1710,
+              "top": 4,
+              "width": 260,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', preco)]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1990,
+              "top": 4,
+              "width": 300,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', valor_estoque)]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 2310,
+              "top": 4,
+              "width": 490,
+              "height": 36,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[fornecedor]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "groupFooter",
+          "name": "SubCat",
+          "height": 60,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "[categoria]",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 5,
+              "width": 1960,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "   Subtotal [categoria]:  [COUNT([codigo])] itens",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1990,
+              "top": 5,
+              "width": 300,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', SUM([valor_estoque]))]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 2,
+              "width": 2810,
+              "height": 0,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            }
+          ]
+        },
+        {
+          "bandType": "summary",
+          "name": "Total",
+          "height": 80,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 5,
+              "width": 2810,
+              "height": 0,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 15,
+              "width": 1960,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "TOTAL GERAL:  [COUNT([codigo])] itens em estoque",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 10,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1990,
+              "top": 15,
+              "width": 300,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', SUM([valor_estoque]))]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 10,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "pageFooter",
+          "name": "Rodape",
+          "height": 60,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 5,
+              "width": 2810,
+              "height": 0,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 15,
+              "width": 1200,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "ReportsHowie - demo matricial",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 2010,
+              "top": 15,
+              "width": 800,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Folha [PAGE] de [TOTALPAGES]",
+              "dataField": "",
+              "font": {
+                "name": "Courier New",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "Fatura": [
+    {
+      "emit_nome": "DISTRIBUIDORA EXEMPLO LTDA",
+      "emit_cnpj": "12345678000199",
+      "emit_ie": "082345678",
+      "emit_end": "AV. DO COMERCIO, 900 - CENTRO",
+      "emit_mun": "VITORIA",
+      "emit_uf": "ES",
+      "numero": "FAT-2026/00875",
+      "dt_emissao": "03/07/2026",
+      "sacado_nome": "SUPERMERCADO CLIENTE LTDA",
+      "sacado_cnpj": "98765432000155",
+      "sacado_end": "RUA DAS COMPRAS, 120 - CENTRO",
+      "sacado_mun": "VILA VELHA",
+      "sacado_uf": "ES",
+      "subtotal": 4850.0,
+      "desconto": 150.0,
+      "impostos": 0.0,
+      "total": 4700.0,
+      "linha_digitavel": "23793.38128 60000.000000 00000.000000 1 99999000470000",
+      "vencimento_final": "10/08/2026",
+      "codigo_barras": "23791999900004700003381286000000000000000000"
+    }
+  ],
+  "Itens": [
+    {
+      "codigo": "A100",
+      "descricao": "ARROZ TIPO 1 - FARDO 30KG",
+      "qtd": 20.0,
+      "valor_unit": 95.0,
+      "valor_total": 1900.0
+    },
+    {
+      "codigo": "B220",
+      "descricao": "FEIJAO CARIOCA - FARDO 30KG",
+      "qtd": 15.0,
+      "valor_unit": 120.0,
+      "valor_total": 1800.0
+    },
+    {
+      "codigo": "C330",
+      "descricao": "OLEO DE SOJA - CAIXA 20UN",
+      "qtd": 10.0,
+      "valor_unit": 115.0,
+      "valor_total": 1150.0
+    }
+  ],
+  "Parcelas": [
+    {
+      "parcela": "1/3",
+      "vencimento": "10/08/2026",
+      "valor": 1566.67
+    },
+    {
+      "parcela": "2/3",
+      "vencimento": "10/09/2026",
+      "valor": 1566.67
+    },
+    {
+      "parcela": "3/3",
+      "vencimento": "10/10/2026",
+      "valor": 1566.66
+    }
+  ]
+}

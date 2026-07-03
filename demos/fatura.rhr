@@ -1,0 +1,1700 @@
+{
+  "formatVersion": 1,
+  "generator": "fatura_build.py",
+  "title": "Fatura / Duplicata Mercantil (demo)",
+  "author": "ReportsHowie",
+  "pages": [
+    {
+      "name": "Fatura",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "portrait",
+      "marginLeft": 100,
+      "marginTop": 100,
+      "marginRight": 100,
+      "marginBottom": 100,
+      "bands": [
+        {
+          "bandType": "masterData",
+          "name": "Fatura",
+          "height": 540,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Fatura",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "shape",
+              "name": "",
+              "left": 0,
+              "top": 0,
+              "width": 1900,
+              "height": 200,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 2,
+              "brushColor": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1292,
+              "top": 0,
+              "width": 0,
+              "height": 200,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 20,
+              "width": 1252,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[emit_nome]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 11,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 80,
+              "width": 1252,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "CNPJ [MASK(emit_cnpj,'##.###.###/####-##')]  IE [emit_ie]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 120,
+              "width": 1252,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[emit_end] - [emit_mun]/[emit_uf]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1312,
+              "top": 20,
+              "width": 568,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "FATURA / DUPLICATA No.",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1312,
+              "top": 60,
+              "width": 568,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[numero]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 13,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1312,
+              "top": 130,
+              "width": 568,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Emissao: [dt_emissao]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "shape",
+              "name": "",
+              "left": 0,
+              "top": 220,
+              "width": 1900,
+              "height": 45,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 1,
+              "brushColor": 12632256,
+              "transparent": false
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 228,
+              "width": 1900,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "SACADO / CLIENTE",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 265,
+              "width": 1292,
+              "height": 80,
+              "visible": true,
+              "frame": {
+                "sides": "LTRB",
+                "color": 0,
+                "width": 2
+              },
+              "text": "",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 270,
+              "width": 1272,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "NOME / RAZAO SOCIAL",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 5,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 298,
+              "width": 1272,
+              "height": 42,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[sacado_nome]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1292,
+              "top": 265,
+              "width": 608,
+              "height": 80,
+              "visible": true,
+              "frame": {
+                "sides": "LTRB",
+                "color": 0,
+                "width": 2
+              },
+              "text": "",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1302,
+              "top": 270,
+              "width": 588,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "CNPJ / CPF",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 5,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1302,
+              "top": 298,
+              "width": 588,
+              "height": 42,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[MASK(sacado_cnpj,'##.###.###/####-##')]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 345,
+              "width": 1292,
+              "height": 80,
+              "visible": true,
+              "frame": {
+                "sides": "LTRB",
+                "color": 0,
+                "width": 2
+              },
+              "text": "",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 350,
+              "width": 1272,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "ENDERECO",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 5,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 378,
+              "width": 1272,
+              "height": 42,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[sacado_end]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1292,
+              "top": 345,
+              "width": 608,
+              "height": 80,
+              "visible": true,
+              "frame": {
+                "sides": "LTRB",
+                "color": 0,
+                "width": 2
+              },
+              "text": "",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1302,
+              "top": 350,
+              "width": 588,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "MUNICIPIO/UF",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 5,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1302,
+              "top": 378,
+              "width": 588,
+              "height": 42,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[sacado_mun]/[sacado_uf]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "shape",
+              "name": "",
+              "left": 0,
+              "top": 445,
+              "width": 1900,
+              "height": 45,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 1,
+              "brushColor": 12632256,
+              "transparent": false
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 453,
+              "width": 1900,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "PRODUTOS / SERVICOS",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "shape",
+              "name": "",
+              "left": 0,
+              "top": 490,
+              "width": 1900,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 2,
+              "brushColor": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 500,
+              "width": 140,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "COD",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 6,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 170,
+              "top": 500,
+              "width": 980,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "DESCRICAO DO PRODUTO / SERVICO",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 6,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 160,
+              "top": 490,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1170,
+              "top": 500,
+              "width": 160,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "QTD",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 6,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1160,
+              "top": 490,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1350,
+              "top": 500,
+              "width": 240,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "VL. UNIT",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 6,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1340,
+              "top": 490,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1610,
+              "top": 500,
+              "width": 280,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "VL. TOTAL",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 6,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1600,
+              "top": 490,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            }
+          ]
+        },
+        {
+          "bandType": "detailData",
+          "name": "Itens",
+          "height": 50,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Itens",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 6,
+              "width": 140,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[codigo]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 170,
+              "top": 6,
+              "width": 980,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[descricao]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 160,
+              "top": 0,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1170,
+              "top": 6,
+              "width": 160,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.###', qtd)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1160,
+              "top": 0,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1350,
+              "top": 6,
+              "width": 240,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', valor_unit)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1340,
+              "top": 0,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1610,
+              "top": 6,
+              "width": 280,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', valor_total)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1600,
+              "top": 0,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 48,
+              "width": 1900,
+              "height": 0,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 0,
+              "top": 0,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 1900,
+              "top": 0,
+              "width": 0,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "penColor": 0,
+              "penWidth": 2
+            }
+          ]
+        },
+        {
+          "bandType": "detailData",
+          "name": "Parcelas",
+          "height": 50,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Parcelas",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 6,
+              "width": 400,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Parcela [parcela] - venc. [vencimento]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1500,
+              "top": 6,
+              "width": 380,
+              "height": 35,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', valor)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "summary",
+          "name": "Totais",
+          "height": 525,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "shape",
+              "name": "",
+              "left": 1102,
+              "top": 0,
+              "width": 798,
+              "height": 200,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 2,
+              "brushColor": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1122,
+              "top": 10,
+              "width": 398,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "SUBTOTAL",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1520,
+              "top": 10,
+              "width": 360,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', subtotal)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1122,
+              "top": 60,
+              "width": 398,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "DESCONTO",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1520,
+              "top": 60,
+              "width": 360,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', desconto)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1122,
+              "top": 110,
+              "width": 398,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "IMPOSTOS",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1520,
+              "top": 110,
+              "width": 360,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', impostos)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1122,
+              "top": 160,
+              "width": 398,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "TOTAL A PAGAR",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 9,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1520,
+              "top": 160,
+              "width": 360,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[FORMATFLOAT('#,##0.00', total)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 9,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 10,
+              "width": 950,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "DUPLICATAS / PARCELAS:",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "shape",
+              "name": "",
+              "left": 0,
+              "top": 220,
+              "width": 1900,
+              "height": 45,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 1,
+              "brushColor": 12632256,
+              "transparent": false
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 10,
+              "top": 228,
+              "width": 1900,
+              "height": 30,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "RECIBO DO SACADO - BANCO EXEMPLO S/A  |  237-2",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "shape",
+              "name": "",
+              "left": 0,
+              "top": 265,
+              "width": 1900,
+              "height": 240,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "kind": "rectangle",
+              "penColor": 0,
+              "penWidth": 2,
+              "brushColor": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 280,
+              "width": 1860,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Linha digitavel:  [linha_digitavel]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 325,
+              "width": 950,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Beneficiario: [emit_nome]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 20,
+              "top": 365,
+              "width": 950,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Pagador: [sacado_nome]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1300,
+              "top": 325,
+              "width": 580,
+              "height": 40,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Vencimento: [vencimento_final]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 7,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 1300,
+              "top": 365,
+              "width": 580,
+              "height": 50,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Valor: R$ [FORMATFLOAT('#,##0.00', total)]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 9,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "barcode",
+              "name": "",
+              "left": 20,
+              "top": 425,
+              "width": 1140,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "symbology": "code128",
+              "text": "[codigo_barras]",
+              "dataField": "",
+              "barColor": 0,
+              "showText": false,
+              "moduleWidth": 0,
+              "font": {
+                "name": "Segoe UI",
+                "size": 6,
+                "color": 0,
+                "style": ""
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -20,8 +20,8 @@ def mm(v):
     return int(round(v * 10))
 
 
-def font(size, style="", color=BLACK):
-    return {"name": FONT, "size": size, "color": color, "style": style}
+def font(size, style="", color=BLACK, name=FONT):
+    return {"name": name, "size": size, "color": color, "style": style}
 
 
 def frame(sides="", width=2, color=BLACK):
@@ -29,13 +29,13 @@ def frame(sides="", width=2, color=BLACK):
 
 
 def txt(objs, l, t, w, h, text, size=7, style="", align="left", valign="top",
-        sides="", wrap=False, color=BLACK):
+        sides="", wrap=False, color=BLACK, fname=FONT):
     """Texto (rotulo/valor). 'sides' desenha a moldura da celula (ex.: 'LTRB')."""
     objs.append({
         "type": "text", "name": "", "left": l, "top": t, "width": w, "height": h,
         "visible": True, "frame": frame(sides),
         "text": text, "dataField": "",
-        "font": font(size, style, color),
+        "font": font(size, style, color, fname),
         "hAlign": align, "vAlign": valign, "wordWrap": wrap,
         "color": WHITE, "transparent": True,
     })

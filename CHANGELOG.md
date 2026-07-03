@@ -7,6 +7,19 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (demos genericos + evolucoes fiscais)
+- **Demos genericos** (#2): **fatura** (duplicata mercantil com itens, parcelas e bloco
+  de boleto), **matricial** (listagem densa em paisagem, fonte monoespacada, agrupada,
+  **multi-pagina** com pageHeader/pageFooter repetindo e `Folha [PAGE]/[TOTALPAGES]`) e
+  **mala_direta** (mail merge: uma carta por destinatario, campos mesclados e corpo com
+  word-wrap justificado).
+- **DACCE** (evolucao fiscal, #22): Documento Auxiliar da Carta de Correcao Eletronica
+  (evento da NF-e) — chave da NF-e, emitente/destinatario, condicoes de uso e texto da
+  correcao.
+- **Tecnica multi-pagina** demonstrada no matricial (aplicavel a DANFE/DACTE longos).
+- `fiscal_common.txt`/`font` ganham parametro de fonte (`fname`) para relatorios
+  monoespacados; primitivas reutilizadas pelos demos genericos.
+
 ### Adicionado (expressoes: funcoes de string + demo fiscal DANFE)
 - **Funcoes de string no motor de expressoes** (#1): `LEFT`, `RIGHT`, `REPLACE`,
   `REPLICATE`, `PADLEFT`, `PADRIGHT`, `PROPER`, `CONCAT`, `CONTAINS`, `STARTSWITH`,
