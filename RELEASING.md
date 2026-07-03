@@ -33,7 +33,17 @@ no Delphi 12 Athens).
 
 ## 2. Empacotar os anexos
 
-Um `.zip` por versão do Delphi, contendo RT+DT (BPL) e os DCP:
+Use o script `pack-release.ps1` (na raiz) — ele copia RT+DT (`.bpl`) e os `.dcp`
+da pasta de saída do Delphi, junto com `LICENSE` e as notas, e gera o `.zip`:
+
+```powershell
+.\pack-release.ps1                 # Delphi 12 (sufixo 290), Win32
+.\pack-release.ps1 -IncludeWin64   # inclui Win64
+.\pack-release.ps1 -Suffix 280 -DelphiLabel Delphi11 -StudioVer 22.0
+```
+
+Ele aborta listando o que falta se algum BPL não foi compilado. Estrutura do
+`.zip` gerado (`dist\ReportsHowie-0.1.0-Delphi12.zip`):
 
 ```
 ReportsHowie-0.1.0-Delphi12.zip
