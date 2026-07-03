@@ -1,0 +1,17 @@
+{
+  "CCe": [
+    {
+      "chave": "35240712345678000199550010001234561123456780",
+      "numero": "000.123.456",
+      "serie": "001",
+      "emit_nome": "COMERCIAL EXEMPLO LTDA",
+      "emit_cnpj": "12345678000199",
+      "dest_nome": "CLIENTE DEMONSTRACAO S/A",
+      "dest_cnpj": "98765432000155",
+      "sequencia": "1",
+      "dt_evento": "03/07/2026 18:05",
+      "protocolo": "135240009988776 - 03/07/2026 18:05",
+      "texto_correcao": "Onde se le 'Transportadora: a definir', leia-se 'Transportadora: TRANSPORTADORA EXEMPLO LTDA, CNPJ 11.222.333/0001-81'. Correcao da modalidade do frete de 'sem frete' para 'por conta do remetente (CIF)'. Demais dados da NF-e permanecem inalterados."
+    }
+  ]
+}
