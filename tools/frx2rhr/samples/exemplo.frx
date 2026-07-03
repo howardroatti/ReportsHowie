@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TfrxReport Version="6.0" ReportOptions.Name="Vendas por Cliente" ReportOptions.Author="Exemplo">
+  <TfrxDataPage Name="Data">
+  </TfrxDataPage>
+  <TfrxReportPage Name="Page1" PaperWidth="210" PaperHeight="297" Orientation="poPortrait"
+      LeftMargin="10" TopMargin="10" RightMargin="10" BottomMargin="10">
+    <TfrxReportTitle Name="Title1" Left="0" Top="0" Width="718" Height="45">
+      <TfrxMemoView Name="MemoTit" Left="0" Top="0" Width="718" Height="34"
+          Font.Name="Segoe UI" Font.Height="-27" Font.Style="1" Font.Color="0"
+          HAlign="haCenter">
+        <Memo.UTF8>RELATORIO DE VENDAS</Memo.UTF8>
+      </TfrxMemoView>
+      <TfrxLineView Name="Line1" Left="0" Top="40" Width="718" Height="0"
+          Frame.Width="1.5" Frame.Color="0"/>
+    </TfrxReportTitle>
+    <TfrxMasterData Name="MasterData1" Left="0" Top="60" Width="718" Height="19"
+        DataSet="frxDBDataset1">
+      <TfrxMemoView Name="MemoCli" Left="0" Top="0" Width="380" Height="19"
+          Font.Name="Segoe UI" Font.Height="-13" Font.Color="0" HAlign="haLeft">
+        <Memo.UTF8>[frxDBDataset1."cliente"]</Memo.UTF8>
+      </TfrxMemoView>
+      <TfrxMemoView Name="MemoVal" Left="500" Top="0" Width="218" Height="19"
+          Font.Name="Segoe UI" Font.Height="-13" Font.Color="0" HAlign="haRight">
+        <Memo.UTF8>[frxDBDataset1."valor"]</Memo.UTF8>
+      </TfrxMemoView>
+    </TfrxMasterData>
+    <TfrxPageFooter Name="PageFooter1" Left="0" Top="100" Width="718" Height="19">
+      <TfrxMemoView Name="MemoPag" Left="0" Top="0" Width="718" Height="19"
+          Font.Name="Segoe UI" Font.Height="-11" Font.Color="0" HAlign="haRight">
+        <Memo.UTF8>Pagina [PAGE] de [TOTALPAGES]</Memo.UTF8>
+      </TfrxMemoView>
+    </TfrxPageFooter>
+  </TfrxReportPage>
+</TfrxReport>

@@ -1,0 +1,183 @@
+{
+  "formatVersion": 1,
+  "generator": "frx2rhr (FastReport->ReportsHowie)",
+  "title": "Vendas por Cliente",
+  "author": "Exemplo",
+  "pages": [
+    {
+      "name": "Page1",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "portrait",
+      "marginLeft": 100,
+      "marginTop": 100,
+      "marginRight": 100,
+      "marginBottom": 100,
+      "bands": [
+        {
+          "bandType": "reportTitle",
+          "name": "Title1",
+          "height": 119,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "objects": [
+            {
+              "name": "MemoTit",
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "left": 0,
+              "top": 0,
+              "width": 1900,
+              "height": 90,
+              "type": "text",
+              "text": "RELATORIO DE VENDAS",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 20,
+                "color": 0,
+                "style": "B"
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "name": "Line1",
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "left": 0,
+              "top": 106,
+              "width": 1900,
+              "height": 0,
+              "type": "line",
+              "penColor": 0,
+              "penWidth": 3
+            }
+          ]
+        },
+        {
+          "bandType": "masterData",
+          "name": "MasterData1",
+          "height": 50,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "frxDBDataset1",
+          "groupExpression": "",
+          "objects": [
+            {
+              "name": "MemoCli",
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "left": 0,
+              "top": 0,
+              "width": 1005,
+              "height": 50,
+              "type": "text",
+              "text": "[cliente]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 10,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "name": "MemoVal",
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "left": 1323,
+              "top": 0,
+              "width": 577,
+              "height": 50,
+              "type": "text",
+              "text": "[valor]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 10,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "pageFooter",
+          "name": "PageFooter1",
+          "height": 50,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "objects": [
+            {
+              "name": "MemoPag",
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "left": 0,
+              "top": 0,
+              "width": 1900,
+              "height": 50,
+              "type": "text",
+              "text": "Pagina [PAGE] de [TOTALPAGES]",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 8,
+                "color": 0,
+                "style": ""
+              },
+              "hAlign": "right",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

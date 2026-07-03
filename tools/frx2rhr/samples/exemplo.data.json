@@ -1,0 +1,5 @@
+{ "frxDBDataset1": [
+  {"cliente": "Ana Souza",    "valor": "R$ 1.250,00"},
+  {"cliente": "Bruno Lima",   "valor": "R$ 3.480,90"},
+  {"cliente": "Carla Nunes",  "valor": "R$ 920,00"}
+] }
