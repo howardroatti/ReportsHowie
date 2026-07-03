@@ -68,11 +68,22 @@ GIT_TERMINAL_PROMPT=0 git -c credential.https://github.com.helper='' \
 
 ## 4. Criar o GitHub Release
 
+Use `create-release.ps1` (na raiz) — valida a tag, as notas e os anexos, fixa a
+conta `gh` e cria o release (pega automaticamente todos os `.zip` de `dist\`):
+
+```powershell
+.\create-release.ps1            # cria v0.1.0 com os .zip de dist\
+.\create-release.ps1 -DryRun    # só mostra o comando, sem publicar
+```
+
+Equivalente manual:
+
 ```sh
 gh release create v0.1.0 \
   --title "ReportsHowie v0.1.0" \
   --notes-file docs/RELEASE-0.1.0.md \
-  ReportsHowie-0.1.0-Delphi12.zip
+  --latest \
+  dist/ReportsHowie-0.1.0-Delphi12.zip
 ```
 
 (Adicione um `.zip` por versão do Delphi como argumento extra.)
