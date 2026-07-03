@@ -39,7 +39,7 @@ implementation
 uses
   System.Classes, System.SysUtils, System.Variants, System.Generics.Collections, Data.DB,
   Vcl.Forms,
-  rh.Types, rh.Model.Types, rh.Page, rh.Bands,
+  rh.Types, rh.Model.Types, rh.Page, rh.Bands, rh.Objects,
   rh.Expr, rh.Expr.Nodes, rh.Render.Engine, rh.Preview.Form;
 
 type
@@ -60,6 +60,9 @@ type
     // configuracao pelo pipeline
     procedure ClearGroupFilters;
     procedure AddGroupFilter(const Expr: string; const Val: Variant);
+    // agrega o dataset por categoria e preenche Chart.Series (transiente),
+    // respeitando o escopo de grupo ativo (mesmos filtros do EvalAggregate).
+    procedure FillChartSeries(Chart: TrhChartObject);
     property DataSet: TDataSet read FDataSet write FDataSet;
     property PageNo: Integer read FPageNo write FPageNo;
     property TotalPages: Integer read FTotalPages write FTotalPages;
@@ -200,6 +203,107 @@ begin
   end;
 end;
 
+procedure TrhReportContext.FillChartSeries(Chart: TrhChartObject);
+var
+  BM: TBookmark;
+  I, Idx: Integer;
+  Cat: string;
+  Val, D: Double;
+  HasVal, Match: Boolean;
+  V, GV: Variant;
+  Cats: TStringList;
+  Sums, Mins, Maxs: TList<Double>;
+  Counts: TList<Integer>;
+  Pts: TArray<TrhChartPoint>;
+begin
+  Chart.Series := nil;
+  if (FDataSet = nil) or (not FDataSet.Active) then Exit;
+  if Trim(Chart.CategoryExpr) = '' then Exit;
+
+  Cats := TStringList.Create;      // ordem de insercao = ordem no grafico
+  Sums := TList<Double>.Create;
+  Mins := TList<Double>.Create;
+  Maxs := TList<Double>.Create;
+  Counts := TList<Integer>.Create;
+  try
+    FDataSet.DisableControls;
+    BM := FDataSet.Bookmark;
+    try
+      FDataSet.First;
+      while not FDataSet.Eof do
+      begin
+        Match := True;
+        for I := 0 to FGroupExprs.Count - 1 do
+        begin
+          GV := rhEvalExpr(FGroupExprs[I], Self);
+          if not VarSameValue(GV, FGroupVals[I]) then
+          begin
+            Match := False;
+            Break;
+          end;
+        end;
+        if Match then
+        begin
+          Cat := rhEvalText(Chart.CategoryExpr, Self);
+          HasVal := False; Val := 0;
+          if Trim(Chart.ValueExpr) <> '' then
+          begin
+            V := rhEvalExpr(Chart.ValueExpr, Self);
+            if not (VarIsNull(V) or VarIsEmpty(V)) then
+              if ToFloat(V, D) then begin Val := D; HasVal := True; end;
+          end;
+
+          Idx := Cats.IndexOf(Cat);
+          if Idx < 0 then
+          begin
+            Idx := Cats.Add(Cat);
+            Sums.Add(0); Counts.Add(0); Mins.Add(0); Maxs.Add(0);
+          end;
+
+          if Chart.Aggregate = rhcaCount then
+            Counts[Idx] := Counts[Idx] + 1
+          else if HasVal then
+          begin
+            if Counts[Idx] = 0 then
+            begin
+              Mins[Idx] := Val; Maxs[Idx] := Val;
+            end
+            else
+            begin
+              if Val < Mins[Idx] then Mins[Idx] := Val;
+              if Val > Maxs[Idx] then Maxs[Idx] := Val;
+            end;
+            Sums[Idx] := Sums[Idx] + Val;
+            Counts[Idx] := Counts[Idx] + 1;
+          end;
+        end;
+        FDataSet.Next;
+      end;
+    finally
+      if FDataSet.BookmarkValid(BM) then FDataSet.Bookmark := BM;
+      FDataSet.EnableControls;
+    end;
+
+    SetLength(Pts, Cats.Count);
+    for I := 0 to Cats.Count - 1 do
+    begin
+      Pts[I].Category := Cats[I];
+      case Chart.Aggregate of
+        rhcaCount: Pts[I].Value := Counts[I];
+        rhcaAvg:   if Counts[I] > 0 then Pts[I].Value := Sums[I] / Counts[I]
+                   else Pts[I].Value := 0;
+        rhcaMin:   Pts[I].Value := Mins[I];
+        rhcaMax:   Pts[I].Value := Maxs[I];
+      else
+        Pts[I].Value := Sums[I];  // rhcaSum (default)
+      end;
+    end;
+    Chart.Series := Pts;
+  finally
+    Cats.Free; Sums.Free; Mins.Free; Maxs.Free; Counts.Free;
+  end;
+end;
+
 // ---------------------------------------------------------------------------
 
 type
@@ -228,6 +332,7 @@ type
     procedure SetGroupFiltersUpTo(Level: Integer);
     procedure StartPage;
     procedure FinishPage;
+    procedure PrepareBandCharts(Band: TrhBand);
     procedure EmitFlow(Band: TrhBand);
     procedure RunData(DS: TDataSet);
   public
@@ -324,6 +429,7 @@ procedure TPipeline.StartPage;
 begin
   FRP := FDoc.AddPage(FPage.EffectiveWidth, FPage.EffectiveHeight);
   FCtxObj.PageNo := FDoc.PageCount;
+  TrhRenderEngine.EmitWatermark(FRP, FReport, FCtx); // fundo, antes de tudo
   FCurY := FPage.MarginTop;
   if FPageHeader <> nil then
   begin
@@ -339,9 +445,21 @@ begin
       FPage.MarginTop + FPage.ContentHeight - FPageFooter.Height, FCtx);
 end;
 
+// Preenche a serie (transiente) de cada grafico da banda, agregando o dataset
+// no escopo de grupo ativo. Chamado antes de renderizar a banda.
+procedure TPipeline.PrepareBandCharts(Band: TrhBand);
+var
+  Obj: TrhReportObject;
+begin
+  for Obj in Band.Objects do
+    if Obj is TrhChartObject then
+      FCtxObj.FillChartSeries(TrhChartObject(Obj));
+end;
+
 procedure TPipeline.EmitFlow(Band: TrhBand);
 begin
   if Band = nil then Exit;
+  PrepareBandCharts(Band);
   if (FCurY + Band.Height > FBodyBottom) and (FCurY > FPage.MarginTop) then
   begin
     FinishPage;

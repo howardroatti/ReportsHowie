@@ -19,6 +19,7 @@ uses
 // --- leitura tolerante: retorna Default se a chave nao existir/tipo errado ---
 function JGetStr(O: TJSONObject; const Name: string; const Default: string = ''): string;
 function JGetInt(O: TJSONObject; const Name: string; Default: Integer = 0): Integer;
+function JGetFloat(O: TJSONObject; const Name: string; Default: Double = 0): Double;
 function JGetBool(O: TJSONObject; const Name: string; Default: Boolean = False): Boolean;
 function JGetObj(O: TJSONObject; const Name: string): TJSONObject;   // nil se ausente
 function JGetArr(O: TJSONObject; const Name: string): TJSONArray;    // nil se ausente
@@ -59,6 +60,18 @@ begin
   V := O.Values[Name];
   if V is TJSONNumber then
     Result := TJSONNumber(V).AsInt
+  else
+    Result := Default;
+end;
+
+function JGetFloat(O: TJSONObject; const Name: string; Default: Double): Double;
+var
+  V: TJSONValue;
+begin
+  if O = nil then Exit(Default);
+  V := O.Values[Name];
+  if V is TJSONNumber then
+    Result := TJSONNumber(V).AsDouble
   else
     Result := Default;
 end;

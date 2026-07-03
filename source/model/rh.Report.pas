@@ -20,7 +20,7 @@ interface
 
 uses
   System.Classes, System.JSON, System.Generics.Collections,
-  rh.Consts, rh.Page;
+  rh.Consts, rh.Page, rh.Watermark;
 
 type
   TrhReport = class(TComponent)
@@ -29,6 +29,7 @@ type
     FAuthor: string;
     FFormatVersion: Integer;
     FPages: TrhPageList;
+    FWatermark: TrhWatermark;
     FDataSets: TDictionary<string, TComponent>; // binding runtime (nao serializado)
     procedure ReadReportData(Stream: TStream);
     procedure WriteReportData(Stream: TStream);
@@ -59,6 +60,8 @@ type
     class function LibraryVersion: string;
 
     property Pages: TrhPageList read FPages;
+    /// <summary>Marca d'agua opcional (texto diagonal ao fundo de cada pagina).</summary>
+    property Watermark: TrhWatermark read FWatermark;
   published
     property Title: string read FTitle write FTitle;
     property Author: string read FAuthor write FAuthor;
@@ -78,12 +81,14 @@ begin
   FFormatVersion := RH_FORMAT_VERSION;
   FPages := TrhPageList.Create;
   FPages.AddPage; // um relatorio novo ja nasce com uma pagina
+  FWatermark := TrhWatermark.Create;
   FDataSets := TDictionary<string, TComponent>.Create;
 end;
 
 destructor TrhReport.Destroy;
 begin
   FDataSets.Free;
+  FWatermark.Free;
   FPages.Free;
   inherited Destroy;
 end;
@@ -120,6 +125,7 @@ function TrhReport.ToJSONString(Pretty: Boolean): string;
 var
   Root: TJSONObject;
   Pages: TJSONArray;
+  WmObj: TJSONObject;
 begin
   Root := TJSONObject.Create;
   try
@@ -127,6 +133,12 @@ begin
     Root.AddPair('generator', 'ReportsHowie ' + RH_VERSION);
     Root.AddPair('title', FTitle);
     Root.AddPair('author', FAuthor);
+    if FWatermark.Visible then
+    begin
+      WmObj := TJSONObject.Create;
+      FWatermark.SaveToJSON(WmObj);
+      Root.AddPair('watermark', WmObj);
+    end;
     Pages := TJSONArray.Create;
     FPages.SaveToJSON(Pages);
     Root.AddPair('pages', Pages);
@@ -164,6 +176,10 @@ begin
       FTitle := TJSONString(Root.Values['title']).Value;
     if Root.Values['author'] is TJSONString then
       FAuthor := TJSONString(Root.Values['author']).Value;
+    if Root.Values['watermark'] is TJSONObject then
+      FWatermark.LoadFromJSON(TJSONObject(Root.Values['watermark']))
+    else
+      FWatermark.Visible := False;
     if Root.Values['pages'] is TJSONArray then
       PagesArr := TJSONArray(Root.Values['pages'])
     else

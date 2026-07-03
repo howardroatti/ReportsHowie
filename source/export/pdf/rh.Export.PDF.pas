@@ -112,6 +112,7 @@ type
     function TextOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
     function LineOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
     function ShapeOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
+    function PolygonOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
     function ImageOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
     function PageContent(Page: TrhRenderedPage): RawByteString;
     function ImageJpegBytes(Op: TrhDrawOp): TBytes;
@@ -153,6 +154,8 @@ var
   Lines: TArray<string>;
   I: Integer;
   LineWidth: Double;
+  ang, ca, sa, cxp, cyp, sxp, syp: Double;
+  Txt: string;
 begin
   Result := '';
   if Trim(Op.Text) = '' then Exit;
@@ -161,6 +164,26 @@ begin
   WPt := MMToPt(Op.Rect.Width);
   LineH := Op.FontSize * 1.2;
   ColorRGB(Op.FontColor, R, G, B);
+
+  // texto ROTACIONADO (marca d'agua): uma linha, centralizado, com matriz de rotacao
+  if Op.Angle <> 0 then
+  begin
+    ang := Op.Angle * Pi / 180;
+    Txt := Op.Text.Replace(#13#10, ' ').Replace(#10, ' ');
+    LineWidth := MeasureTextPt(Txt, Op.FontName, Op.FontSize, Op.FontStyle);
+    cxp := MMToPt(Op.Rect.Left + Op.Rect.Width div 2);
+    cyp := PageHpt - MMToPt(Op.Rect.Top + Op.Rect.Height div 2);
+    ca := Cos(ang); sa := Sin(ang);
+    sxp := cxp - (LineWidth / 2) * ca + (0.35 * Op.FontSize) * sa;
+    syp := cyp - (LineWidth / 2) * sa - (0.35 * Op.FontSize) * ca;
+    Result := RawByteString(Format('%s %s %s rg'#10, [NS(R), NS(G), NS(B)]));
+    Result := Result + RawByteString(Format('BT /F%d %d Tf'#10, [FontIndex(Op.FontStyle), Op.FontSize]));
+    Result := Result + RawByteString(Format('%s %s %s %s %s %s Tm (',
+      [NS(ca), NS(sa), NS(-sa), NS(ca), NS(sxp), NS(syp)]));
+    Result := Result + PdfEscapeText(Txt);
+    Result := Result + ') Tj'#10'ET'#10;
+    Exit;
+  end;
 
   Lines := Op.Text.Replace(#13#10, #10).Split([#10]);
 
@@ -241,6 +264,41 @@ begin
     Result := Result + 'S'#10;
 end;
 
+function TPdfBuilder.PolygonOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
+var
+  I: Integer;
+  X, Y, R, G, B, Br, Bg, Bb: Double;
+  HasFill, HasStroke: Boolean;
+begin
+  Result := '';
+  if Length(Op.Points) < 3 then Exit;
+  HasFill := not Op.BrushTransparent;
+  HasStroke := Op.PenWidth > 0;
+  ColorRGB(Op.PenColor, R, G, B);
+  ColorRGB(Op.BrushColor, Br, Bg, Bb);
+  if HasStroke then
+    Result := Result + RawByteString(Format('%s %s %s RG %s w'#10,
+      [NS(R), NS(G), NS(B), NS(Max(0.3, MMToPt(Op.PenWidth)))]));
+  if HasFill then
+    Result := Result + RawByteString(Format('%s %s %s rg'#10, [NS(Br), NS(Bg), NS(Bb)]));
+  for I := 0 to High(Op.Points) do
+  begin
+    X := MMToPt(Op.Points[I].X);
+    Y := PageHpt - MMToPt(Op.Points[I].Y);
+    if I = 0 then
+      Result := Result + RawByteString(Format('%s %s m'#10, [NS(X), NS(Y)]))
+    else
+      Result := Result + RawByteString(Format('%s %s l'#10, [NS(X), NS(Y)]));
+  end;
+  Result := Result + 'h'#10; // fecha o contorno
+  if HasFill and HasStroke then
+    Result := Result + 'B'#10
+  else if HasFill then
+    Result := Result + 'f'#10
+  else
+    Result := Result + 'S'#10;
+end;
+
 function TPdfBuilder.ImageOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
 var
   X, Y, W, H: Double;
@@ -270,6 +328,7 @@ begin
       rhdkLine:    Result := Result + LineOpContent(Op, PageHpt);
       rhdkRect,
       rhdkEllipse: Result := Result + ShapeOpContent(Op, PageHpt);
+      rhdkPolygon: Result := Result + PolygonOpContent(Op, PageHpt);
       rhdkImage:   Result := Result + ImageOpContent(Op, PageHpt);
     end;
 end;

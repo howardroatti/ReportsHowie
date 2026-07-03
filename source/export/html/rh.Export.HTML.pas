@@ -106,8 +106,18 @@ begin
   else
     HA := 'left';
   end;
+  // texto rotacionado (marca d'agua): centraliza dentro do box
+  if Op.Angle <> 0 then
+  begin
+    VA := 'center';
+    HA := 'center';
+  end;
 
   Outer := PosStyle(Op.Rect) + 'display:flex;align-items:' + VA + ';';
+  if Op.Angle <> 0 then
+    // CSS rotate e horario; nosso angulo e anti-horario -> inverte o sinal
+    Outer := Outer + 'justify-content:center;overflow:visible;transform-origin:center center;' +
+      'transform:rotate(' + IntToStr(Round(-Op.Angle)) + 'deg);';
   if not Op.Transparent then
     Outer := Outer + 'background:' + ColorToHtml(Op.BackColor) + ';';
   if rhfsLeft in Op.FrameSides then
@@ -166,6 +176,36 @@ begin
   SB.Append('<div class="rh-obj" style="' + Style + '"></div>');
 end;
 
+procedure EmitPolygonOp(SB: TStringBuilder; Op: TrhDrawOp);
+var
+  I, MinX, MinY, MaxX, MaxY, W, H: TrhUnit;
+  Pts, Fill, Stroke: string;
+begin
+  if Length(Op.Points) < 3 then Exit;
+  MinX := Op.Points[0].X; MaxX := MinX;
+  MinY := Op.Points[0].Y; MaxY := MinY;
+  for I := 1 to High(Op.Points) do
+  begin
+    if Op.Points[I].X < MinX then MinX := Op.Points[I].X;
+    if Op.Points[I].X > MaxX then MaxX := Op.Points[I].X;
+    if Op.Points[I].Y < MinY then MinY := Op.Points[I].Y;
+    if Op.Points[I].Y > MaxY then MaxY := Op.Points[I].Y;
+  end;
+  W := MaxX - MinX; H := MaxY - MinY;
+  if (W <= 0) or (H <= 0) then Exit;
+  Pts := '';
+  for I := 0 to High(Op.Points) do
+    Pts := Pts + IntToStr(Op.Points[I].X - MinX) + ',' +
+                 IntToStr(Op.Points[I].Y - MinY) + ' ';
+  if Op.BrushTransparent then Fill := 'none' else Fill := ColorToHtml(Op.BrushColor);
+  if Op.PenWidth > 0 then Stroke := ColorToHtml(Op.PenColor) else Stroke := 'none';
+  SB.Append(Format('<svg class="rh-obj" style="left:%smm;top:%smm;width:%smm;' +
+    'height:%smm;overflow:visible;" viewBox="0 0 %d %d"><polygon points="%s" ' +
+    'fill="%s" stroke="%s" stroke-width="%d"/></svg>',
+    [MMStr(MinX), MMStr(MinY), MMStr(W), MMStr(H), W, H, Trim(Pts), Fill, Stroke,
+     Op.PenWidth]));
+end;
+
 procedure EmitImageOp(SB: TStringBuilder; Op: TrhDrawOp);
 var
   Fit, URI: string;
@@ -208,6 +248,7 @@ begin
             rhdkLine:    EmitLineOp(SB, Op);
             rhdkRect,
             rhdkEllipse: EmitShapeOp(SB, Op);
+            rhdkPolygon: EmitPolygonOp(SB, Op);
             rhdkImage:   EmitImageOp(SB, Op);
           end;
         SB.Append('</div>');

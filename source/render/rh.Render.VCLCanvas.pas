@@ -42,6 +42,13 @@ var
   gw, gh: Integer;
   sc: Double;
   tw, th, tx, ty: Integer;
+  LF: TLogFont;
+  NewFont, OldFont: HFONT;
+  ext: TSize;
+  cx, cy, sx, sy: Integer;
+  ang: Double;
+  Poly: array of TPoint;
+  pi_: Integer;
 
   function PX(u: TrhUnit): Integer;
   begin
@@ -64,6 +71,34 @@ begin
     case Op.Kind of
       rhdkText:
         begin
+          // texto ROTACIONADO (marca d'agua / rotulos): desenha centralizado no R
+          if Op.Angle <> 0 then
+          begin
+            Canvas.Font.Name := Op.FontName;
+            Canvas.Font.Style := Op.FontStyle;
+            Canvas.Font.Color := Op.FontColor;
+            Canvas.Font.Height := -Round(Op.FontSize * Scale * 254 / 72);
+            FillChar(LF, SizeOf(LF), 0);
+            GetObject(Canvas.Font.Handle, SizeOf(LF), @LF);
+            LF.lfEscapement := Round(Op.Angle * 10);
+            LF.lfOrientation := Round(Op.Angle * 10);
+            NewFont := CreateFontIndirect(LF);
+            OldFont := SelectObject(Canvas.Handle, NewFont);
+            SetBkMode(Canvas.Handle, TRANSPARENT);
+            SetTextColor(Canvas.Handle, ColorToRGB(Op.FontColor));
+            GetTextExtentPoint32(Canvas.Handle, PChar(Op.Text), Length(Op.Text), ext);
+            cx := (R.Left + R.Right) div 2;
+            cy := (R.Top + R.Bottom) div 2;
+            ang := Op.Angle * Pi / 180;
+            SetTextAlign(Canvas.Handle, TA_CENTER or TA_BASELINE);
+            sx := cx + Round(0.35 * ext.cy * Sin(ang));
+            sy := cy + Round(0.35 * ext.cy * Cos(ang));
+            Winapi.Windows.TextOut(Canvas.Handle, sx, sy, PChar(Op.Text), Length(Op.Text));
+            SetTextAlign(Canvas.Handle, TA_LEFT or TA_TOP);
+            SelectObject(Canvas.Handle, OldFont);
+            DeleteObject(NewFont);
+            Continue;
+          end;
           if not Op.Transparent then
           begin
             Canvas.Brush.Style := bsSolid;
@@ -151,6 +186,33 @@ begin
               PenPx(30), PenPx(30))
           else
             Canvas.Rectangle(R);
+        end;
+
+      rhdkPolygon:
+        begin
+          if Length(Op.Points) >= 3 then
+          begin
+            SetLength(Poly, Length(Op.Points));
+            for pi_ := 0 to High(Op.Points) do
+              Poly[pi_] := Point(PX(Op.Points[pi_].X), PY(Op.Points[pi_].Y));
+            if Op.PenWidth > 0 then
+            begin
+              Canvas.Pen.Color := Op.PenColor;
+              Canvas.Pen.Width := PenPx(Op.PenWidth);
+              Canvas.Pen.Style := psSolid;
+            end
+            else
+              Canvas.Pen.Style := psClear;
+            if Op.BrushTransparent then
+              Canvas.Brush.Style := bsClear
+            else
+            begin
+              Canvas.Brush.Style := bsSolid;
+              Canvas.Brush.Color := Op.BrushColor;
+            end;
+            Canvas.Polygon(Poly);
+            Canvas.Pen.Style := psSolid;
+          end;
         end;
 
       rhdkImage:

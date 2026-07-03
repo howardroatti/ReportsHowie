@@ -166,6 +166,86 @@ type
     property Transparent: Boolean read FTransparent write FTransparent default False;
   end;
 
+  /// <summary>Codigo de barras 1D (Code128 / Code39). O texto pode conter ilhas
+  ///  [expr] ou vir de DataField (igual ao TrhTextObject). O motor de render
+  ///  expande as barras em retangulos, entao funciona em preview e em todos os
+  ///  exports. ModuleWidth = 0 => a largura da barra estreita e auto-ajustada
+  ///  para preencher Width; &gt; 0 fixa a largura do modulo (em 0,1 mm).</summary>
+  TrhBarcodeObject = class(TrhReportObject)
+  private
+    FSymbology: TrhBarcodeSymbology;
+    FText: string;
+    FDataField: string;
+    FBarColor: TColor;
+    FShowText: Boolean;
+    FModuleWidth: TrhUnit;
+    FFont: TFont;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
+    class function ObjectType: string; override;
+    procedure SaveToJSON(O: TJSONObject); override;
+    procedure LoadFromJSON(O: TJSONObject); override;
+    /// <summary>Valor a codificar: '[DataField]' se preenchido, senao Text.</summary>
+    function DisplayExpression: string;
+  published
+    property Symbology: TrhBarcodeSymbology read FSymbology write FSymbology default rhbcCode128;
+    property Text: string read FText write FText;
+    property DataField: string read FDataField write FDataField;
+    property BarColor: TColor read FBarColor write FBarColor default clBlack;
+    property ShowText: Boolean read FShowText write FShowText default True;
+    property ModuleWidth: TrhUnit read FModuleWidth write FModuleWidth default 0;
+    property Font: TFont read FFont;
+  end;
+
+  /// <summary>Um ponto da serie do grafico (categoria + valor agregado).</summary>
+  TrhChartPoint = record
+    Category: string;
+    Value: Double;
+  end;
+
+  /// <summary>Grafico (barras/linhas/pizza). A serie e AGREGADA do dataset da
+  ///  banda pelo pipeline: agrupa por CategoryExpr e aplica Aggregate sobre
+  ///  ValueExpr. O motor de render desenha via primitivas (rect/linha/poligono),
+  ///  entao aparece em preview e em todos os exports. Coloque o grafico numa
+  ///  banda emitida APOS os dados (Summary ou GroupFooter) para a serie estar
+  ///  completa.</summary>
+  TrhChartObject = class(TrhReportObject)
+  private
+    FChartType: TrhChartType;
+    FAggregate: TrhChartAggregate;
+    FDataSetName: string;
+    FCategoryExpr: string;
+    FValueExpr: string;
+    FTitle: string;
+    FShowValues: Boolean;
+    FShowLegend: Boolean;
+    FBarColor: TColor;
+    FFont: TFont;
+    FSeries: TArray<TrhChartPoint>;   // transiente: preenchido pelo pipeline
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
+    class function ObjectType: string; override;
+    procedure SaveToJSON(O: TJSONObject); override;
+    procedure LoadFromJSON(O: TJSONObject); override;
+    /// <summary>Serie agregada (nao serializada). O pipeline escreve; o motor le.</summary>
+    property Series: TArray<TrhChartPoint> read FSeries write FSeries;
+  published
+    property ChartType: TrhChartType read FChartType write FChartType default rhctBar;
+    property Aggregate: TrhChartAggregate read FAggregate write FAggregate default rhcaSum;
+    property DataSetName: string read FDataSetName write FDataSetName;
+    property CategoryExpr: string read FCategoryExpr write FCategoryExpr;
+    property ValueExpr: string read FValueExpr write FValueExpr;
+    property Title: string read FTitle write FTitle;
+    property ShowValues: Boolean read FShowValues write FShowValues default True;
+    property ShowLegend: Boolean read FShowLegend write FShowLegend default False;
+    property BarColor: TColor read FBarColor write FBarColor default clSkyBlue;
+    property Font: TFont read FFont;
+  end;
+
   /// <summary>Colecao polimorfica de objetos, dona dos itens.</summary>
   TrhObjectList = class(TObjectList<TrhReportObject>)
   public
@@ -545,6 +625,166 @@ begin
   FTransparent := JGetBool(O, 'transparent', False);
 end;
 
+{ TrhBarcodeObject }
+
+constructor TrhBarcodeObject.Create;
+begin
+  inherited Create;
+  FSymbology := rhbcCode128;
+  FBarColor := clBlack;
+  FShowText := True;
+  FModuleWidth := 0; // auto-ajusta a largura
+  FFont := TFont.Create;
+  FFont.Name := 'Segoe UI';
+  FFont.Size := 8;
+end;
+
+destructor TrhBarcodeObject.Destroy;
+begin
+  FFont.Free;
+  inherited Destroy;
+end;
+
+procedure TrhBarcodeObject.Assign(Source: TPersistent);
+var
+  Src: TrhBarcodeObject;
+begin
+  inherited Assign(Source);
+  if Source is TrhBarcodeObject then
+  begin
+    Src := TrhBarcodeObject(Source);
+    FSymbology := Src.FSymbology;
+    FText := Src.FText;
+    FDataField := Src.FDataField;
+    FBarColor := Src.FBarColor;
+    FShowText := Src.FShowText;
+    FModuleWidth := Src.FModuleWidth;
+    FFont.Assign(Src.FFont);
+  end;
+end;
+
+class function TrhBarcodeObject.ObjectType: string;
+begin
+  Result := 'barcode';
+end;
+
+function TrhBarcodeObject.DisplayExpression: string;
+begin
+  if FDataField <> '' then
+    Result := '[' + FDataField + ']'
+  else
+    Result := FText;
+end;
+
+procedure TrhBarcodeObject.SaveToJSON(O: TJSONObject);
+var
+  FontObj: TJSONObject;
+begin
+  inherited SaveToJSON(O);
+  O.AddPair('symbology', BarcodeSymbologyToStr(FSymbology));
+  O.AddPair('text', FText);
+  O.AddPair('dataField', FDataField);
+  O.AddPair('barColor', TJSONNumber.Create(Integer(FBarColor)));
+  O.AddPair('showText', TJSONBool.Create(FShowText));
+  O.AddPair('moduleWidth', TJSONNumber.Create(FModuleWidth));
+  FontObj := TJSONObject.Create;
+  FontToJSON(FFont, FontObj);
+  O.AddPair('font', FontObj);
+end;
+
+procedure TrhBarcodeObject.LoadFromJSON(O: TJSONObject);
+begin
+  inherited LoadFromJSON(O);
+  FSymbology := StrToBarcodeSymbology(JGetStr(O, 'symbology', 'code128'));
+  FText := JGetStr(O, 'text', '');
+  FDataField := JGetStr(O, 'dataField', '');
+  FBarColor := TColor(JGetInt(O, 'barColor', Integer(clBlack)));
+  FShowText := JGetBool(O, 'showText', True);
+  FModuleWidth := JGetInt(O, 'moduleWidth', 0);
+  FontFromJSON(JGetObj(O, 'font'), FFont);
+end;
+
+{ TrhChartObject }
+
+constructor TrhChartObject.Create;
+begin
+  inherited Create;
+  FChartType := rhctBar;
+  FAggregate := rhcaSum;
+  FShowValues := True;
+  FShowLegend := False;
+  FBarColor := clSkyBlue;
+  FFont := TFont.Create;
+  FFont.Name := 'Segoe UI';
+  FFont.Size := 8;
+end;
+
+destructor TrhChartObject.Destroy;
+begin
+  FFont.Free;
+  inherited Destroy;
+end;
+
+procedure TrhChartObject.Assign(Source: TPersistent);
+var
+  Src: TrhChartObject;
+begin
+  inherited Assign(Source);
+  if Source is TrhChartObject then
+  begin
+    Src := TrhChartObject(Source);
+    FChartType := Src.FChartType;
+    FAggregate := Src.FAggregate;
+    FDataSetName := Src.FDataSetName;
+    FCategoryExpr := Src.FCategoryExpr;
+    FValueExpr := Src.FValueExpr;
+    FTitle := Src.FTitle;
+    FShowValues := Src.FShowValues;
+    FShowLegend := Src.FShowLegend;
+    FBarColor := Src.FBarColor;
+    FFont.Assign(Src.FFont);
+  end;
+end;
+
+class function TrhChartObject.ObjectType: string;
+begin
+  Result := 'chart';
+end;
+
+procedure TrhChartObject.SaveToJSON(O: TJSONObject);
+var
+  FontObj: TJSONObject;
+begin
+  inherited SaveToJSON(O);
+  O.AddPair('chartType', ChartTypeToStr(FChartType));
+  O.AddPair('aggregate', ChartAggregateToStr(FAggregate));
+  O.AddPair('dataSetName', FDataSetName);
+  O.AddPair('categoryExpr', FCategoryExpr);
+  O.AddPair('valueExpr', FValueExpr);
+  O.AddPair('title', FTitle);
+  O.AddPair('showValues', TJSONBool.Create(FShowValues));
+  O.AddPair('showLegend', TJSONBool.Create(FShowLegend));
+  O.AddPair('barColor', TJSONNumber.Create(Integer(FBarColor)));
+  FontObj := TJSONObject.Create;
+  FontToJSON(FFont, FontObj);
+  O.AddPair('font', FontObj);
+end;
+
+procedure TrhChartObject.LoadFromJSON(O: TJSONObject);
+begin
+  inherited LoadFromJSON(O);
+  FChartType := StrToChartType(JGetStr(O, 'chartType', 'bar'));
+  FAggregate := StrToChartAggregate(JGetStr(O, 'aggregate', 'sum'));
+  FDataSetName := JGetStr(O, 'dataSetName', '');
+  FCategoryExpr := JGetStr(O, 'categoryExpr', '');
+  FValueExpr := JGetStr(O, 'valueExpr', '');
+  FTitle := JGetStr(O, 'title', '');
+  FShowValues := JGetBool(O, 'showValues', True);
+  FShowLegend := JGetBool(O, 'showLegend', False);
+  FBarColor := TColor(JGetInt(O, 'barColor', Integer(clSkyBlue)));
+  FontFromJSON(JGetObj(O, 'font'), FFont);
+end;
+
 { TrhObjectList }
 
 constructor TrhObjectList.Create;
@@ -598,6 +838,8 @@ initialization
   RegisterReportObject(TrhImageObject);
   RegisterReportObject(TrhLineObject);
   RegisterReportObject(TrhShapeObject);
+  RegisterReportObject(TrhBarcodeObject);
+  RegisterReportObject(TrhChartObject);
 
 finalization
   GObjectClasses.Free;

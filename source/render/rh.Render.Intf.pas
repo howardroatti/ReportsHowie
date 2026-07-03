@@ -22,7 +22,7 @@ uses
   rh.Types, rh.Model.Types;
 
 type
-  TrhDrawKind = (rhdkText, rhdkLine, rhdkRect, rhdkEllipse, rhdkImage);
+  TrhDrawKind = (rhdkText, rhdkLine, rhdkRect, rhdkEllipse, rhdkImage, rhdkPolygon);
 
   /// <summary>Uma primitiva de desenho posicionada na pagina.</summary>
   TrhDrawOp = class
@@ -41,26 +41,32 @@ type
     WordWrap: Boolean;
     BackColor: TColor;
     Transparent: Boolean;
+    Angle: Double;               // graus, anti-horario (texto rotacionado; 0 = normal)
 
     // --- moldura (texto) ---
     FrameSides: TrhFrameSides;
     FrameColor: TColor;
     FrameWidth: TrhUnit;
 
-    // --- pen/brush (linha, rect, ellipse) ---
+    // --- pen/brush (linha, rect, ellipse, poligono) ---
     PenColor: TColor;
     PenWidth: TrhUnit;
     BrushColor: TColor;
     BrushTransparent: Boolean;
     RoundRect: Boolean;
 
-    // --- imagem (referencia nao-propria ao grafico do objeto) ---
+    // --- poligono (rhdkPolygon): vertices absolutos em unidades de relatorio ---
+    Points: TArray<TrhPointU>;
+
+    // --- imagem ---
     Graphic: TGraphic;
+    OwnsGraphic: Boolean;        // True = a display list e dona (libera no Destroy)
     Stretch: Boolean;
     KeepAspect: Boolean;
     Center: Boolean;
 
     constructor Create;
+    destructor Destroy; override;
   end;
 
   /// <summary>Uma pagina fisica renderizada: tamanho + lista de primitivas.</summary>
@@ -109,6 +115,14 @@ begin
   Stretch := True;
   KeepAspect := True;
   Center := True;
+  OwnsGraphic := False;
+end;
+
+destructor TrhDrawOp.Destroy;
+begin
+  if OwnsGraphic and (Graphic <> nil) then
+    Graphic.Free;
+  inherited Destroy;
 end;
 
 { TrhRenderedPage }

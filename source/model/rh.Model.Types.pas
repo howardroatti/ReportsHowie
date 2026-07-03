@@ -36,6 +36,15 @@ type
   /// <summary>Formato geometrico de um TrhShapeObject.</summary>
   TrhShapeKind = (rhskRectangle, rhskRoundRect, rhskEllipse);
 
+  /// <summary>Simbologia de um TrhBarcodeObject (1D e 2D).</summary>
+  TrhBarcodeSymbology = (rhbcCode128, rhbcCode39, rhbcQRCode);
+
+  /// <summary>Tipo de um TrhChartObject.</summary>
+  TrhChartType = (rhctBar, rhctLine, rhctPie);
+
+  /// <summary>Agregacao aplicada ao valor por categoria num TrhChartObject.</summary>
+  TrhChartAggregate = (rhcaSum, rhcaAvg, rhcaCount, rhcaMin, rhcaMax);
+
   /// <summary>Orientacao do papel da pagina.</summary>
   TrhOrientation = (rhoPortrait, rhoLandscape);
 
@@ -61,6 +70,14 @@ function StrToVAlign(const S: string; Default: TrhVAlign = rhvaTop): TrhVAlign;
 
 function ShapeKindToStr(V: TrhShapeKind): string;
 function StrToShapeKind(const S: string; Default: TrhShapeKind = rhskRectangle): TrhShapeKind;
+
+function BarcodeSymbologyToStr(V: TrhBarcodeSymbology): string;
+function StrToBarcodeSymbology(const S: string; Default: TrhBarcodeSymbology = rhbcCode128): TrhBarcodeSymbology;
+
+function ChartTypeToStr(V: TrhChartType): string;
+function StrToChartType(const S: string; Default: TrhChartType = rhctBar): TrhChartType;
+function ChartAggregateToStr(V: TrhChartAggregate): string;
+function StrToChartAggregate(const S: string; Default: TrhChartAggregate = rhcaSum): TrhChartAggregate;
 
 function OrientationToStr(V: TrhOrientation): string;
 function StrToOrientation(const S: string; Default: TrhOrientation = rhoPortrait): TrhOrientation;
@@ -160,6 +177,64 @@ begin
   if SameText(S, 'rectangle') then Result := rhskRectangle
   else if SameText(S, 'roundRect') then Result := rhskRoundRect
   else if SameText(S, 'ellipse') then Result := rhskEllipse
+  else Result := Default;
+end;
+
+function BarcodeSymbologyToStr(V: TrhBarcodeSymbology): string;
+begin
+  case V of
+    rhbcCode39: Result := 'code39';
+    rhbcQRCode: Result := 'qrcode';
+  else
+    Result := 'code128';
+  end;
+end;
+
+function StrToBarcodeSymbology(const S: string; Default: TrhBarcodeSymbology): TrhBarcodeSymbology;
+begin
+  if SameText(S, 'code128') then Result := rhbcCode128
+  else if SameText(S, 'code39') then Result := rhbcCode39
+  else if SameText(S, 'qrcode') then Result := rhbcQRCode
+  else Result := Default;
+end;
+
+function ChartTypeToStr(V: TrhChartType): string;
+begin
+  case V of
+    rhctLine: Result := 'line';
+    rhctPie:  Result := 'pie';
+  else
+    Result := 'bar';
+  end;
+end;
+
+function StrToChartType(const S: string; Default: TrhChartType): TrhChartType;
+begin
+  if SameText(S, 'bar') then Result := rhctBar
+  else if SameText(S, 'line') then Result := rhctLine
+  else if SameText(S, 'pie') then Result := rhctPie
+  else Result := Default;
+end;
+
+function ChartAggregateToStr(V: TrhChartAggregate): string;
+begin
+  case V of
+    rhcaAvg:   Result := 'avg';
+    rhcaCount: Result := 'count';
+    rhcaMin:   Result := 'min';
+    rhcaMax:   Result := 'max';
+  else
+    Result := 'sum';
+  end;
+end;
+
+function StrToChartAggregate(const S: string; Default: TrhChartAggregate): TrhChartAggregate;
+begin
+  if SameText(S, 'sum') then Result := rhcaSum
+  else if SameText(S, 'avg') then Result := rhcaAvg
+  else if SameText(S, 'count') then Result := rhcaCount
+  else if SameText(S, 'min') then Result := rhcaMin
+  else if SameText(S, 'max') then Result := rhcaMax
   else Result := Default;
 end;
 
