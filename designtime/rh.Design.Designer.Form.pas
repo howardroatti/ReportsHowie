@@ -37,7 +37,11 @@ type
     FInspector: TrhInspector;
     FInspHeader: TLabel;
     FData: TrhDesignData;
+    FOwnedData: TrhDesignData;              // instancias criadas por Atualizar (a form libera)
+    FOnCollectData: TFunc<TrhDesignData>;   // recoleta dados sob demanda (design-time)
     FDataTree: TTreeView;
+    FDataPanel: TPanel;
+    FDataSplitter: TSplitter;
     FStructTree: TTreeView;   // outline de estrutura (Fase 5.3)
     FSyncing: Boolean;        // guarda contra recursao entre outline <-> surface
     FStructSig: string;       // assinatura da estrutura (rebuild so quando muda)
@@ -50,9 +54,13 @@ type
     procedure DoAddImage(Sender: TObject);
     procedure DoAddLine(Sender: TObject);
     procedure DoAddShape(Sender: TObject);
+    procedure DoAddBarcode(Sender: TObject);
+    procedure DoAddChart(Sender: TObject);
     procedure DoDelObj(Sender: TObject);
     procedure DoAddBand(Sender: TObject);
     procedure DoDelBand(Sender: TObject);
+    procedure DoBandUp(Sender: TObject);
+    procedure DoBandDown(Sender: TObject);
     procedure DoZoomIn(Sender: TObject);
     procedure DoZoomOut(Sender: TObject);
     procedure DoOpenFile(Sender: TObject);
@@ -70,6 +78,8 @@ type
     procedure FormKeyDownHandler(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure BuildUI;
     procedure BuildDataPanel;
+    procedure PopulateDataTree;
+    procedure DoRefreshData(Sender: TObject);
     procedure DataTreeDblClick(Sender: TObject);
     procedure DoInsertField(Sender: TObject);
     procedure SurfaceDragOver(Sender, Source: TObject; X, Y: Integer;
@@ -86,8 +96,10 @@ type
     procedure UpdateStatus;
   public
     constructor CreateForReport(AOwner: TComponent; AReport: TrhReport;
-      AData: TrhDesignData);
-    class function Execute(AReport: TrhReport; AData: TrhDesignData = nil): Boolean;
+      AData: TrhDesignData; AOnCollectData: TFunc<TrhDesignData> = nil);
+    destructor Destroy; override;
+    class function Execute(AReport: TrhReport; AData: TrhDesignData = nil;
+      AOnCollectData: TFunc<TrhDesignData> = nil): Boolean;
   end;
 
 implementation
@@ -108,11 +120,12 @@ const
 { TrhDesignerForm }
 
 constructor TrhDesignerForm.CreateForReport(AOwner: TComponent; AReport: TrhReport;
-  AData: TrhDesignData);
+  AData: TrhDesignData; AOnCollectData: TFunc<TrhDesignData>);
 begin
   inherited CreateNew(AOwner);
   FReport := AReport;
   FData := AData;
+  FOnCollectData := AOnCollectData;
   BuildUI;
   if FReport <> nil then
     FSnapshot := FReport.ToJSONString(False);
@@ -122,11 +135,18 @@ begin
   UpdateStatus;
 end;
 
-class function TrhDesignerForm.Execute(AReport: TrhReport; AData: TrhDesignData): Boolean;
+destructor TrhDesignerForm.Destroy;
+begin
+  FOwnedData.Free; // libera as instancias criadas por Atualizar (nil-safe)
+  inherited Destroy;
+end;
+
+class function TrhDesignerForm.Execute(AReport: TrhReport; AData: TrhDesignData;
+  AOnCollectData: TFunc<TrhDesignData>): Boolean;
 var
   Form: TrhDesignerForm;
 begin
-  Form := TrhDesignerForm.CreateForReport(nil, AReport, AData);
+  Form := TrhDesignerForm.CreateForReport(nil, AReport, AData, AOnCollectData);
   try
     Result := Form.ShowModal = mrOk;
     if (not Result) and (AReport <> nil) then
@@ -193,16 +213,18 @@ begin
   Inc(FGroupX, 48);
   GBtn('+', 'Aumentar zoom', 30, DoZoomIn);
 
-  // grupo Inserir
-  BeginGroup('Inserir', 210);
-  GBtn('Texto', 'Inserir objeto de texto', 54, DoAddText);
-  GBtn('Imagem', 'Inserir imagem', 60, DoAddImage);
-  GBtn('Linha', 'Inserir linha', 50, DoAddLine);
-  GBtn('Forma', 'Inserir forma (retangulo/elipse)', 54, DoAddShape);
+  // grupo Inserir (clique no botao e depois clique na superficie p/ posicionar)
+  BeginGroup('Inserir', 330);
+  GBtn('Texto', 'Inserir texto: clique aqui e depois na superficie', 54, DoAddText);
+  GBtn('Imagem', 'Inserir imagem: clique aqui e depois na superficie', 60, DoAddImage);
+  GBtn('Linha', 'Inserir linha: clique aqui e depois na superficie', 50, DoAddLine);
+  GBtn('Forma', 'Inserir forma: clique aqui e depois na superficie', 54, DoAddShape);
+  GBtn('Barras', 'Inserir codigo de barras (Code128/Code39/QR): clique e posicione', 54, DoAddBarcode);
+  GBtn('Grafico', 'Inserir grafico (barras/linha/pizza): clique e posicione', 58, DoAddChart);
   GBtn('Excluir', 'Excluir objeto(s) selecionado(s)  (Del)', 58, DoDelObj);
 
   // grupo Banda
-  BeginGroup('Banda', 240);
+  BeginGroup('Banda', 312);
   FBandCombo := TComboBox.Create(Self);
   FBandCombo.Parent := FCurGroup;
   FBandCombo.Style := csDropDownList;
@@ -215,6 +237,8 @@ begin
   Inc(FGroupX, 132);
   GBtn('+ Banda', 'Inserir banda do tipo escolhido', 62, DoAddBand);
   GBtn('Excluir', 'Excluir a banda selecionada', 54, DoDelBand);
+  GBtn(#$25B2, 'Subir a banda selecionada', 28, DoBandUp);
+  GBtn(#$25BC, 'Descer a banda selecionada', 28, DoBandDown);
 
   // grupo Alinhar (glifos via #$XXXX = seguros no source ANSI)
   BeginGroup('Alinhar', 250);
@@ -352,41 +376,61 @@ end;
 
 procedure TrhDesignerForm.BuildDataPanel;
 var
-  LeftPanel: TPanel;
-  Header: TLabel;
-  BtnIns: TButton;
-  Splitter: TSplitter;
-  I, J: Integer;
-  DsNode: TTreeNode;
+  Header: TPanel;
+  Cap: TLabel;
+  BtnRefresh, BtnIns: TButton;
 begin
-  if (FData = nil) or (FData.Count = 0) then Exit;
+  // mostra o painel quando ja ha datasets OU quando da para recoletar sob demanda
+  // (design-time). No runtime embutido sem callback e sem dados, fica oculto.
+  if ((FData = nil) or (FData.Count = 0)) and (not Assigned(FOnCollectData)) then
+    Exit;
 
-  LeftPanel := TPanel.Create(Self);
-  LeftPanel.Parent := Self;
-  LeftPanel.Align := alLeft;
-  LeftPanel.Width := 200;
-  LeftPanel.BevelOuter := bvNone;
+  FDataPanel := TPanel.Create(Self);
+  FDataPanel.Parent := Self;
+  FDataPanel.Align := alLeft;
+  FDataPanel.Width := 200;
+  FDataPanel.BevelOuter := bvNone;
 
-  Header := TLabel.Create(Self);
-  Header.Parent := LeftPanel;
+  // cabecalho: titulo + botao Atualizar (recoleta datasets do IDE sob demanda)
+  Header := TPanel.Create(Self);
+  Header.Parent := FDataPanel;
   Header.Align := alTop;
   Header.Height := 22;
-  Header.Alignment := taCenter;
-  Header.Layout := tlCenter;
-  Header.Caption := 'Dados (campos)';
+  Header.BevelOuter := bvNone;
   Header.Color := clBtnFace;
-  Header.Transparent := False;
-  Header.Font.Style := [fsBold];
+  Header.ParentBackground := False;
+
+  Cap := TLabel.Create(Self);
+  Cap.Parent := Header;
+  Cap.Align := alClient;
+  Cap.Alignment := taCenter;
+  Cap.Layout := tlCenter;
+  Cap.Caption := 'Dados (campos)';
+  Cap.Transparent := True;
+  Cap.Font.Style := [fsBold];
+
+  if Assigned(FOnCollectData) then
+  begin
+    BtnRefresh := TButton.Create(Self);
+    BtnRefresh.Parent := Header;
+    BtnRefresh.Align := alRight;
+    BtnRefresh.Width := 64;
+    BtnRefresh.Caption := 'Atualizar';
+    BtnRefresh.Hint := 'Recoletar os datasets abertos no IDE ' +
+      '(use apos adicionar/alterar TDataSource ou abrir um DataModule).';
+    BtnRefresh.ShowHint := True;
+    BtnRefresh.OnClick := DoRefreshData;
+  end;
 
   BtnIns := TButton.Create(Self);
-  BtnIns.Parent := LeftPanel;
+  BtnIns.Parent := FDataPanel;
   BtnIns.Align := alBottom;
   BtnIns.Height := 28;
   BtnIns.Caption := 'Inserir campo na banda';
   BtnIns.OnClick := DoInsertField;
 
   FDataTree := TTreeView.Create(Self);
-  FDataTree.Parent := LeftPanel;
+  FDataTree.Parent := FDataPanel;
   FDataTree.Align := alClient;
   FDataTree.ReadOnly := True;
   FDataTree.HideSelection := False;
@@ -396,25 +440,54 @@ begin
   FDataTree.Hint := 'Arraste um campo para a superficie (sobre um objeto = vincula; ' +
     'em area vazia = cria texto vinculado). Ou duplo-clique para inserir.';
 
-  // popular: datasets -> campos
+  PopulateDataTree;
+
+  FDataSplitter := TSplitter.Create(Self);
+  FDataSplitter.Parent := Self;
+  FDataSplitter.Align := alLeft;
+  FDataSplitter.Width := 4;
+end;
+
+procedure TrhDesignerForm.PopulateDataTree;
+var
+  I, J: Integer;
+  DsNode: TTreeNode;
+begin
+  if FDataTree = nil then Exit;
   FDataTree.Items.BeginUpdate;
   try
-    for I := 0 to FData.Count - 1 do
-    begin
-      DsNode := FDataTree.Items.Add(nil, FData.DatasetName(I));
-      for J := 0 to FData.Fields(I).Count - 1 do
-        FDataTree.Items.AddChild(DsNode, FData.Fields(I)[J]);
-    end;
+    FDataTree.Items.Clear;
+    if FData <> nil then
+      for I := 0 to FData.Count - 1 do
+      begin
+        DsNode := FDataTree.Items.Add(nil, FData.DatasetName(I));
+        for J := 0 to FData.Fields(I).Count - 1 do
+          FDataTree.Items.AddChild(DsNode, FData.Fields(I)[J]);
+      end;
   finally
     FDataTree.Items.EndUpdate;
   end;
   if FDataTree.Items.Count > 0 then
     FDataTree.Items[0].Expand(True);
+end;
 
-  Splitter := TSplitter.Create(Self);
-  Splitter.Parent := Self;
-  Splitter.Align := alLeft;
-  Splitter.Width := 4;
+procedure TrhDesignerForm.DoRefreshData(Sender: TObject);
+var
+  NewData: TrhDesignData;
+begin
+  if not Assigned(FOnCollectData) then Exit;
+  NewData := FOnCollectData();
+  if NewData = nil then Exit;
+  // troca a fonte atual pela recem-coletada; a form passa a ser dona dela
+  FOwnedData.Free;
+  FOwnedData := NewData;
+  FData := NewData;
+  PopulateDataTree;
+  // feedback: confirma que a coleta rodou e quantos datasets estao visiveis
+  // (sem esse aviso, clicar e nao ver mudanca parece que "nao funcionou").
+  if FStatus <> nil then
+    FStatus.SimpleText := Format('  Dados atualizados: %d dataset(s) encontrado(s).',
+      [FData.Count]);
 end;
 
 procedure TrhDesignerForm.DoInsertField(Sender: TObject);
@@ -475,6 +548,8 @@ begin
   else if Obj is TrhImageObject then Result := 'Imagem'
   else if Obj is TrhLineObject then Result := 'Linha'
   else if Obj is TrhShapeObject then Result := 'Forma'
+  else if Obj is TrhBarcodeObject then Result := 'Barras'
+  else if Obj is TrhChartObject then Result := 'Grafico: ' + TrhChartObject(Obj).Title
   else Result := Obj.ClassName;
 end;
 
@@ -648,22 +723,32 @@ end;
 
 procedure TrhDesignerForm.DoAddText(Sender: TObject);
 begin
-  FSurface.AddObjectOfClass(TrhTextObject);
+  FSurface.ArmTool(TrhTextObject);
 end;
 
 procedure TrhDesignerForm.DoAddImage(Sender: TObject);
 begin
-  FSurface.AddObjectOfClass(TrhImageObject);
+  FSurface.ArmTool(TrhImageObject);
 end;
 
 procedure TrhDesignerForm.DoAddLine(Sender: TObject);
 begin
-  FSurface.AddObjectOfClass(TrhLineObject);
+  FSurface.ArmTool(TrhLineObject);
 end;
 
 procedure TrhDesignerForm.DoAddShape(Sender: TObject);
 begin
-  FSurface.AddObjectOfClass(TrhShapeObject);
+  FSurface.ArmTool(TrhShapeObject);
+end;
+
+procedure TrhDesignerForm.DoAddBarcode(Sender: TObject);
+begin
+  FSurface.ArmTool(TrhBarcodeObject);
+end;
+
+procedure TrhDesignerForm.DoAddChart(Sender: TObject);
+begin
+  FSurface.ArmTool(TrhChartObject);
 end;
 
 procedure TrhDesignerForm.DoDelObj(Sender: TObject);
@@ -684,6 +769,22 @@ begin
   else if MessageDlg('Excluir a banda selecionada e seus objetos?',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     FSurface.DeleteSelectedBand;
+end;
+
+procedure TrhDesignerForm.DoBandUp(Sender: TObject);
+begin
+  if FSurface.SelectedBand = nil then
+    ShowMessage('Selecione uma banda (clique na faixa) para mover.')
+  else
+    FSurface.MoveBand(-1);
+end;
+
+procedure TrhDesignerForm.DoBandDown(Sender: TObject);
+begin
+  if FSurface.SelectedBand = nil then
+    ShowMessage('Selecione uma banda (clique na faixa) para mover.')
+  else
+    FSurface.MoveBand(1);
 end;
 
 procedure TrhDesignerForm.DoZoomIn(Sender: TObject);
@@ -844,6 +945,21 @@ begin
      (not (ActiveControl is TCustomEdit)) then
   begin
     FSurface.Undo;
+    Key := 0;
+    Exit;
+  end;
+  // Ctrl+Y: refazer
+  if (ssCtrl in Shift) and (Key = Ord('Y')) and
+     (not (ActiveControl is TCustomEdit)) then
+  begin
+    FSurface.Redo;
+    Key := 0;
+    Exit;
+  end;
+  // Esc: cancela a ferramenta armada (click-to-place)
+  if Key = VK_ESCAPE then
+  begin
+    FSurface.ArmTool(nil);
     Key := 0;
     Exit;
   end;

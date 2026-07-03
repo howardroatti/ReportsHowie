@@ -32,16 +32,84 @@ type
 implementation
 
 uses
-  System.Classes, Data.DB,
+  System.Classes, System.SysUtils, Data.DB, ToolsAPI,
   rh.Report, rh.Design.Designer.Form, rh.Design.Data, rh.Preview.Form;
 
 function TrhReportComponentEditor.CollectDesignData: TObject;
 var
   Data: TrhDesignData;
   Root: TComponent;
-  I, J: Integer;
-  DS: TDataSet;
-  Flds: TStringList;
+  I: Integer;
+  Flds, Seen: TStringList;
+
+  // Coleta os campos de um dataset (persistentes ou via FieldDefs). Evita
+  // duplicar quando o mesmo dataset e achado direto e via TDataSource.
+  procedure AddDS(DS: TDataSet);
+  var
+    J: Integer;
+  begin
+    if (DS = nil) or (DS.Name = '') then Exit;
+    if Seen.IndexOf(DS.Name) >= 0 then Exit;
+    Seen.Add(DS.Name);
+    Flds.Clear;
+    try
+      if DS.Fields.Count > 0 then
+      begin
+        for J := 0 to DS.Fields.Count - 1 do
+          Flds.Add(DS.Fields[J].FieldName);
+      end
+      else
+      begin
+        DS.FieldDefs.Update;
+        for J := 0 to DS.FieldDefs.Count - 1 do
+          Flds.Add(DS.FieldDefs[J].Name);
+      end;
+    except
+      // dataset fechado/sem conexao: fica so o nome, sem campos
+    end;
+    Data.AddDataset(DS.Name, Flds);
+  end;
+
+  // Enumera os modulos ABERTOS no IDE (via ToolsAPI) e coleta os TDataSet do
+  // root de cada um — pega datasets de DataModules mesmo SEM um TDataSource no
+  // form. Falhas de ToolsAPI sao silenciadas (o designer segue com o que achou).
+  procedure ScanOpenModules;
+  var
+    MS: IOTAModuleServices;
+    M: IOTAModule;
+    Ed: IOTAEditor;
+    FE: IOTAFormEditor;
+    RootIntf: IOTAComponent;
+    NativeRoot: TComponent;
+    MI, EI, CI: Integer;
+  begin
+    try
+      if not Supports(BorlandIDEServices, IOTAModuleServices, MS) then Exit;
+      for MI := 0 to MS.ModuleCount - 1 do
+      begin
+        M := MS.Modules[MI];
+        if M = nil then Continue;
+        // acha o editor de formulario/datamodule do modulo (se houver)
+        FE := nil;
+        for EI := 0 to M.GetModuleFileCount - 1 do
+        begin
+          Ed := M.GetModuleFileEditor(EI);
+          if Supports(Ed, IOTAFormEditor, FE) then Break;
+        end;
+        if FE = nil then Continue;
+        RootIntf := FE.GetRootComponent;
+        if (RootIntf = nil) or (not Supports(RootIntf, INTAComponent)) then Continue;
+        NativeRoot := (RootIntf as INTAComponent).GetComponent;
+        if NativeRoot = nil then Continue;
+        for CI := 0 to NativeRoot.ComponentCount - 1 do
+          if NativeRoot.Components[CI] is TDataSet then
+            AddDS(TDataSet(NativeRoot.Components[CI]));
+      end;
+    except
+      // ToolsAPI indisponivel/erro: ignora e mantem os datasets ja coletados
+    end;
+  end;
+
 begin
   Data := TrhDesignData.Create;
   Result := Data;
@@ -49,31 +117,22 @@ begin
   Root := Designer.Root;
   if Root = nil then Exit;
   Flds := TStringList.Create;
+  Seen := TStringList.Create;
   try
+    // 1) datasets que vivem no proprio form/DM sendo desenhado
     for I := 0 to Root.ComponentCount - 1 do
       if Root.Components[I] is TDataSet then
-      begin
-        DS := TDataSet(Root.Components[I]);
-        Flds.Clear;
-        try
-          if DS.Fields.Count > 0 then
-          begin
-            for J := 0 to DS.Fields.Count - 1 do
-              Flds.Add(DS.Fields[J].FieldName);
-          end
-          else
-          begin
-            DS.FieldDefs.Update;
-            for J := 0 to DS.FieldDefs.Count - 1 do
-              Flds.Add(DS.FieldDefs[J].Name);
-          end;
-        except
-          // dataset fechado/sem conexao: fica so o nome, sem campos
-        end;
-        Data.AddDataset(DS.Name, Flds);
-      end;
+        AddDS(TDataSet(Root.Components[I]));
+    // 2) datasets referenciados por TDataSource no form (resolve a referencia,
+    //    inclusive quando o dataset mora em OUTRO DataModule aberto no IDE)
+    for I := 0 to Root.ComponentCount - 1 do
+      if Root.Components[I] is TDataSource then
+        AddDS(TDataSource(Root.Components[I]).DataSet);
+    // 3) datasets de QUALQUER DataModule/form aberto no IDE (via ToolsAPI)
+    ScanOpenModules;
   finally
     Flds.Free;
+    Seen.Free;
   end;
 end;
 
@@ -107,7 +166,12 @@ begin
       begin
         Data := TrhDesignData(CollectDesignData);
         try
-          if TrhDesignerForm.Execute(TrhReport(Component), Data) then
+          // callback de Atualizar: recoleta os datasets abertos no IDE sob demanda
+          if TrhDesignerForm.Execute(TrhReport(Component), Data,
+               function: TrhDesignData
+               begin
+                 Result := TrhDesignData(CollectDesignData);
+               end) then
             if Designer <> nil then
               Designer.Modified;
         finally

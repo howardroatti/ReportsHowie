@@ -66,13 +66,18 @@ type
     FMarqueeRect: TRect;       // em pixels
     FGuideVX: Integer;         // guia vertical (px), -1 = nenhuma
     FGuideHY: Integer;         // guia horizontal (px), -1 = nenhuma
-    // desfazer (pilha de snapshots JSON)
+    // desfazer/refazer (pilhas de snapshots JSON)
     FUndo: TList<string>;
+    FRedo: TList<string>;
     FPendingUndo: string;
     FUndoPending: Boolean;
+    // ferramenta "armada" p/ inserir no proximo clique (click-to-place)
+    FArmedClass: TrhReportObjectClass;
     procedure PushSnapshot(const S: string);
     procedure BeginDragUndo;
     procedure CommitDragUndo;
+    procedure RestoreState(const S: string);
+    function MakeObject(AClass: TrhReportObjectClass): TrhReportObject;
     function Scale: Double;
     procedure Recalc;
     function ContentWidthPx: Integer;
@@ -116,8 +121,15 @@ type
     procedure AlignSelected(Mode: TrhAlignMode);
     procedure DistributeSelected(Horizontal: Boolean);
     procedure Undo;
+    procedure Redo;
     procedure PushUndoNow;
     function CanUndo: Boolean;
+    function CanRedo: Boolean;
+    /// <summary>Reordena a banda selecionada (Delta -1 = sobe, +1 = desce).</summary>
+    procedure MoveBand(Delta: Integer);
+    /// <summary>Arma uma ferramenta: o proximo clique na superficie insere um
+    ///  objeto dessa classe na posicao clicada (clique direito cancela).</summary>
+    procedure ArmTool(AClass: TrhReportObjectClass);
     function SelectionCount: Integer;
     /// <summary>Seleciona banda/objeto a partir do outline de estrutura (Fase 5.3).
     ///  Mantem FSelBand coerente — o setter Selected sozinho nao ajusta a banda.</summary>
@@ -141,7 +153,8 @@ function BandCaption(BT: TrhBandType): string;
 implementation
 
 uses
-  System.SysUtils, System.Math, System.Generics.Defaults, Vcl.Dialogs, Vcl.ExtDlgs;
+  System.SysUtils, System.Math, System.Generics.Defaults, Vcl.Dialogs, Vcl.ExtDlgs,
+  rh.Barcode, rh.QRCode;
 
 function BandCaption(BT: TrhBandType): string;
 begin
@@ -169,6 +182,7 @@ begin
   FSelection := TList<TrhReportObject>.Create;
   FSelStart := TList<TRect>.Create;
   FUndo := TList<string>.Create;
+  FRedo := TList<string>.Create;
   FGuideVX := -1;
   FGuideHY := -1;
   FZoom := 100;
@@ -183,6 +197,7 @@ end;
 destructor TrhDesignSurface.Destroy;
 begin
   FUndo.Free;
+  FRedo.Free;
   FSelStart.Free;
   FSelection.Free;
   FLayouts.Free;
@@ -210,6 +225,7 @@ begin
   FSelBand := nil;
   FSelection.Clear;
   FUndo.Clear;
+  FRedo.Clear;
   FUndoPending := False;
   if (FReport <> nil) then
   begin
@@ -469,9 +485,19 @@ var
   Lin: TrhLineObject;
   Shp: TrhShapeObject;
   Img: TrhImageObject;
+  Bar: TrhBarcodeObject;
   Flags: Cardinal;
   S: Double;
   DispTxt: string;
+  Pat: TrhBarPattern;
+  TotalMods, TextPx, BarsBottom, Bi: Integer;
+  ModWpx, XX, BW: Double;
+  QRm: TrhQRMatrix;
+  QSide, QMod, QOX, QOY, QRr, QRc: Integer;
+  TxtRect: TRect;
+  Cht: TrhChartObject;
+  PLx, PTy, PRx, PBy, TitleStrip, sbx, sbw, sbh, k: Integer;
+  SampleFrac: array[0..3] of Double;
 begin
   if not Obj.Visible then Exit;
   S := Scale;
@@ -593,6 +619,165 @@ begin
       Canvas.MoveTo(R.Right, R.Top); Canvas.LineTo(R.Left, R.Bottom);
       Canvas.Brush.Style := bsSolid;
     end;
+  end
+  else if Obj is TrhBarcodeObject then
+  begin
+    Bar := TrhBarcodeObject(Obj);
+    DispTxt := Bar.DisplayExpression;             // no design: expressao/valor
+    // fundo branco
+    Canvas.Brush.Style := bsSolid;
+    Canvas.Brush.Color := clWhite;
+    Canvas.FillRect(R);
+    if Bar.Symbology = rhbcQRCode then
+    begin
+      QRm := rhEncodeQR(DispTxt);
+      if QRm.Size > 0 then
+      begin
+        if (R.Right - R.Left) < (R.Bottom - R.Top) then
+          QSide := R.Right - R.Left else QSide := R.Bottom - R.Top;
+        QMod := QSide div QRm.Size;
+        if QMod < 1 then QMod := 1;
+        QOX := R.Left + ((R.Right - R.Left) - QMod * QRm.Size) div 2;
+        QOY := R.Top + ((R.Bottom - R.Top) - QMod * QRm.Size) div 2;
+        Canvas.Brush.Color := Bar.BarColor;
+        for QRr := 0 to QRm.Size - 1 do
+          for QRc := 0 to QRm.Size - 1 do
+            if QRm.IsDark(QRr, QRc) then
+              Canvas.FillRect(TRect.Create(QOX + QRc * QMod, QOY + QRr * QMod,
+                QOX + (QRc + 1) * QMod, QOY + (QRr + 1) * QMod));
+      end
+      else
+      begin
+        Canvas.Brush.Style := bsClear;
+        Canvas.Pen.Color := $00A0A0A0; Canvas.Pen.Style := psDot;
+        Canvas.Rectangle(R); Canvas.Pen.Style := psSolid;
+      end;
+      Canvas.Brush.Style := bsSolid;
+    end
+    else
+    begin
+    Pat := rhEncodeBarcode(Bar.Symbology, DispTxt);
+    if Length(Pat) > 0 then
+    begin
+      TotalMods := rhBarPatternModules(Pat);
+      if Bar.ShowText then
+        TextPx := Max(8, Round(Bar.Font.Size * 96 / 72 * (FZoom / 100)))
+      else
+        TextPx := 0;
+      BarsBottom := R.Bottom - TextPx;
+      if BarsBottom <= R.Top then BarsBottom := R.Bottom;
+      if TotalMods > 0 then ModWpx := (R.Right - R.Left) / TotalMods else ModWpx := 1;
+      // barras
+      Canvas.Brush.Color := Bar.BarColor;
+      XX := R.Left;
+      for Bi := 0 to High(Pat) do
+      begin
+        BW := Pat[Bi] * ModWpx;
+        if (Bi and 1) = 0 then
+          Canvas.FillRect(TRect.Create(Round(XX), R.Top, Round(XX + BW), BarsBottom));
+        XX := XX + BW;
+      end;
+      // texto legivel
+      if (TextPx > 0) and (BarsBottom < R.Bottom) then
+      begin
+        Canvas.Font.Assign(Bar.Font);
+        Canvas.Font.Height := -Round(Bar.Font.Size * 96 / 72 * (FZoom / 100));
+        Canvas.Font.Color := clBlack;
+        Canvas.Brush.Style := bsClear;
+        Flags := DT_NOPREFIX or DT_CENTER or DT_SINGLELINE or DT_BOTTOM;
+        TxtRect := TRect.Create(R.Left, BarsBottom, R.Right, R.Bottom);
+        DrawText(Canvas.Handle, PChar(DispTxt), Length(DispTxt), TxtRect, Flags);
+      end;
+    end
+    else
+    begin
+      // sem dados: placeholder tracejado
+      Canvas.Brush.Style := bsClear;
+      Canvas.Pen.Color := $00A0A0A0;
+      Canvas.Pen.Style := psDot;
+      Canvas.Rectangle(R);
+      Canvas.Pen.Style := psSolid;
+    end;
+    Canvas.Brush.Style := bsSolid;
+    end; // fim do else (codigo 1D)
+  end
+  else if Obj is TrhChartObject then
+  begin
+    Cht := TrhChartObject(Obj);
+    // fundo + contorno
+    Canvas.Brush.Style := bsSolid;
+    Canvas.Brush.Color := clWhite;
+    Canvas.FillRect(R);
+    Canvas.Brush.Style := bsClear;
+    Canvas.Pen.Color := $00A0A0A0;
+    Canvas.Pen.Style := psSolid;
+    Canvas.Rectangle(R);
+    // titulo (faixa superior)
+    Canvas.Font.Assign(Cht.Font);
+    Canvas.Font.Height := -Round(Cht.Font.Size * 96 / 72 * (FZoom / 100));
+    Canvas.Font.Color := clBlack;
+    Canvas.Brush.Style := bsClear;
+    TitleStrip := Max(12, Round(Cht.Font.Size * 96 / 72 * (FZoom / 100) * 1.4));
+    if Cht.Title <> '' then
+    begin
+      TxtRect := TRect.Create(R.Left + 2, R.Top + 2, R.Right - 2, R.Top + TitleStrip);
+      DrawText(Canvas.Handle, PChar(Cht.Title), Length(Cht.Title), TxtRect,
+        DT_NOPREFIX or DT_CENTER or DT_SINGLELINE or DT_VCENTER or DT_END_ELLIPSIS);
+    end;
+    // area do esquema (amostra ilustrativa; a serie real vem dos dados)
+    PLx := R.Left + 6; PRx := R.Right - 6;
+    PTy := R.Top + TitleStrip + 2; PBy := R.Bottom - 6;
+    if (PRx - PLx > 8) and (PBy - PTy > 8) then
+    begin
+      SampleFrac[0] := 0.55; SampleFrac[1] := 0.85;
+      SampleFrac[2] := 0.40; SampleFrac[3] := 0.68;
+      if Cht.ChartType = rhctPie then
+      begin
+        k := Min(PRx - PLx, PBy - PTy);
+        QOX := (PLx + PRx) div 2; QOY := (PTy + PBy) div 2;
+        Canvas.Brush.Style := bsSolid;
+        Canvas.Brush.Color := Cht.BarColor;
+        Canvas.Pen.Color := clWhite;
+        Canvas.Pie(QOX - k div 2, QOY - k div 2, QOX + k div 2, QOY + k div 2,
+          QOX + k div 2, QOY, QOX, QOY - k div 2);
+        Canvas.Brush.Color := $00D9C8B0;
+        Canvas.Pie(QOX - k div 2, QOY - k div 2, QOX + k div 2, QOY + k div 2,
+          QOX, QOY - k div 2, QOX - k div 2, QOY);
+        Canvas.Brush.Style := bsClear;
+        Canvas.Pen.Color := $00808080;
+        Canvas.Ellipse(QOX - k div 2, QOY - k div 2, QOX + k div 2, QOY + k div 2);
+      end
+      else if Cht.ChartType = rhctLine then
+      begin
+        Canvas.Pen.Color := Cht.BarColor;
+        Canvas.Pen.Width := 2;
+        for k := 0 to High(SampleFrac) do
+        begin
+          sbx := PLx + Round((PRx - PLx) * k / High(SampleFrac));
+          sbh := PBy - Round((PBy - PTy) * SampleFrac[k]);
+          if k = 0 then Canvas.MoveTo(sbx, sbh) else Canvas.LineTo(sbx, sbh);
+        end;
+        Canvas.Pen.Width := 1;
+      end
+      else // barras
+      begin
+        Canvas.Brush.Style := bsSolid;
+        Canvas.Brush.Color := Cht.BarColor;
+        Canvas.Pen.Style := psClear;
+        sbw := Round((PRx - PLx) / 4 * 0.6);
+        for k := 0 to High(SampleFrac) do
+        begin
+          sbx := PLx + Round((PRx - PLx) * k / 4) + Round((PRx - PLx) / 4 * 0.2);
+          sbh := Round((PBy - PTy) * SampleFrac[k]);
+          Canvas.FillRect(TRect.Create(sbx, PBy - sbh, sbx + sbw, PBy));
+        end;
+        Canvas.Pen.Style := psSolid;
+      end;
+      // linha de base
+      Canvas.Pen.Color := $00A0A0A0;
+      Canvas.MoveTo(PLx, PBy); Canvas.LineTo(PRx, PBy);
+    end;
+    Canvas.Brush.Style := bsSolid;
   end;
 end;
 
@@ -642,6 +827,43 @@ begin
   if FPage = nil then Exit;
   P := Point(X, Y);
   FGuideVX := -1; FGuideHY := -1;
+
+  // ferramenta armada (click-to-place): insere na posicao clicada
+  if FArmedClass <> nil then
+  begin
+    if Button <> mbLeft then
+    begin
+      ArmTool(nil); // clique direito/meio cancela
+      Exit;
+    end;
+    if FPage.Bands.Count = 0 then
+    begin
+      FSelBand := FPage.Bands.AddBand(rhbtMasterData);
+      Recalc;
+    end;
+    PushUndoNow;
+    if FindBandAtY(Y, Lay) then
+      Band := Lay.Band
+    else if FSelBand <> nil then
+      Band := FSelBand
+    else
+      Band := FPage.Bands[0];
+    Obj := MakeObject(FArmedClass);
+    if FindBandAtY(Y, Lay) then
+    begin
+      Obj.Left := Max(0, SnapU(Round((X - RH_GUTTER) / Scale)));
+      Obj.Top  := Max(0, SnapU(Round((Y - Lay.TopPx) / Scale)));
+    end;
+    Band.Objects.Add(Obj);
+    FSelBand := Band;
+    SelectSingle(Obj);
+    DoSelChanged;
+    Recalc;
+    Invalidate;
+    DoModified;
+    ArmTool(nil);
+    Exit;
+  end;
 
   // resize de altura de banda?
   if (Button = mbLeft) and BandBottomGripAt(P, Band) then
@@ -824,6 +1046,13 @@ begin
     Exit;
   end;
 
+  // ferramenta armada: mantem a mira, sem cursores de hover
+  if FArmedClass <> nil then
+  begin
+    Cursor := crCross;
+    Exit;
+  end;
+
   // atualizar cursor (hover)
   if BandBottomGripAt(Point(X, Y), Band) then
     Cursor := crSizeNS
@@ -915,6 +1144,40 @@ end;
 //  Operacoes
 // ---------------------------------------------------------------------------
 
+// Cria e configura um objeto novo do tipo dado (tamanho/textos default),
+// SEM posicao ou banda — o chamador define Left/Top e adiciona a banda.
+function TrhDesignSurface.MakeObject(AClass: TrhReportObjectClass): TrhReportObject;
+begin
+  Result := AClass.Create;
+  Result.Left := SnapU(50);
+  Result.Top := SnapU(20);
+  Result.Width := 400;  // 40 mm
+  Result.Height := 60;  // 6 mm
+  if Result is TrhTextObject then
+    TrhTextObject(Result).Text := 'Texto';
+  if Result is TrhImageObject then
+  begin
+    Result.Width := 300;   // 30 mm
+    Result.Height := 300;
+  end;
+  if Result is TrhLineObject then
+    Result.Height := 0;
+  if Result is TrhBarcodeObject then
+  begin
+    Result.Width := 500;   // 50 mm
+    Result.Height := 150;  // 15 mm
+    TrhBarcodeObject(Result).Text := '123456789'; // amostra visivel ao soltar
+  end;
+  if Result is TrhChartObject then
+  begin
+    Result.Width := 800;   // 80 mm
+    Result.Height := 500;  // 50 mm
+    TrhChartObject(Result).Title := 'Grafico';
+    TrhChartObject(Result).CategoryExpr := '[categoria]';
+    TrhChartObject(Result).ValueExpr := '[valor]';
+  end;
+end;
+
 procedure TrhDesignSurface.AddObjectOfClass(AClass: TrhReportObjectClass);
 var
   Obj: TrhReportObject;
@@ -933,20 +1196,7 @@ begin
     Band := FPage.Bands[0];
   if Band = nil then Exit;
 
-  Obj := AClass.Create;
-  Obj.Left := SnapU(50);
-  Obj.Top := SnapU(20);
-  Obj.Width := 400;  // 40 mm
-  Obj.Height := 60;  // 6 mm
-  if Obj is TrhTextObject then
-    TrhTextObject(Obj).Text := 'Texto';
-  if Obj is TrhImageObject then
-  begin
-    Obj.Width := 300;   // 30 mm
-    Obj.Height := 300;
-  end;
-  if Obj is TrhLineObject then
-    Obj.Height := 0;
+  Obj := MakeObject(AClass);
   Band.Objects.Add(Obj);
   FSelBand := Band;
   SetSelObj(Obj);
@@ -1081,6 +1331,28 @@ begin
   end;
 end;
 
+procedure TrhDesignSurface.MoveBand(Delta: Integer);
+var
+  I, J: Integer;
+begin
+  if (FPage = nil) or (FSelBand = nil) or (Delta = 0) then Exit;
+  I := FPage.Bands.IndexOf(FSelBand);
+  if I < 0 then Exit;
+  J := I + Delta;
+  if (J < 0) or (J >= FPage.Bands.Count) then Exit; // ja no limite
+  PushUndoNow;
+  FPage.Bands.Move(I, J);
+  Recalc;
+  Invalidate;
+  DoModified;
+end;
+
+procedure TrhDesignSurface.ArmTool(AClass: TrhReportObjectClass);
+begin
+  FArmedClass := AClass;
+  if AClass <> nil then Cursor := crCross else Cursor := crDefault;
+end;
+
 procedure TrhDesignSurface.SetZoom(V: Integer);
 begin
   V := Max(25, Min(400, V));
@@ -1146,6 +1418,7 @@ begin
   FUndo.Add(S);
   while FUndo.Count > 50 do   // limite de historico
     FUndo.Delete(0);
+  FRedo.Clear;                // uma nova acao invalida o ramo de refazer
 end;
 
 procedure TrhDesignSurface.PushUndoNow;
@@ -1177,13 +1450,14 @@ begin
   Result := FUndo.Count > 0;
 end;
 
-procedure TrhDesignSurface.Undo;
-var
-  S: string;
+function TrhDesignSurface.CanRedo: Boolean;
 begin
-  if (FReport = nil) or (FUndo.Count = 0) then Exit;
-  S := FUndo.Last;
-  FUndo.Delete(FUndo.Count - 1);
+  Result := FRedo.Count > 0;
+end;
+
+// Recarrega o relatorio a partir de um snapshot JSON e reajusta o estado visual.
+procedure TrhDesignSurface.RestoreState(const S: string);
+begin
   FReport.LoadFromJSONString(S);
   if FReport.Pages.Count = 0 then
     FReport.EnsurePage;
@@ -1196,6 +1470,30 @@ begin
   Invalidate;
   DoSelChanged;
   DoModified;
+end;
+
+procedure TrhDesignSurface.Undo;
+var
+  S: string;
+begin
+  if (FReport = nil) or (FUndo.Count = 0) then Exit;
+  FRedo.Add(FReport.ToJSONString(False)); // estado atual -> refazer
+  while FRedo.Count > 50 do FRedo.Delete(0);
+  S := FUndo.Last;
+  FUndo.Delete(FUndo.Count - 1);
+  RestoreState(S);
+end;
+
+procedure TrhDesignSurface.Redo;
+var
+  S: string;
+begin
+  if (FReport = nil) or (FRedo.Count = 0) then Exit;
+  FUndo.Add(FReport.ToJSONString(False)); // estado atual -> desfazer (sem limpar refazer)
+  while FUndo.Count > 50 do FUndo.Delete(0);
+  S := FRedo.Last;
+  FRedo.Delete(FRedo.Count - 1);
+  RestoreState(S);
 end;
 
 procedure TrhDesignSurface.CaptureSelStart;
