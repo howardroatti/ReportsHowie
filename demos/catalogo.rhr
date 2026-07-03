@@ -1,0 +1,156 @@
+{
+  "formatVersion": 1,
+  "generator": "ReportsHowie 0.1.0-dev",
+  "title": "Catalogo de Produtos",
+  "author": "",
+  "pages": [
+    {
+      "name": "",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "portrait",
+      "marginLeft": 100,
+      "marginTop": 100,
+      "marginRight": 100,
+      "marginBottom": 100,
+      "bands": [
+        {
+          "bandType": "reportTitle",
+          "name": "",
+          "height": 180,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 20, "width": 1900, "height": 90,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "CATALOGO DE PRODUTOS",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 16, "color": -16777208, "style": "" },
+              "hAlign": "center", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 120, "width": 1900, "height": 50,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "Codigo de barras (Code128) e QR por item",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 10, "color": -16777208, "style": "" },
+              "hAlign": "center", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "masterData",
+          "name": "",
+          "height": 320,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Produtos",
+          "groupExpression": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 10, "width": 1300, "height": 60,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "[Nome]",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 12, "color": -16777208, "style": "B" },
+              "hAlign": "left", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 80, "width": 1300, "height": 50,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "Cod.: [Codigo]    -    R$ [FORMATFLOAT('#,##0.00', [Preco])]",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 10, "color": -16777208, "style": "" },
+              "hAlign": "left", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            },
+            {
+              "type": "barcode",
+              "name": "",
+              "left": 0, "top": 150, "width": 900, "height": 150,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "symbology": "code128",
+              "text": "",
+              "dataField": "Codigo",
+              "barColor": 0,
+              "showText": true,
+              "moduleWidth": 3,
+              "font": { "name": "Segoe UI", "size": 8, "color": -16777208, "style": "" }
+            },
+            {
+              "type": "barcode",
+              "name": "",
+              "left": 1550, "top": 20, "width": 300, "height": 300,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "symbology": "qrcode",
+              "text": "",
+              "dataField": "Codigo",
+              "barColor": 0,
+              "showText": false,
+              "moduleWidth": 6,
+              "font": { "name": "Segoe UI", "size": 8, "color": -16777208, "style": "" }
+            },
+            {
+              "type": "line",
+              "name": "",
+              "left": 0, "top": 310, "width": 1900, "height": 0,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 1 },
+              "penColor": 12632256,
+              "penWidth": 1
+            }
+          ]
+        },
+        {
+          "bandType": "pageFooter",
+          "name": "",
+          "height": 60,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 0, "width": 1900, "height": 50,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "Pagina [PAGE] de [TOTALPAGES]",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 10, "color": -16777208, "style": "" },
+              "hAlign": "right", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

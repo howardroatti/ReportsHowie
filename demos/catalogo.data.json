@@ -1,0 +1,9 @@
+{
+  "Produtos": [
+    { "Codigo": "7891234000019", "Nome": "Caderno Universitario 200 fls", "Preco": 27.90 },
+    { "Codigo": "7891234000026", "Nome": "Caneta Esferografica Azul (cx 50)", "Preco": 62.50 },
+    { "Codigo": "7891234000033", "Nome": "Mouse Optico USB",                 "Preco": 39.90 },
+    { "Codigo": "7891234000040", "Nome": "Teclado ABNT2 com fio",            "Preco": 89.00 },
+    { "Codigo": "7891234000057", "Nome": "Livro: Delphi na Pratica",         "Preco": 118.00 }
+  ]
+}

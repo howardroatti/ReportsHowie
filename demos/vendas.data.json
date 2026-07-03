@@ -1,0 +1,13 @@
+{
+  "Vendas": [
+    { "Categoria": "Livros",      "Cliente": "Livraria Central",  "Valor": 1890.00 },
+    { "Categoria": "Livros",      "Cliente": "Livraria Central",  "Valor": 640.00 },
+    { "Categoria": "Livros",      "Cliente": "Saber & Cia",       "Valor": 1225.00 },
+    { "Categoria": "Eletronicos", "Cliente": "TechMais",          "Valor": 3480.00 },
+    { "Categoria": "Eletronicos", "Cliente": "TechMais",          "Valor": 990.00 },
+    { "Categoria": "Eletronicos", "Cliente": "InfoShop",          "Valor": 2150.00 },
+    { "Categoria": "Papelaria",   "Cliente": "Escritorio Facil",  "Valor": 430.00 },
+    { "Categoria": "Papelaria",   "Cliente": "Escritorio Facil",  "Valor": 275.00 },
+    { "Categoria": "Papelaria",   "Cliente": "PapelKing",         "Valor": 610.00 }
+  ]
+}

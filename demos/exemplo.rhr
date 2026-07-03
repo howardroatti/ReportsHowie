@@ -1,0 +1,124 @@
+{
+  "formatVersion": 1,
+  "generator": "ReportsHowie 0.1.0-dev",
+  "title": "Relatorio de Vendas",
+  "author": "Howard",
+  "pages": [
+    {
+      "name": "",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "portrait",
+      "marginLeft": 100,
+      "marginTop": 100,
+      "marginRight": 100,
+      "marginBottom": 100,
+      "bands": [
+        {
+          "bandType": "reportTitle",
+          "name": "",
+          "height": 200,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 100,
+              "top": 50,
+              "width": 1800,
+              "height": 100,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "RELATORIO DE VENDAS",
+              "font": {
+                "name": "Segoe UI",
+                "size": 16,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 100,
+              "top": 140,
+              "width": 1800,
+              "height": 60,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "[UPPER('emitido em ')][FORMATDATETIME('dd\/mm\/yyyy', NOW)]",
+              "font": {
+                "name": "Segoe UI",
+                "size": 10,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "center",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "masterData",
+          "name": "",
+          "height": 80,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Vendas",
+          "groupExpression": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 100,
+              "top": 0,
+              "width": 1800,
+              "height": 80,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Cliente: [Cliente]  |  Valor: R$ [FORMATFLOAT('#,##0.00', [Valor])]  |  Faixa: [IIF([Valor] > 1000, 'ALTA', 'baixa')]",
+              "font": {
+                "name": "Segoe UI",
+                "size": 10,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": true,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

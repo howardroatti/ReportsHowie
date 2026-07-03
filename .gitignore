@@ -62,9 +62,10 @@ modules/
 # Instrucoes locais do Claude Code (contem conta/paths especificos da maquina)
 CLAUDE.md
 
-# Saidas geradas pelo app de teste (regeneradas a cada execucao)
-demos/vendas.*
-demos/exemplo.rhr
+# Saidas binarias geradas dos demos (regeneraveis via rhtool) — os .rhr,
+# .data.json e as saidas de referencia .pdf/.html permanecem versionados.
+demos/vendas.docx
+demos/vendas.xlsx
 
 # Python (servidor MCP / scripts utilitarios)
 __pycache__/
