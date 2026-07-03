@@ -7,6 +7,20 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (barcode/QR como imagem + imagens no XLSX)
+- **Barcode e QR viram uma imagem** rasterizada (alta resolucao) no motor de render, em vez
+  de dezenas/centenas de retangulos. Uma imagem unica funciona em **todos** os alvos —
+  inclusive **XLSX** (que ignora formas) — e enxuga DOCX/HTML (o QR deixa de virar centenas
+  de `<v:rect>`). No PDF/preview o simbolo passa a ser imagem; a resolucao mantem a leitura
+  (testado: QR/Code128 nitidos e escaneaveis). Ref #9.
+- **Imagens no XLSX**: antes ignoradas; agora ancoradas via **`oneCellAnchor`** a celula mais
+  proxima, no tamanho do objeto (EMU). Novas partes `xl/drawings/` + `xl/media/` + rels +
+  `Default png`/`Override drawing` no Content_Types. Sem imagens, a saida XLSX fica identica.
+- **XLSX — posicionamento das imagens**: os `left/top` das imagens entram na grade (colunas/
+  linhas proprias, dimensionadas pelo tamanho da imagem) para nao cairem sobre o texto; e
+  imagens que se sobrepoem verticalmente (ex.: QR no topo do item + barcode abaixo) sao
+  alinhadas na **mesma linha**.
+
 ### Melhorado (DOCX — layout posicional + imagens)
 - O exportador **DOCX** passou de fluxo aproximado (paragrafos empilhados por Top/Left,
   posicao horizontal so por recuo) para **posicional fiel** ao preview/PDF: cada objeto de

@@ -10,7 +10,8 @@
 ///   agrupando os objetos de texto por posicao: linhas por coordenada Top
 ///   (por pagina) e colunas por coordenada Left (global). Cada texto vira uma
 ///   celula (inlineStr, ja formatado pelo pipeline) com fonte/estilo/alinhamento.
-///   Linhas/formas/imagens sao ignoradas nesta versao tabular pragmatica.
+///   Imagens sao ancoradas (oneCellAnchor) a celula mais proxima, no tamanho do
+///   objeto (EMU). Linhas/formas seguem ignoradas nesta versao tabular pragmatica.
 /// </summary>
 unit rh.Export.XLSX;
 
@@ -31,7 +32,7 @@ implementation
 uses
   System.SysUtils, System.Classes, System.Generics.Collections,
   System.Generics.Defaults, System.Math, System.StrUtils,
-  Winapi.Windows, Vcl.Graphics,
+  Winapi.Windows, Vcl.Graphics, Vcl.Imaging.pngimage,
   rh.Types, rh.Model.Types, rh.OOXML.Zip;
 
 const
@@ -44,10 +45,16 @@ type
     Row, Col: Integer;
   end;
 
+  TImageAnchor = record
+    Op: TrhDrawOp;
+    Row, Col: Integer;           // celula-ancora (0-based) mais proxima
+  end;
+
   TXlsxBuilder = class
   private
     FDoc: TrhRenderedDocument;
     FCells: TList<TCell>;
+    FImages: TList<TImageAnchor>;
     FColLefts: TList<Integer>;   // representantes de coluna (global)
     FMaxRow, FMaxCol: Integer;
     FRowH: TArray<Integer>;      // altura (unidades) por linha
@@ -59,11 +66,40 @@ type
     function GetXfId(Op: TrhDrawOp): Integer;
     function StylesXml: string;
     function SheetXml: string;
+    function DrawingXml: string;
   public
     constructor Create(ADoc: TrhRenderedDocument);
     destructor Destroy; override;
     procedure Save(const FileName, SheetName: string);
   end;
+
+/// <summary>Codifica um TGraphic em bytes PNG para xl/media.</summary>
+function ImagePngBytes(G: TGraphic): TBytes;
+var
+  BMP: TBitmap;
+  PNG: TPngImage;
+  MS: TMemoryStream;
+begin
+  BMP := TBitmap.Create;
+  PNG := TPngImage.Create;
+  MS := TMemoryStream.Create;
+  try
+    BMP.PixelFormat := pf24bit;
+    BMP.SetSize(G.Width, G.Height);
+    BMP.Canvas.Brush.Color := clWhite;
+    BMP.Canvas.FillRect(TRect.Create(0, 0, BMP.Width, BMP.Height));
+    BMP.Canvas.Draw(0, 0, G);
+    PNG.Assign(BMP);
+    PNG.SaveToStream(MS);
+    SetLength(Result, MS.Size);
+    if MS.Size > 0 then
+      Move(MS.Memory^, Result[0], MS.Size);
+  finally
+    MS.Free;
+    PNG.Free;
+    BMP.Free;
+  end;
+end;
 
 function ArgbHex(C: TColor): string;
 var
@@ -124,6 +160,7 @@ begin
   inherited Create;
   FDoc := ADoc;
   FCells := TList<TCell>.Create;
+  FImages := TList<TImageAnchor>.Create;
   FColLefts := TList<Integer>.Create;
   FFonts := TList<string>.Create;
   FXfs := TList<string>.Create;
@@ -137,6 +174,7 @@ begin
   FXfs.Free;
   FFonts.Free;
   FColLefts.Free;
+  FImages.Free;
   FCells.Free;
   inherited Destroy;
 end;
@@ -146,15 +184,19 @@ var
   Page: TrhRenderedPage;
   Op: TrhDrawOp;
   AllLefts, PageTops, RowReps: TList<Integer>;
-  GlobalRow, R, C: Integer;
+  PageImgs: TList<TImageAnchor>;
+  GlobalRow, R, C, K, M, N, GrpBottom, GrpRow: Integer;
   Cell: TCell;
+  Img: TImageAnchor;
 begin
   // colunas: clusteriza todos os lefts de texto (global)
   AllLefts := TList<Integer>.Create;
   try
     for Page in FDoc.Pages do
       for Op in Page.Ops do
-        if (Op.Kind = rhdkText) and (Trim(Op.Text) <> '') then
+        if ((Op.Kind = rhdkText) and (Trim(Op.Text) <> '')) or
+           ((Op.Kind = rhdkImage) and (Op.Graphic <> nil) and
+            (Op.Graphic.Width > 0) and (Op.Graphic.Height > 0)) then
           AllLefts.Add(Op.Rect.Left);
     AllLefts.Sort;
     FColLefts.Free;
@@ -170,10 +212,13 @@ begin
     PageTops := TList<Integer>.Create;
     try
       for Op in Page.Ops do
-        if (Op.Kind = rhdkText) and (Trim(Op.Text) <> '') then
+        if ((Op.Kind = rhdkText) and (Trim(Op.Text) <> '')) or
+           ((Op.Kind = rhdkImage) and (Op.Graphic <> nil) and
+            (Op.Graphic.Width > 0) and (Op.Graphic.Height > 0)) then
           PageTops.Add(Op.Rect.Top);
       PageTops.Sort;
       RowReps := DedupeTol(PageTops, ROW_TOL);
+      PageImgs := TList<TImageAnchor>.Create;
       try
         for Op in Page.Ops do
           if (Op.Kind = rhdkText) and (Trim(Op.Text) <> '') then
@@ -182,9 +227,48 @@ begin
             Cell.Row := GlobalRow + NearestIdx(RowReps, Op.Rect.Top);
             Cell.Col := NearestIdx(FColLefts, Op.Rect.Left);
             FCells.Add(Cell);
+          end
+          else if (Op.Kind = rhdkImage) and (Op.Graphic <> nil) and
+                  (Op.Graphic.Width > 0) and (Op.Graphic.Height > 0) then
+          begin
+            Img.Op := Op;
+            Img.Row := GlobalRow + NearestIdx(RowReps, Op.Rect.Top);
+            Img.Col := NearestIdx(FColLefts, Op.Rect.Left);
+            PageImgs.Add(Img);
           end;
+
+        // alinha na MESMA linha as imagens que se sobrepoem verticalmente (ex.: o
+        // QR no topo do item e o barcode logo abaixo) -> grupo recebe a linha do topo.
+        PageImgs.Sort(TComparer<TImageAnchor>.Construct(
+          function(const A, B: TImageAnchor): Integer
+          begin
+            Result := A.Op.Rect.Top - B.Op.Rect.Top;
+          end));
+        K := 0;
+        while K < PageImgs.Count do
+        begin
+          GrpBottom := PageImgs[K].Op.Rect.Bottom;
+          GrpRow := PageImgs[K].Row;
+          M := K + 1;
+          while (M < PageImgs.Count) and (PageImgs[M].Op.Rect.Top <= GrpBottom) do
+          begin
+            GrpBottom := Max(GrpBottom, PageImgs[M].Op.Rect.Bottom);
+            GrpRow := Min(GrpRow, PageImgs[M].Row);
+            Inc(M);
+          end;
+          for N := K to M - 1 do
+          begin
+            Img := PageImgs[N];
+            Img.Row := GrpRow;
+            PageImgs[N] := Img;
+          end;
+          K := M;
+        end;
+        FImages.AddRange(PageImgs);
+
         GlobalRow := GlobalRow + RowReps.Count + 1;
       finally
+        PageImgs.Free;
         RowReps.Free;
       end;
     finally
@@ -196,7 +280,8 @@ begin
   FMaxCol := FColLefts.Count;
   if FMaxCol = 0 then FMaxCol := 1;
 
-  // dimensoes
+  // dimensoes (texto e imagens: a coluna/linha da imagem precisa comportar o
+  // tamanho dela para as imagens nao se sobreporem nem cairem sobre o texto)
   SetLength(FRowH, Max(FMaxRow, 1));
   SetLength(FColW, FMaxCol);
   for Cell in FCells do
@@ -206,6 +291,14 @@ begin
       FRowH[R] := Max(FRowH[R], Cell.Op.Rect.Height);
     if (C >= 0) and (C < Length(FColW)) then
       FColW[C] := Max(FColW[C], Cell.Op.Rect.Width);
+  end;
+  for Img in FImages do
+  begin
+    R := Img.Row; C := Img.Col;
+    if (R >= 0) and (R < Length(FRowH)) then
+      FRowH[R] := Max(FRowH[R], Img.Op.Rect.Height);
+    if (C >= 0) and (C < Length(FColW)) then
+      FColW[C] := Max(FColW[C], Img.Op.Rect.Width);
   end;
 end;
 
@@ -302,7 +395,8 @@ begin
     end;
 
     SB.Append('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
-    SB.Append('<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">');
+    SB.Append('<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">');
 
     // larguras de coluna
     if FMaxCol > 0 then
@@ -339,6 +433,9 @@ begin
       SB.Append('</row>');
     end;
     SB.Append('</sheetData>');
+    // referencia ao desenho (imagens); rId1 casa com xl/worksheets/_rels/sheet1.xml.rels
+    if FImages.Count > 0 then
+      SB.Append('<drawing r:id="rId1"/>');
     SB.Append('</worksheet>');
     Result := SB.ToString;
   finally
@@ -349,15 +446,69 @@ begin
   end;
 end;
 
+function TXlsxBuilder.DrawingXml: string;
+var
+  SB: TStringBuilder;
+  I: Integer;
+  A: TImageAnchor;
+  CX, CY: Int64;
+begin
+  SB := TStringBuilder.Create;
+  try
+    SB.Append('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+    SB.Append('<xdr:wsDr ' +
+      'xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" ' +
+      'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">');
+    for I := 0 to FImages.Count - 1 do
+    begin
+      A := FImages[I];
+      CX := MMToEMU(A.Op.Rect.Width);
+      CY := MMToEMU(A.Op.Rect.Height);
+      if CX <= 0 then CX := 990000;
+      if CY <= 0 then CY := 990000;
+      // oneCellAnchor: ancorado a celula (from) + tamanho fixo (ext) -> a imagem
+      // nao distorce quando as colunas sao redimensionadas.
+      SB.Append(Format('<xdr:oneCellAnchor>' +
+        '<xdr:from><xdr:col>%0:d</xdr:col><xdr:colOff>0</xdr:colOff>' +
+        '<xdr:row>%1:d</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>' +
+        '<xdr:ext cx="%2:d" cy="%3:d"/>' +
+        '<xdr:pic><xdr:nvPicPr>' +
+        '<xdr:cNvPr id="%4:d" name="Imagem %4:d"/><xdr:cNvPicPr/></xdr:nvPicPr>' +
+        '<xdr:blipFill><a:blip r:embed="rId%4:d"/>' +
+        '<a:stretch><a:fillRect/></a:stretch></xdr:blipFill>' +
+        '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="%2:d" cy="%3:d"/></a:xfrm>' +
+        '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>' +
+        '</xdr:pic><xdr:clientData/></xdr:oneCellAnchor>',
+        [A.Col, A.Row, CX, CY, I + 1]));
+    end;
+    SB.Append('</xdr:wsDr>');
+    Result := SB.ToString;
+  finally
+    SB.Free;
+  end;
+end;
+
 procedure TXlsxBuilder.Save(const FileName, SheetName: string);
 var
   Pkg: TrhOoxmlPackage;
-  Sheet, Styles: string;
+  Sheet, Styles, CtImg, CtDraw: string;
+  DrawRels: TStringBuilder;
+  I: Integer;
 begin
   BuildGrid;
   // gerar sheet ANTES de styles: SheetXml popula FXfs via GetXfId
   Sheet := SheetXml;
   Styles := StylesXml;
+
+  // partes extras do Content_Types quando ha imagens (png + o drawing)
+  CtImg := ''; CtDraw := '';
+  if FImages.Count > 0 then
+  begin
+    CtImg := '<Default Extension="png" ContentType="image/png"/>';
+    CtDraw := '<Override PartName="/xl/drawings/drawing1.xml" ' +
+      'ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>';
+  end;
 
   Pkg := TrhOoxmlPackage.Create;
   try
@@ -366,8 +517,10 @@ begin
       '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
       '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
       '<Default Extension="xml" ContentType="application/xml"/>' +
+      CtImg +
       '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
       '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      CtDraw +
       '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
       '</Types>');
 
@@ -393,6 +546,36 @@ begin
 
     Pkg.AddXml('xl/styles.xml', Styles);
     Pkg.AddXml('xl/worksheets/sheet1.xml', Sheet);
+
+    // imagens: media PNG + drawing + rels (sheet->drawing e drawing->media)
+    if FImages.Count > 0 then
+    begin
+      Pkg.AddXml('xl/worksheets/_rels/sheet1.xml.rels',
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>' +
+        '</Relationships>');
+
+      Pkg.AddXml('xl/drawings/drawing1.xml', DrawingXml);
+
+      DrawRels := TStringBuilder.Create;
+      try
+        DrawRels.Append('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+        DrawRels.Append('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">');
+        for I := 0 to FImages.Count - 1 do
+        begin
+          Pkg.AddBytes(Format('xl/media/image%d.png', [I + 1]),
+            ImagePngBytes(FImages[I].Op.Graphic));
+          DrawRels.Append(Format('<Relationship Id="rId%0:d" ' +
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" ' +
+            'Target="../media/image%0:d.png"/>', [I + 1]));
+        end;
+        DrawRels.Append('</Relationships>');
+        Pkg.AddXml('xl/drawings/_rels/drawing1.xml.rels', DrawRels.ToString);
+      finally
+        DrawRels.Free;
+      end;
+    end;
 
     Pkg.SaveToFile(FileName);
   finally

@@ -45,7 +45,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Math, System.UITypes,
+  System.SysUtils, System.Math, System.Types, System.UITypes,
   Vcl.Graphics, rh.Model.Types, rh.Page, rh.Objects, rh.Expr, rh.Barcode,
   rh.QRCode, rh.Watermark;
 
@@ -241,12 +241,17 @@ begin
   end;
 end;
 
-// Expande um QR Code em retangulos (modulos escuros), coalescendo runs por linha.
+// Rasteriza um QR Code numa imagem (bitmap alta-res) e emite UMA op de imagem.
+// Uma imagem unica (em vez de centenas de retangulos) funciona em todos os alvos
+// — inclusive XLSX (que ignora formas) — e enxuga DOCX/HTML.
 procedure EmitQR(RP: TrhRenderedPage; Bar: TrhBarcodeObject;
   L, T: TrhUnit; const Data: string);
+const
+  PX = 8;  // pixels por modulo no raster (nitido para impressao)
 var
   QR: TrhQRMatrix;
   Side, ModSize, OffX, OffY, R, C, RunStart: Integer;
+  BMP: TBitmap;
   Op: TrhDrawOp;
 begin
   QR := rhEncodeQR(Data);
@@ -259,6 +264,13 @@ begin
   if ModSize < 1 then ModSize := 1;
   OffX := L + (Bar.Width - ModSize * QR.Size) div 2;
   OffY := T + (Bar.Height - ModSize * QR.Size) div 2;
+
+  BMP := TBitmap.Create;
+  BMP.PixelFormat := pf24bit;
+  BMP.SetSize(QR.Size * PX, QR.Size * PX);
+  BMP.Canvas.Brush.Color := clWhite;
+  BMP.Canvas.FillRect(TRect.Create(0, 0, BMP.Width, BMP.Height));
+  BMP.Canvas.Brush.Color := Bar.BarColor;
   for R := 0 to QR.Size - 1 do
   begin
     C := 0;
@@ -267,25 +279,32 @@ begin
       begin
         RunStart := C;
         while (C < QR.Size) and QR.IsDark(R, C) do Inc(C);
-        Op := RP.AddOp(rhdkRect);
-        Op.Rect := TrhRectU.Create(OffX + RunStart * ModSize, OffY + R * ModSize,
-          (C - RunStart) * ModSize, ModSize);
-        Op.PenColor := Bar.BarColor;
-        Op.PenWidth := 0;
-        Op.BrushColor := Bar.BarColor;
-        Op.BrushTransparent := False;
+        BMP.Canvas.FillRect(TRect.Create(RunStart * PX, R * PX, C * PX, (R + 1) * PX));
       end
       else
         Inc(C);
   end;
+
+  Op := RP.AddOp(rhdkImage);
+  Op.Rect := TrhRectU.Create(OffX, OffY, ModSize * QR.Size, ModSize * QR.Size);
+  Op.Graphic := BMP;
+  Op.OwnsGraphic := True;
+  Op.Stretch := True;
+  Op.KeepAspect := False;
+  Op.Center := False;
 end;
 
-// Expande um codigo de barras em retangulos (barras) + texto opcional legivel.
+// Rasteriza um codigo de barras 1D numa imagem (barras) + texto opcional legivel.
+// Barras uniformes na vertical -> o alvo estica a imagem no retangulo sem distorcer.
 procedure EmitBarcode(RP: TrhRenderedPage; Bar: TrhBarcodeObject;
   L, T: TrhUnit; const Data: string);
+const
+  BARPX = 3;   // pixels por modulo (horizontal)
+  HGT = 64;    // altura do raster em pixels (esticada ao retangulo na saida)
 var
   Pat: TrhBarPattern;
-  TotalMods, ModW, BarsH, TextH, ActualW, X, W, I: Integer;
+  TotalMods, ModW, BarsH, TextH, ActualW, X, PxX, I: Integer;
+  BMP: TBitmap;
   Op: TrhDrawOp;
 begin
   Pat := rhEncodeBarcode(Bar.Symbology, Data);
@@ -317,20 +336,27 @@ begin
   X := L + ((Bar.Width - ActualW) div 2);
   if X < L then X := L;
 
+  BMP := TBitmap.Create;
+  BMP.PixelFormat := pf24bit;
+  BMP.SetSize(TotalMods * BARPX, HGT);
+  BMP.Canvas.Brush.Color := clWhite;
+  BMP.Canvas.FillRect(TRect.Create(0, 0, BMP.Width, BMP.Height));
+  BMP.Canvas.Brush.Color := Bar.BarColor;
+  PxX := 0;
   for I := 0 to High(Pat) do
   begin
-    W := Pat[I] * ModW;
     if (I and 1) = 0 then // indice par = barra (impar = espaco: nao desenha)
-    begin
-      Op := RP.AddOp(rhdkRect);
-      Op.Rect := TrhRectU.Create(X, T, W, BarsH);
-      Op.PenColor := Bar.BarColor;      // pen = brush -> barra solida, sem artefato
-      Op.PenWidth := 0;
-      Op.BrushColor := Bar.BarColor;
-      Op.BrushTransparent := False;
-    end;
-    X := X + W;
+      BMP.Canvas.FillRect(TRect.Create(PxX, 0, PxX + Pat[I] * BARPX, HGT));
+    PxX := PxX + Pat[I] * BARPX;
   end;
+
+  Op := RP.AddOp(rhdkImage);
+  Op.Rect := TrhRectU.Create(X, T, ActualW, BarsH);
+  Op.Graphic := BMP;
+  Op.OwnsGraphic := True;
+  Op.Stretch := True;
+  Op.KeepAspect := False;
+  Op.Center := False;
 
   if TextH > 0 then
   begin
