@@ -15,6 +15,9 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `Xml.XMLDoc`): importa `.frx` direto para um `TrhReport` vivo, sem depender do script
   Python — `Imp.ImportFile('template.frx', Report)`. Espelha o mapa de conversao do frx2rhr.
 - **`rhtool import <entrada.frx> <saida.rhr> [--dpi 96]`**: importa um `.frx` pela CLI.
+- **Menu no designer**: o component editor do `TrhReport` ganha o verbo **"Importar
+  FastReport (.frx)..."** — abre o `.frx`, importa para o relatorio do form e persiste no
+  DFM. Pacote DT passa a requerer `xmlrtl`.
 - Melhorias abertas a comunidade na issue #23 (imagens embutidas, mais tipos de objeto,
   traducao de funcoes de expressao, QuickReport/Rave).
 

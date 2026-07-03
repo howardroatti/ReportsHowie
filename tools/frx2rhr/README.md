@@ -7,6 +7,14 @@ bases legadas (issue [#21](https://github.com/howardroatti/ReportsHowie/issues/2
 Roda em **Python 3** puro (sem Delphi), então cabe num pipeline ou numa etapa
 assistida por IA.
 
+> **Também nativo no componente.** O mesmo mapa de conversão existe em Delphi puro
+> na unit `source/import/rh.Import.FastReport.pas` (`TrhFastReportImporter`), sem
+> depender deste script. Use por código —
+> `TrhFastReportImporter.LoadFromFile('template.frx')` — pela CLI `rhtool import
+> entrada.frx saida.rhr`, ou pelo designer (botão direito no `TrhReport` →
+> **"Importar FastReport (.frx)…"**). Este script Python fica como companheiro para
+> pipelines/automação fora do Delphi.
+
 ## Uso
 
 ```sh
