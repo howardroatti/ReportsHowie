@@ -46,6 +46,7 @@ uses
   rh.Preview.Form in '..\..\source\preview\rh.Preview.Form.pas',
   rh.Data.Pipeline in '..\..\source\data\rh.Data.Pipeline.pas',
   rh.Export.HTML in '..\..\source\export\html\rh.Export.HTML.pas',
+  rh.PDF.TrueType in '..\..\source\export\pdf\rh.PDF.TrueType.pas',
   rh.Export.PDF in '..\..\source\export\pdf\rh.Export.PDF.pas',
   rh.OOXML.Zip in '..\..\source\export\ooxml\rh.OOXML.Zip.pas',
   rh.Export.XLSX in '..\..\source\export\ooxml\rh.Export.XLSX.pas',

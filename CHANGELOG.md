@@ -7,6 +7,22 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (DOCX — layout posicional + imagens)
+- O exportador **DOCX** passou de fluxo aproximado (paragrafos empilhados por Top/Left,
+  posicao horizontal so por recuo) para **posicional fiel** ao preview/PDF: cada objeto de
+  texto vira um paragrafo com **text frame `w:framePr`** ancorado a pagina na posicao/largura
+  exatas (twips), preservando fonte/estilo/cor/alinhamento.
+- **Imagens no DOCX**: antes ignoradas; agora saem como **`<w:drawing>` flutuante ancorado**
+  (`wp:anchor`) em x/y absolutos (EMU), no tamanho do objeto. PNG em `word/media` +
+  relationship em `word/_rels/document.xml.rels` + `Default png` no Content_Types. Ref #9.
+- **Linhas e retangulos/molduras no DOCX**: `rhdkLine`/`rhdkRect` (inclui reguas, molduras
+  de shape, barras de barcode e modulos de QR) viram formas **VML `<v:rect>`** posicionadas
+  em absoluto na pagina (atras do texto). Antes eram descartados. Elipses/poligonos pendentes;
+  XLSX segue tabular.
+- Todo o conteudo flutuante (formas VML + imagens ancoradas) sai num **unico paragrafo**, para
+  que centenas de formas (ex.: modulos de QR) nao gerem paragrafos de fluxo que empurrariam o
+  conteudo por varias paginas.
+
 ### Adicionado (PDF — fontes embutidas + Unicode)
 - O exportador PDF agora **embute a fonte TrueType** de cada (nome+estilo) usado, como
   fonte composta **Type0/Identity-H** (CIDFontType2 + FontFile2 + larguras `/W` + CMap
@@ -16,6 +32,9 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   glyph indices via o novo leitor `rh.PDF.TrueType` (le head/hhea/maxp/hmtx/cmap fmt 4 e 12).
 - Fallback para fontes comuns do Windows se a fonte pedida nao existir. Ref #8.
   *Limitacao atual:* embute a fonte inteira (sem subsetting) e trata o plano BMP (<= U+FFFF).
+- Validado com `demos/unicode.rhr`: PT/DE/FR acentuados + **cirilico** (Привет) e **grego**
+  (Γειά σου) renderizam; PDF passa a conter `/Type0`+`/CIDFontType2`+`/FontFile2`+`/ToUnicode`
+  (5 fontes, zero `/Type1`); regressao de `vendas`/`ordem_producao` sem mudanca visual.
 
 ### Adicionado (subrelatorios / master-detail)
 - **Bandas `detailData`** agora sao emitidas pelo pipeline: para cada linha da banda
