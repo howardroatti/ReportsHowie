@@ -17,6 +17,7 @@ rhtool export demos/vendas.rhr demos/vendas.html --data demos/vendas.data.json
 | `vendas.rhr`      | Agrupamento por categoria, subtotais, total geral e **grafico de barras** (vendas por categoria) | `vendas.data.json`    |
 | `pedidos.rhr`     | Lista de pedidos por cliente/UF com totais                         | `pedidos.data.json`   |
 | `catalogo.rhr`    | Catalogo de produtos com **codigo de barras (Code128)** e **QR** por item | `catalogo.data.json`  |
+| `subrelatorio.rhr`| **Subrelatorio / master-detail**: entregas por paciente (banda `detailData` ligada por chave) | `subrelatorio.data.json` |
 | `exemplo.rhr`     | Template minimo de referencia                                      | —                     |
 
 O formato de `--data` e `{ "NomeDataset": [ { campo: valor, ... }, ... ] }`,

@@ -1,0 +1,128 @@
+{
+  "formatVersion": 1,
+  "generator": "ReportsHowie 0.1.0-dev",
+  "title": "Subrelatorio - Entregas por paciente",
+  "author": "",
+  "pages": [
+    {
+      "name": "",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "portrait",
+      "marginLeft": 100,
+      "marginTop": 100,
+      "marginRight": 100,
+      "marginBottom": 100,
+      "bands": [
+        {
+          "bandType": "reportTitle",
+          "name": "",
+          "height": 150,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 20, "width": 1900, "height": 90,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "ENTREGAS POR PACIENTE",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 16, "color": -16777208, "style": "" },
+              "hAlign": "center", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "masterData",
+          "name": "",
+          "height": 90,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Pacientes",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 20, "width": 1900, "height": 55,
+              "visible": true,
+              "frame": { "sides": "B", "color": 10066329, "width": 1 },
+              "text": "[nome]    -    [hospital]",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 12, "color": -16777208, "style": "B" },
+              "hAlign": "left", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "detailData",
+          "name": "",
+          "height": 50,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "Entregas",
+          "groupExpression": "",
+          "masterKeyExpr": "[id]",
+          "detailKeyField": "paciente_id",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 200, "top": 5, "width": 1700, "height": 40,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "Bolsa [bolsa]  -  [volume] ml",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 10, "color": -16777208, "style": "" },
+              "hAlign": "left", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            }
+          ]
+        },
+        {
+          "bandType": "pageFooter",
+          "name": "",
+          "height": 60,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0, "top": 0, "width": 1900, "height": 50,
+              "visible": true,
+              "frame": { "sides": "", "color": 0, "width": 2 },
+              "text": "Pagina [PAGE] de [TOTALPAGES]",
+              "dataField": "",
+              "font": { "name": "Segoe UI", "size": 10, "color": -16777208, "style": "" },
+              "hAlign": "right", "vAlign": "top", "wordWrap": true,
+              "color": 16777215, "transparent": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

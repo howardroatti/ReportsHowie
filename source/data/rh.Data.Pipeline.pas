@@ -10,9 +10,10 @@
 ///   (SUM/AVG/COUNT/MIN/MAX) sao calculadas re-varrendo o dataset com filtro de
 ///   grupo, salvando/restaurando a posicao via bookmark — sem acumuladores.
 ///
-///   FASE 4: banda master + 1 nivel de grupo + agregacoes (grupo e geral) +
-///   cabecalho/rodape de pagina + total de paginas (2 passagens). Master-detail
-///   com dataset aninhado e multiplos niveis de grupo ficam para uma evolucao.
+///   Banda master + grupos aninhados + agregacoes (grupo e geral) + cabecalho/
+///   rodape de pagina + total de paginas (2 passagens). Subrelatorio: bandas
+///   detailData com dataset proprio, emitidas por linha-master e filtradas por
+///   chave (MasterKeyExpr/DetailKeyField) — ver EmitDetailBands.
 /// </summary>
 unit rh.Data.Pipeline;
 
@@ -328,12 +329,14 @@ type
     FCtxObj: TrhReportContext;
     FTitle, FPageHeader, FPageFooter, FSummary, FMaster: TrhBand;
     FLevels: TArray<TrhGroupLevel>; // grupos aninhados (indice 0 = mais externo)
+    FDetails: TArray<TrhBand>;      // bandas de detalhe (subrelatorio), na ordem
     procedure Classify;
     procedure SetGroupFiltersUpTo(Level: Integer);
     procedure StartPage;
     procedure FinishPage;
     procedure PrepareBandCharts(Band: TrhBand);
     procedure EmitFlow(Band: TrhBand);
+    procedure EmitDetailBands(AMaster: TDataSet);
     procedure RunData(DS: TDataSet);
   public
     constructor Create(AReport: TrhReport);
@@ -364,6 +367,7 @@ begin
   FTitle := nil; FPageHeader := nil; FPageFooter := nil;
   FSummary := nil; FMaster := nil;
   SetLength(FLevels, 0);
+  SetLength(FDetails, 0);
 
   // 1a passada: cada GroupHeader (na ordem do topo p/ baixo) vira um nivel.
   for Band in FPage.Bands do
@@ -375,6 +379,12 @@ begin
       rhbtPageFooter:  if FPageFooter = nil then FPageFooter := Band;
       rhbtMasterData:  if FMaster = nil then FMaster := Band;
       rhbtSummary:     if FSummary = nil then FSummary := Band;
+      rhbtDetailData:
+        begin
+          N := Length(FDetails);
+          SetLength(FDetails, N + 1);
+          FDetails[N] := Band;
+        end;
       rhbtGroupHeader:
         begin
           N := Length(FLevels);
@@ -469,6 +479,63 @@ begin
   FCurY := FCurY + Band.Height;
 end;
 
+// Subrelatorio: para a linha-master corrente, emite cada banda de detalhe uma
+// vez por linha do seu dataset. Se MasterKeyExpr+DetailKeyField estao setados,
+// filtra o detalhe as linhas cuja chave casa com a do master (link headless, sem
+// depender de MasterSource do VCL). Restaura o dataset do master ao final.
+procedure TPipeline.EmitDetailBands(AMaster: TDataSet);
+var
+  Band: TrhBand;
+  DSComp: TComponent;
+  DS2: TDataSet;
+  Fld: TField;
+  KeyExpr, KeyField, MasterKeyStr: string;
+  HasFilter: Boolean;
+begin
+  for Band in FDetails do
+  begin
+    if not Band.Visible then Continue;
+    DSComp := FReport.FindDataSet(Band.DataSetName);
+    if not (DSComp is TDataSet) then Continue;
+    DS2 := TDataSet(DSComp);
+    if not DS2.Active then Continue;
+
+    KeyExpr := Trim(Band.MasterKeyExpr);
+    KeyField := Trim(Band.DetailKeyField);
+    HasFilter := (KeyExpr <> '') and (KeyField <> '');
+    Fld := nil;
+    MasterKeyStr := '';
+    if HasFilter then
+    begin
+      Fld := DS2.FindField(KeyField);
+      HasFilter := Fld <> nil; // campo inexistente => sem filtro (nao quebra)
+      if HasFilter then
+      begin
+        FCtxObj.DataSet := AMaster; // avalia a chave no contexto do master
+        MasterKeyStr := Trim(VarToStr(rhEvalExpr(KeyExpr, FCtx)));
+      end;
+    end;
+
+    DS2.DisableControls;
+    try
+      DS2.First;
+      while not DS2.Eof do
+      begin
+        if (not HasFilter) or
+           SameText(Trim(VarToStr(Fld.Value)), MasterKeyStr) then
+        begin
+          FCtxObj.DataSet := DS2;
+          EmitFlow(Band);
+        end;
+        DS2.Next;
+      end;
+    finally
+      DS2.EnableControls;
+      FCtxObj.DataSet := AMaster; // restaura o master para o restante do loop
+    end;
+  end;
+end;
+
 procedure TPipeline.RunData(DS: TDataSet);
 var
   First, HasGroup: Boolean;
@@ -537,6 +604,8 @@ begin
 
       FCtxObj.DataSet := DS;
       EmitFlow(FMaster);
+      if Length(FDetails) > 0 then
+        EmitDetailBands(DS); // subrelatorio: detalhe(s) da linha-master corrente
       DS.Next;
       First := False;
     end;

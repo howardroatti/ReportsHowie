@@ -30,6 +30,8 @@ type
     FPrintIfEmpty: Boolean;
     FDataSetName: string;
     FGroupExpression: string;
+    FMasterKeyExpr: string;
+    FDetailKeyField: string;
     FObjects: TrhObjectList;
   public
     constructor Create;
@@ -49,6 +51,13 @@ type
     property DataSetName: string read FDataSetName write FDataSetName;
     /// <summary>Expressao de grupo (para bandas de grupo).</summary>
     property GroupExpression: string read FGroupExpression write FGroupExpression;
+    /// <summary>Subrelatorio (banda de detalhe): expressao-chave avaliada no
+    ///  contexto do MASTER (ex.: [id]). Junto com DetailKeyField, filtra o
+    ///  dataset de detalhe para so as linhas da linha-master corrente.</summary>
+    property MasterKeyExpr: string read FMasterKeyExpr write FMasterKeyExpr;
+    /// <summary>Subrelatorio: campo do dataset de DETALHE comparado a
+    ///  MasterKeyExpr. Vazio = sem filtro (itera todo o detalhe por linha-master).</summary>
+    property DetailKeyField: string read FDetailKeyField write FDetailKeyField;
     property Objects: TrhObjectList read FObjects;
   end;
 
@@ -100,6 +109,8 @@ begin
     FPrintIfEmpty := Src.FPrintIfEmpty;
     FDataSetName := Src.FDataSetName;
     FGroupExpression := Src.FGroupExpression;
+    FMasterKeyExpr := Src.FMasterKeyExpr;
+    FDetailKeyField := Src.FDetailKeyField;
     FObjects.Clear;
     for Obj in Src.FObjects do
     begin
@@ -128,6 +139,8 @@ begin
   O.AddPair('printIfEmpty', TJSONBool.Create(FPrintIfEmpty));
   O.AddPair('dataSetName', FDataSetName);
   O.AddPair('groupExpression', FGroupExpression);
+  O.AddPair('masterKeyExpr', FMasterKeyExpr);
+  O.AddPair('detailKeyField', FDetailKeyField);
   Arr := TJSONArray.Create;
   FObjects.SaveToJSON(Arr);
   O.AddPair('objects', Arr);
@@ -145,6 +158,8 @@ begin
   FPrintIfEmpty := JGetBool(O, 'printIfEmpty', False);
   FDataSetName := JGetStr(O, 'dataSetName', '');
   FGroupExpression := JGetStr(O, 'groupExpression', '');
+  FMasterKeyExpr := JGetStr(O, 'masterKeyExpr', '');
+  FDetailKeyField := JGetStr(O, 'detailKeyField', '');
   FObjects.LoadFromJSON(JGetArr(O, 'objects'));
 end;
 

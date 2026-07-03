@@ -86,7 +86,8 @@ end;
 function IsExprProp(const Name: string): Boolean;
 begin
   Result := SameText(Name, 'Text') or SameText(Name, 'GroupExpression') or
-            SameText(Name, 'CategoryExpr') or SameText(Name, 'ValueExpr');
+            SameText(Name, 'CategoryExpr') or SameText(Name, 'ValueExpr') or
+            SameText(Name, 'MasterKeyExpr');
 end;
 
 // Modo ilha (texto com [expr]) vs. expressao unica.

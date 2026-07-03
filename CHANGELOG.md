@@ -7,6 +7,17 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (subrelatorios / master-detail)
+- **Bandas `detailData`** agora sao emitidas pelo pipeline: para cada linha da banda
+  master, a banda de detalhe roda uma vez por linha do **seu proprio dataset**. Antes o
+  tipo existia no modelo mas era ignorado.
+- **Link por chave sem MasterSource**: `TrhBand.MasterKeyExpr` (expressao no contexto do
+  master, ex.: `[id]`) + `TrhBand.DetailKeyField` (campo do detalhe, ex.: `paciente_id`)
+  filtram o detalhe as linhas da linha-master corrente — funciona headless (rhtool) sem
+  depender de master-detail do VCL. Sem os dois, itera todo o detalhe por linha-master.
+- Schema `.rhr` estendido (`masterKeyExpr`/`detailKeyField`); exemplo em `demos/subrelatorio.rhr`.
+  Fecha #10.
+
 ### Adicionado (designer — editor de expressao)
 - **Diálogo de edição de expressão** (`rh.Design.ExprEditor`): botão **"..."** no inspetor
   para as propriedades de expressão (`Text`, `GroupExpression`, `CategoryExpr`, `ValueExpr`).

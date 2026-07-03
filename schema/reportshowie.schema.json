@@ -4,7 +4,10 @@
   "title": "ReportsHowie report template (.rhr)",
   "description": "Esquema do template de relatorio ReportsHowie. Coordenadas em unidades de 0,1 mm (inteiros). Cores sao inteiros TColor do Delphi (podem ser negativas quando cor de sistema).",
   "type": "object",
-  "required": ["formatVersion", "pages"],
+  "required": [
+    "formatVersion",
+    "pages"
+  ],
   "additionalProperties": false,
   "properties": {
     "formatVersion": {
@@ -16,13 +19,21 @@
       "type": "string",
       "description": "Identificacao de quem gerou o arquivo (ex.: 'ReportsHowie 0.1.0-dev')."
     },
-    "title": { "type": "string" },
-    "author": { "type": "string" },
-    "watermark": { "$ref": "#/$defs/watermark" },
+    "title": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "watermark": {
+      "$ref": "#/$defs/watermark"
+    },
     "pages": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/page" }
+      "items": {
+        "$ref": "#/$defs/page"
+      }
     }
   },
   "$defs": {
@@ -31,10 +42,19 @@
       "additionalProperties": false,
       "description": "Marca d'agua opcional: texto diagonal ao fundo de cada pagina.",
       "properties": {
-        "visible": { "type": "boolean" },
-        "text": { "type": "string" },
-        "angle": { "type": "number", "description": "Angulo em graus, anti-horario (45 = diagonal)." },
-        "font": { "$ref": "#/$defs/font" }
+        "visible": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Angulo em graus, anti-horario (45 = diagonal)."
+        },
+        "font": {
+          "$ref": "#/$defs/font"
+        }
       }
     },
     "color": {
@@ -47,41 +67,95 @@
     },
     "page": {
       "type": "object",
-      "required": ["paperWidth", "paperHeight", "bands"],
+      "required": [
+        "paperWidth",
+        "paperHeight",
+        "bands"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string" },
-        "paperWidth": { "$ref": "#/$defs/unit", "exclusiveMinimum": 0 },
-        "paperHeight": { "$ref": "#/$defs/unit", "exclusiveMinimum": 0 },
-        "orientation": { "type": "string", "enum": ["portrait", "landscape"] },
-        "marginLeft": { "$ref": "#/$defs/unit", "minimum": 0 },
-        "marginTop": { "$ref": "#/$defs/unit", "minimum": 0 },
-        "marginRight": { "$ref": "#/$defs/unit", "minimum": 0 },
-        "marginBottom": { "$ref": "#/$defs/unit", "minimum": 0 },
+        "name": {
+          "type": "string"
+        },
+        "paperWidth": {
+          "$ref": "#/$defs/unit",
+          "exclusiveMinimum": 0
+        },
+        "paperHeight": {
+          "$ref": "#/$defs/unit",
+          "exclusiveMinimum": 0
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "portrait",
+            "landscape"
+          ]
+        },
+        "marginLeft": {
+          "$ref": "#/$defs/unit",
+          "minimum": 0
+        },
+        "marginTop": {
+          "$ref": "#/$defs/unit",
+          "minimum": 0
+        },
+        "marginRight": {
+          "$ref": "#/$defs/unit",
+          "minimum": 0
+        },
+        "marginBottom": {
+          "$ref": "#/$defs/unit",
+          "minimum": 0
+        },
         "bands": {
           "type": "array",
-          "items": { "$ref": "#/$defs/band" }
+          "items": {
+            "$ref": "#/$defs/band"
+          }
         }
       }
     },
     "band": {
       "type": "object",
-      "required": ["bandType"],
+      "required": [
+        "bandType"
+      ],
       "additionalProperties": false,
       "properties": {
         "bandType": {
           "type": "string",
           "enum": [
-            "reportTitle", "pageHeader", "pageFooter", "groupHeader",
-            "masterData", "detailData", "groupFooter", "summary", "child"
+            "reportTitle",
+            "pageHeader",
+            "pageFooter",
+            "groupHeader",
+            "masterData",
+            "detailData",
+            "groupFooter",
+            "summary",
+            "child"
           ]
         },
-        "name": { "type": "string" },
-        "height": { "$ref": "#/$defs/unit", "minimum": 0 },
-        "visible": { "type": "boolean" },
-        "canGrow": { "type": "boolean" },
-        "canShrink": { "type": "boolean" },
-        "printIfEmpty": { "type": "boolean" },
+        "name": {
+          "type": "string"
+        },
+        "height": {
+          "$ref": "#/$defs/unit",
+          "minimum": 0
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "canGrow": {
+          "type": "boolean"
+        },
+        "canShrink": {
+          "type": "boolean"
+        },
+        "printIfEmpty": {
+          "type": "boolean"
+        },
         "dataSetName": {
           "type": "string",
           "description": "Nome logico do dataset ligado em runtime via SetDataSet. Usado por bandas de dados/grupo."
@@ -90,9 +164,19 @@
           "type": "string",
           "description": "Expressao [ilha] cujo valor, ao mudar, quebra o grupo (groupHeader/groupFooter)."
         },
+        "masterKeyExpr": {
+          "type": "string",
+          "description": "Subrelatorio (banda detailData): expressao-chave avaliada no contexto do master (ex.: [id]). Com detailKeyField, filtra o dataset de detalhe."
+        },
+        "detailKeyField": {
+          "type": "string",
+          "description": "Subrelatorio: campo do dataset de detalhe comparado a masterKeyExpr. Vazio = sem filtro."
+        },
         "objects": {
           "type": "array",
-          "items": { "$ref": "#/$defs/object" }
+          "items": {
+            "$ref": "#/$defs/object"
+          }
         }
       }
     },
@@ -105,17 +189,29 @@
           "pattern": "^[LTRB]*$",
           "description": "Lados da moldura: subconjunto de L(eft) T(op) R(ight) B(ottom); vazio = sem moldura."
         },
-        "color": { "$ref": "#/$defs/color" },
-        "width": { "type": "integer", "minimum": 0 }
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "font": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string" },
-        "size": { "type": "number", "exclusiveMinimum": 0 },
-        "color": { "$ref": "#/$defs/color" },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
         "style": {
           "type": "string",
           "pattern": "^[BIUS]*$",
@@ -126,41 +222,89 @@
     "objectBase": {
       "type": "object",
       "properties": {
-        "type": { "type": "string" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" }
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        }
       }
     },
     "object": {
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "oneOf": [
-        { "$ref": "#/$defs/textObject" },
-        { "$ref": "#/$defs/imageObject" },
-        { "$ref": "#/$defs/lineObject" },
-        { "$ref": "#/$defs/shapeObject" },
-        { "$ref": "#/$defs/barcodeObject" },
-        { "$ref": "#/$defs/chartObject" }
+        {
+          "$ref": "#/$defs/textObject"
+        },
+        {
+          "$ref": "#/$defs/imageObject"
+        },
+        {
+          "$ref": "#/$defs/lineObject"
+        },
+        {
+          "$ref": "#/$defs/shapeObject"
+        },
+        {
+          "$ref": "#/$defs/barcodeObject"
+        },
+        {
+          "$ref": "#/$defs/chartObject"
+        }
       ]
     },
     "textObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "text" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" },
+        "type": {
+          "const": "text"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
         "text": {
           "type": "string",
           "description": "Conteudo com ilhas [expr] avaliadas pelo motor de expressoes."
@@ -169,31 +313,79 @@
           "type": "string",
           "description": "Bind simples a um campo do dataset da banda (estilo DB-aware). Quando preenchido, tem precedencia e equivale a ilha [campo]."
         },
-        "font": { "$ref": "#/$defs/font" },
-        "hAlign": { "type": "string", "enum": ["left", "center", "right"] },
-        "vAlign": { "type": "string", "enum": ["top", "center", "bottom"] },
-        "wordWrap": { "type": "boolean" },
-        "color": { "$ref": "#/$defs/color" },
-        "transparent": { "type": "boolean" }
+        "font": {
+          "$ref": "#/$defs/font"
+        },
+        "hAlign": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "vAlign": {
+          "type": "string",
+          "enum": [
+            "top",
+            "center",
+            "bottom"
+          ]
+        },
+        "wordWrap": {
+          "type": "boolean"
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "transparent": {
+          "type": "boolean"
+        }
       }
     },
     "imageObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "image" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" },
-        "dataField": { "type": "string" },
-        "stretch": { "type": "boolean" },
-        "keepAspect": { "type": "boolean" },
-        "center": { "type": "boolean" },
+        "type": {
+          "const": "image"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "dataField": {
+          "type": "string"
+        },
+        "stretch": {
+          "type": "boolean"
+        },
+        "keepAspect": {
+          "type": "boolean"
+        },
+        "center": {
+          "type": "boolean"
+        },
         "picture": {
           "type": "string",
           "description": "Imagem embutida em base64 (vazio quando ligada por dataField)."
@@ -203,85 +395,230 @@
     "lineObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "line" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" },
-        "penColor": { "$ref": "#/$defs/color" },
-        "penWidth": { "type": "integer", "minimum": 0 }
+        "type": {
+          "const": "line"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "penColor": {
+          "$ref": "#/$defs/color"
+        },
+        "penWidth": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "shapeObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "shape" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" },
-        "kind": { "type": "string", "enum": ["rect", "roundRect", "ellipse"] },
-        "penColor": { "$ref": "#/$defs/color" },
-        "penWidth": { "type": "integer", "minimum": 0 },
-        "brushColor": { "$ref": "#/$defs/color" },
-        "transparent": { "type": "boolean" }
+        "type": {
+          "const": "shape"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "rect",
+            "roundRect",
+            "ellipse"
+          ]
+        },
+        "penColor": {
+          "$ref": "#/$defs/color"
+        },
+        "penWidth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "brushColor": {
+          "$ref": "#/$defs/color"
+        },
+        "transparent": {
+          "type": "boolean"
+        }
       }
     },
     "barcodeObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "barcode" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" },
-        "symbology": { "type": "string", "enum": ["code128", "code39", "qrcode"] },
-        "text": { "type": "string" },
-        "dataField": { "type": "string" },
-        "barColor": { "$ref": "#/$defs/color" },
-        "showText": { "type": "boolean" },
-        "moduleWidth": { "type": "integer", "minimum": 0 },
-        "font": { "$ref": "#/$defs/font" }
+        "type": {
+          "const": "barcode"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "symbology": {
+          "type": "string",
+          "enum": [
+            "code128",
+            "code39",
+            "qrcode"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "dataField": {
+          "type": "string"
+        },
+        "barColor": {
+          "$ref": "#/$defs/color"
+        },
+        "showText": {
+          "type": "boolean"
+        },
+        "moduleWidth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "font": {
+          "$ref": "#/$defs/font"
+        }
       }
     },
     "chartObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "chart" },
-        "name": { "type": "string" },
-        "left": { "$ref": "#/$defs/unit" },
-        "top": { "$ref": "#/$defs/unit" },
-        "width": { "$ref": "#/$defs/unit" },
-        "height": { "$ref": "#/$defs/unit" },
-        "visible": { "type": "boolean" },
-        "frame": { "$ref": "#/$defs/frame" },
-        "chartType": { "type": "string", "enum": ["bar", "line", "pie"] },
-        "aggregate": { "type": "string", "enum": ["sum", "avg", "count", "min", "max"] },
-        "dataSetName": { "type": "string" },
-        "categoryExpr": { "type": "string" },
-        "valueExpr": { "type": "string" },
-        "title": { "type": "string" },
-        "showValues": { "type": "boolean" },
-        "showLegend": { "type": "boolean" },
-        "barColor": { "$ref": "#/$defs/color" },
-        "font": { "$ref": "#/$defs/font" }
+        "type": {
+          "const": "chart"
+        },
+        "name": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/unit"
+        },
+        "top": {
+          "$ref": "#/$defs/unit"
+        },
+        "width": {
+          "$ref": "#/$defs/unit"
+        },
+        "height": {
+          "$ref": "#/$defs/unit"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "chartType": {
+          "type": "string",
+          "enum": [
+            "bar",
+            "line",
+            "pie"
+          ]
+        },
+        "aggregate": {
+          "type": "string",
+          "enum": [
+            "sum",
+            "avg",
+            "count",
+            "min",
+            "max"
+          ]
+        },
+        "dataSetName": {
+          "type": "string"
+        },
+        "categoryExpr": {
+          "type": "string"
+        },
+        "valueExpr": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "showValues": {
+          "type": "boolean"
+        },
+        "showLegend": {
+          "type": "boolean"
+        },
+        "barColor": {
+          "$ref": "#/$defs/color"
+        },
+        "font": {
+          "$ref": "#/$defs/font"
+        }
       }
     }
   }
