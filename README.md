@@ -58,28 +58,91 @@ baixe o `.zip` da sua versão do Delphi, instale o `ReportsHowieDT<sufixo>.bpl` 
 > ```
 > Para publicar uma nova versão, veja **[RELEASING.md](./RELEASING.md)**.
 
-## Exemplo mínimo (API pretendida)
+## Começando (Getting Started)
 
-> A API abaixo é o alvo das próximas fases; hoje `TrhReport` é o esqueleto instalável.
+Depois de [instalar o componente](#instalação), há dois caminhos: **carregar um
+template `.rhr`** (desenhado no designer) ou **montar o relatório por código**. Em ambos
+os casos você liga um `TDataSet`, pré-visualiza e exporta.
+
+### 1. Carregar um template e exportar
 
 ```pascal
-uses rh.Report;
+uses
+  Data.DB,
+  rh.Report,          // TrhReport + SetDataSet
+  rh.Data.Pipeline,   // BuildDocument + ShowDataPreview
+  rh.Render.Intf,     // TrhRenderedDocument
+  rh.Export.PDF;      // TrhPdfExporter (idem HTML/XLSX/DOCX)
 
+procedure GerarVendas(Query: TDataSet);
 var
   Rep: TrhReport;
+  Doc: TrhRenderedDocument;
 begin
   Rep := TrhReport.Create(nil);
   try
-    Rep.LoadFromFile('vendas.rhr');   // template desenhado no designer
-    // Rep.DataLinks['Master'].DataSet := qryVendas;  // TDataSet genérico
-    Rep.ShowPreview;                  // preview VCL
-    Rep.ExportToFile('vendas.pdf');   // PDF / HTML / DOCX / XLSX
-    // Rep.SendByEmail(...);          // via Indy SMTP
+    Rep.LoadFromFile('vendas.rhr');     // template feito no designer
+    Rep.SetDataSet('Master', Query);    // liga o TDataSet ao nome usado nas bandas
+
+    Rep.ShowDataPreview;                 // preview com dados (janela VCL)
+
+    // Exportar: monta a display list uma vez e reusa em qualquer formato.
+    Doc := TrhDataPipeline.BuildDocument(Rep);
+    try
+      TrhPdfExporter.ExportToFile(Doc, 'vendas.pdf');
+      // TrhHtmlExporter.ExportToFile(Doc, 'vendas.html', Rep.Title);
+      // TrhXlsxExporter.ExportToFile(Doc, 'vendas.xlsx');
+      // TrhDocxExporter.ExportToFile(Doc, 'vendas.docx');
+    finally
+      Doc.Free;
+    end;
   finally
     Rep.Free;
   end;
 end;
 ```
+
+> **Dica sobre `uses`:** o preview *com dados* (`ShowDataPreview`) vem de `rh.Data.Pipeline`;
+> o preview *estático* (`ShowPreview`, sem dataset) vem de `rh.Preview.Form`. Como ambos são
+> *class helpers* de `TrhReport`, mantenha na cláusula `uses` **o da última** que você quer usar.
+
+### 2. Montar um relatório por código (sem designer)
+
+```pascal
+uses rh.Report, rh.Page, rh.Bands, rh.Objects, rh.Model.Types;
+
+var
+  Rep: TrhReport;
+  Band: TrhBand;
+  Txt: TrhTextObject;
+begin
+  Rep := TrhReport.Create(nil);
+  try
+    Band := Rep.EnsurePage.Bands.AddBand(rhbtMasterData);
+    Band.DataSetName := 'Master';         // casa com o SetDataSet('Master', ...)
+    Band.Height := 60;                    // unidades de 0,1 mm => 6 mm
+
+    Txt := Band.Objects.AddNew<TrhTextObject>;
+    Txt.Text := '[cliente] — [FORMATFLOAT(''#,##0.00'', valor)]';  // ilhas [expr]
+    Txt.Left := 0;  Txt.Top := 0;  Txt.Width := 1800;  Txt.Height := 50;
+
+    Rep.SaveToFile('vendas.rhr');         // vira template reutilizável
+  finally
+    Rep.Free;
+  end;
+end;
+```
+
+### 3. Sem abrir o IDE (`rhtool`)
+
+```sh
+rhtool info vendas.rhr                                   # estrutura do template
+rhtool export vendas.rhr vendas.pdf --data dados.json    # renderiza com dados
+rhtool import legado.frx vendas.rhr                       # importa de FastReport
+```
+
+Veja templates prontos em **[`demos/`](./demos/)** e o guia completo no
+**[Manual](https://howardroatti.github.io/ReportsHowie/)**.
 
 ## Documentação
 
