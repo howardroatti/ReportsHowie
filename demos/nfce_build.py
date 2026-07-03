@@ -12,9 +12,10 @@ Uso:  python nfce_build.py
 from fiscal_common import (mm, txt, hline, qrcode, band, page, save)
 
 PW, PH, MARGIN = mm(80), mm(122), mm(2)
-X0 = MARGIN
-X1 = PW - MARGIN
-W = X1 - X0
+# coordenadas relativas a area de conteudo (o motor ja aplica a margem)
+X0 = 0
+W = PW - 2 * MARGIN
+X1 = W
 CHAVE_MASK = "#### #### #### #### #### #### #### #### #### #### ####"
 
 

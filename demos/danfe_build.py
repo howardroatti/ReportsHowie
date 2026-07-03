@@ -20,9 +20,11 @@ def mm(v): return int(round(v * 10))
 
 PAGE_W, PAGE_H = mm(210), mm(297)   # A4
 MARGIN = mm(4)
-X0 = MARGIN
-X1 = PAGE_W - MARGIN
-W = X1 - X0                          # largura util
+# coordenadas RELATIVAS a area de conteudo (o motor ja aplica a margem):
+# X0=0 e W = largura util. NAO somar a margem de novo aqui.
+X0 = 0
+W = PAGE_W - 2 * MARGIN              # largura util
+X1 = W
 
 FONT = "Segoe UI"
 BLACK = 0

@@ -11,8 +11,10 @@ from fiscal_common import (mm, txt, cell, box, fill, vline, hline,
                            band, page, save)
 
 PW, PH, MARGIN = mm(210), mm(297), mm(6)
-X0, X1 = MARGIN, PW - MARGIN
-W = X1 - X0
+# coordenadas relativas a area de conteudo (o motor ja aplica a margem)
+X0 = 0
+W = PW - 2 * MARGIN
+X1 = W
 ROW = mm(9)
 
 
