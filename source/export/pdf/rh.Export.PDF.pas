@@ -7,9 +7,14 @@
 /// <summary>
 ///   Exportador PDF nativo (puro Pascal, sem dependencias). Escreve um PDF 1.4
 ///   a partir do TrhRenderedDocument: catalogo, arvore de paginas, content
-///   streams, as 14 fontes Type1 padrao (familia Helvetica, WinAnsi) e imagens
-///   como XObject /DCTDecode (JPEG). Origem do PDF e canto inferior-esquerdo;
-///   convertemos a partir do topo. Alinhamento de texto usa metricas GDI.
+///   streams e imagens como XObject /DCTDecode (JPEG).
+///
+///   FONTES: cada (nome+estilo) usado vira uma fonte composta Type0/Identity-H
+///   com a TrueType EMBUTIDA (FontFile2), CIDFontType2, larguras /W e CMap
+///   ToUnicode -> acentuacao/Unicode e fontes customizadas saem corretas e o
+///   texto e copiavel/buscavel. O texto e escrito como glyph indices (via
+///   rh.PDF.TrueType). Origem do PDF e canto inferior-esquerdo; convertemos a
+///   partir do topo. Alinhamento de texto usa metricas GDI.
 /// </summary>
 unit rh.Export.PDF;
 
@@ -29,7 +34,7 @@ implementation
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, System.Math,
   Winapi.Windows, Vcl.Graphics, Vcl.Imaging.jpeg,
-  rh.Types, rh.Model.Types;
+  rh.Types, rh.Model.Types, rh.PDF.TrueType;
 
 var
   GFS: TFormatSettings;
@@ -102,13 +107,142 @@ begin
 end;
 
 type
+  // Uma fonte embutida usada no documento (por nome + estilo). Dona da TTF.
+  TPdfFont = class
+    Name: string;
+    Bold, Italic: Boolean;
+    TTF: TrhTrueTypeFont;
+    destructor Destroy; override;
+  end;
+
+destructor TPdfFont.Destroy;
+begin
+  TTF.Free;
+  inherited Destroy;
+end;
+
+// Nome seguro para /BaseFont (PDF name): so ASCII alfanumerico + '-'.
+function SanitizeName(const S: string): string;
+var
+  I: Integer;
+  C: Char;
+begin
+  Result := '';
+  for I := 1 to Length(S) do
+  begin
+    C := S[I];
+    if ((C >= 'A') and (C <= 'Z')) or ((C >= 'a') and (C <= 'z')) or
+       ((C >= '0') and (C <= '9')) or (C = '-') then
+      Result := Result + C;
+  end;
+  if Result = '' then Result := 'Font';
+end;
+
+// Carrega a TTF instalada; se falhar, tenta fontes de fallback comuns do Windows.
+function LoadTTF(const AName: string; ABold, AItalic: Boolean): TrhTrueTypeFont;
+const
+  FALLBACKS: array[0..2] of string = ('Arial', 'Segoe UI', 'Tahoma');
+var
+  I: Integer;
+begin
+  try
+    Exit(TrhTrueTypeFont.CreateFromFont(AName, ABold, AItalic));
+  except
+    // tenta os fallbacks
+  end;
+  for I := Low(FALLBACKS) to High(FALLBACKS) do
+    try
+      Exit(TrhTrueTypeFont.CreateFromFont(FALLBACKS[I], ABold, AItalic));
+    except
+    end;
+  raise Exception.CreateFmt('ReportsHowie: nenhuma fonte TrueType disponivel (%s).', [AName]);
+end;
+
+// Texto -> string hexadecimal de glyph indices (2 bytes cada), para Identity-H.
+function HexGIDs(const S: string; F: TrhTrueTypeFont): RawByteString;
+var
+  I: Integer;
+  SB: TStringBuilder;
+begin
+  SB := TStringBuilder.Create;
+  try
+    for I := 1 to Length(S) do
+      SB.Append(IntToHex(F.GlyphIndex(Ord(S[I])), 4));
+    Result := RawByteString(SB.ToString);
+  finally
+    SB.Free;
+  end;
+end;
+
+// Array /W [ 0 [ w0 w1 ... ] ] com a largura de cada glifo (espaco 1000/em).
+function WidthsArray(F: TrhTrueTypeFont): RawByteString;
+var
+  I: Integer;
+  SB: TStringBuilder;
+begin
+  if F.NumGlyphs <= 0 then Exit('');
+  SB := TStringBuilder.Create;
+  try
+    SB.Append('/W [ 0 [');
+    for I := 0 to F.NumGlyphs - 1 do
+    begin
+      SB.Append(' ');
+      SB.Append(F.AdvanceWidth1000(I));
+    end;
+    SB.Append(' ] ]');
+    Result := RawByteString(SB.ToString);
+  finally
+    SB.Free;
+  end;
+end;
+
+// CMap ToUnicode (GID -> codepoint) para permitir copiar/buscar texto no PDF.
+function BuildToUnicode(F: TrhTrueTypeFont): RawByteString;
+var
+  SB: TStringBuilder;
+  Pairs: TArray<TPair<Word, Word>>;
+  I, J, Blk: Integer;
+begin
+  Pairs := F.GIDToCode.ToArray;
+  SB := TStringBuilder.Create;
+  try
+    SB.Append('/CIDInit /ProcSet findresource begin'#10);
+    SB.Append('12 dict begin'#10'begincmap'#10);
+    SB.Append('/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def'#10);
+    SB.Append('/CMapName /Adobe-Identity-UCS def'#10'/CMapType 2 def'#10);
+    SB.Append('1 begincodespacerange'#10'<0000> <FFFF>'#10'endcodespacerange'#10);
+    I := 0;
+    while I < Length(Pairs) do
+    begin
+      Blk := Min(100, Length(Pairs) - I);
+      SB.Append(Blk).Append(' beginbfchar'#10);
+      for J := I to I + Blk - 1 do
+        SB.Append(Format('<%.4x> <%.4x>'#10, [Pairs[J].Key, Pairs[J].Value]));
+      SB.Append('endbfchar'#10);
+      Inc(I, Blk);
+    end;
+    SB.Append('endcmap'#10);
+    SB.Append('CMapName currentdict /CMap defineresource pop'#10'end'#10'end'#10);
+    Result := RawByteString(SB.ToString);
+  finally
+    SB.Free;
+  end;
+end;
+
+type
   TPdfBuilder = class
   private
     FDoc: TrhRenderedDocument;
     FImages: TList<TrhDrawOp>;
+    FFonts: TObjectList<TPdfFont>;      // fontes embutidas (dono)
+    FFontIndex: TDictionary<string, Integer>;
+    FFontFirst: Integer;      // numero do 1o objeto de fonte (=3)
     FImgFirst: Integer;       // numero do 1o objeto de imagem
     FPageFirst: Integer;      // numero do 1o objeto de pagina
     procedure CollectImages;
+    procedure CollectFonts;
+    function FontKey(const AName: string; ABold, AItalic: Boolean): string;
+    function FontIndexOf(Op: TrhDrawOp): Integer;
     function TextOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
     function LineOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
     function ShapeOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteString;
@@ -127,12 +261,59 @@ begin
   inherited Create;
   FDoc := ADoc;
   FImages := TList<TrhDrawOp>.Create;
+  FFonts := TObjectList<TPdfFont>.Create(True);
+  FFontIndex := TDictionary<string, Integer>.Create;
 end;
 
 destructor TPdfBuilder.Destroy;
 begin
+  FFontIndex.Free;
+  FFonts.Free;
   FImages.Free;
   inherited Destroy;
+end;
+
+function TPdfBuilder.FontKey(const AName: string; ABold, AItalic: Boolean): string;
+begin
+  Result := LowerCase(AName) + '|' + IntToStr(Ord(ABold)) + IntToStr(Ord(AItalic));
+end;
+
+// Varre os text ops e carrega uma TTF por (nome, bold, italic) distinto.
+procedure TPdfBuilder.CollectFonts;
+var
+  Page: TrhRenderedPage;
+  Op: TrhDrawOp;
+  Key: string;
+  Bold, Italic: Boolean;
+  F: TPdfFont;
+begin
+  FFonts.Clear;
+  FFontIndex.Clear;
+  for Page in FDoc.Pages do
+    for Op in Page.Ops do
+      if (Op.Kind = rhdkText) and (Trim(Op.Text) <> '') then
+      begin
+        Bold := fsBold in Op.FontStyle;
+        Italic := fsItalic in Op.FontStyle;
+        Key := FontKey(Op.FontName, Bold, Italic);
+        if not FFontIndex.ContainsKey(Key) then
+        begin
+          F := TPdfFont.Create;
+          F.Name := Op.FontName;
+          F.Bold := Bold;
+          F.Italic := Italic;
+          F.TTF := LoadTTF(Op.FontName, Bold, Italic);
+          FFontIndex.Add(Key, FFonts.Count);
+          FFonts.Add(F);
+        end;
+      end;
+end;
+
+function TPdfBuilder.FontIndexOf(Op: TrhDrawOp): Integer;
+begin
+  if not FFontIndex.TryGetValue(
+    FontKey(Op.FontName, fsBold in Op.FontStyle, fsItalic in Op.FontStyle), Result) then
+    Result := -1;
 end;
 
 procedure TPdfBuilder.CollectImages;
@@ -152,13 +333,17 @@ function TPdfBuilder.TextOpContent(Op: TrhDrawOp; PageHpt: Double): RawByteStrin
 var
   LeftPt, TopPt, WPt, LineH, X, BaseY, R, G, B: Double;
   Lines: TArray<string>;
-  I: Integer;
+  I, Idx: Integer;
   LineWidth: Double;
   ang, ca, sa, cxp, cyp, sxp, syp: Double;
   Txt: string;
+  F: TrhTrueTypeFont;
 begin
   Result := '';
   if Trim(Op.Text) = '' then Exit;
+  Idx := FontIndexOf(Op);
+  if Idx < 0 then Exit;
+  F := FFonts[Idx].TTF;
   LeftPt := MMToPt(Op.Rect.Left);
   TopPt := MMToPt(Op.Rect.Top);
   WPt := MMToPt(Op.Rect.Width);
@@ -177,18 +362,18 @@ begin
     sxp := cxp - (LineWidth / 2) * ca + (0.35 * Op.FontSize) * sa;
     syp := cyp - (LineWidth / 2) * sa - (0.35 * Op.FontSize) * ca;
     Result := RawByteString(Format('%s %s %s rg'#10, [NS(R), NS(G), NS(B)]));
-    Result := Result + RawByteString(Format('BT /F%d %d Tf'#10, [FontIndex(Op.FontStyle), Op.FontSize]));
-    Result := Result + RawByteString(Format('%s %s %s %s %s %s Tm (',
+    Result := Result + RawByteString(Format('BT /F%d %d Tf'#10, [Idx, Op.FontSize]));
+    Result := Result + RawByteString(Format('%s %s %s %s %s %s Tm <',
       [NS(ca), NS(sa), NS(-sa), NS(ca), NS(sxp), NS(syp)]));
-    Result := Result + PdfEscapeText(Txt);
-    Result := Result + ') Tj'#10'ET'#10;
+    Result := Result + HexGIDs(Txt, F);
+    Result := Result + '> Tj'#10'ET'#10;
     Exit;
   end;
 
   Lines := Op.Text.Replace(#13#10, #10).Split([#10]);
 
   Result := Result + RawByteString(Format('%s %s %s rg'#10, [NS(R), NS(G), NS(B)]));
-  Result := Result + RawByteString(Format('BT /F%d %d Tf'#10, [FontIndex(Op.FontStyle), Op.FontSize]));
+  Result := Result + RawByteString(Format('BT /F%d %d Tf'#10, [Idx, Op.FontSize]));
   for I := 0 to High(Lines) do
   begin
     LineWidth := MeasureTextPt(Lines[I], Op.FontName, Op.FontSize, Op.FontStyle);
@@ -200,9 +385,9 @@ begin
     end;
     // baseline a partir do topo do retangulo, linha a linha
     BaseY := PageHpt - (TopPt + Op.FontSize + I * LineH);
-    Result := Result + RawByteString(Format('1 0 0 1 %s %s Tm (', [NS(X), NS(BaseY)]));
-    Result := Result + PdfEscapeText(Lines[I]);
-    Result := Result + ') Tj'#10;
+    Result := Result + RawByteString(Format('1 0 0 1 %s %s Tm <', [NS(X), NS(BaseY)]));
+    Result := Result + HexGIDs(Lines[I], F);
+    Result := Result + '> Tj'#10;
   end;
   Result := Result + 'ET'#10;
 end;
@@ -364,10 +549,12 @@ end;
 procedure TPdfBuilder.SaveToStream(Stream: TStream);
 var
   Offsets: TList<Int64>;
-  TotalObjs, I, PageObj, ContentObj: Integer;
+  TotalObjs, I, K, Base, PageObj, ContentObj: Integer;
   NPages: Integer;
-  Kids, XObjRes, Body, Content: RawByteString;
+  Kids, XObjRes, FontRes, Body, Content, ToUni: RawByteString;
   JpegBytes: TBytes;
+  PF: TPdfFont;
+  StemV: Integer;
 
   procedure W(const S: RawByteString);
   begin
@@ -394,13 +581,16 @@ var
 
 begin
   CollectImages;
+  CollectFonts;
   NPages := FDoc.PageCount;
 
-  // Numeracao: 1 Catalog, 2 Pages, 3..6 fontes, imagens, depois paginas+conteudo
-  FImgFirst := 7;
+  // Numeracao: 1 Catalog, 2 Pages, fontes (5 objs por fonte embutida), imagens,
+  // depois paginas + conteudo.
+  FFontFirst := 3;
+  FImgFirst := FFontFirst + FFonts.Count * 5;
   FPageFirst := FImgFirst + FImages.Count;
   TotalObjs := FPageFirst + NPages * 2 - 1;
-  if NPages = 0 then TotalObjs := 6;
+  if TotalObjs < 2 then TotalObjs := 2;
 
   Offsets := TList<Int64>.Create;
   try
@@ -423,11 +613,61 @@ begin
     W(RawByteString('<< /Type /Pages /Kids [ ' + string(Kids) + '] /Count ' + IntToStr(NPages) + ' >>'));
     EndObj;
 
-    // 3..6: fontes Helvetica
-    BeginObj(3); W('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'); EndObj;
-    BeginObj(4); W('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'); EndObj;
-    BeginObj(5); W('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>'); EndObj;
-    BeginObj(6); W('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-BoldOblique /Encoding /WinAnsiEncoding >>'); EndObj;
+    // fontes embutidas: 5 objetos por fonte (Type0, CIDFontType2, FontDescriptor,
+    // FontFile2, ToUnicode). BaseName com sufixo de estilo p/ nao colidir entre estilos.
+    for K := 0 to FFonts.Count - 1 do
+    begin
+      Base := FFontFirst + K * 5;
+      PF := FFonts[K];
+      var BN: RawByteString := RawByteString(SanitizeName(PF.Name));
+      if PF.Bold and PF.Italic then BN := BN + RawByteString('-BoldItalic')
+      else if PF.Bold then BN := BN + RawByteString('-Bold')
+      else if PF.Italic then BN := BN + RawByteString('-Italic');
+      if PF.Bold then StemV := 120 else StemV := 80;
+
+      // Type0 (composta, Identity-H)
+      BeginObj(Base);
+      W(RawByteString(Format('<< /Type /Font /Subtype /Type0 /BaseFont /%s ' +
+        '/Encoding /Identity-H /DescendantFonts [ %d 0 R ] /ToUnicode %d 0 R >>',
+        [string(BN), Base + 1, Base + 4])));
+      EndObj;
+
+      // CIDFontType2 (descendente) + larguras
+      BeginObj(Base + 1);
+      W(RawByteString(Format('<< /Type /Font /Subtype /CIDFontType2 /BaseFont /%s ' +
+        '/CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> ' +
+        '/FontDescriptor %d 0 R /CIDToGIDMap /Identity /DW 1000 ',
+        [string(BN), Base + 2])));
+      W(WidthsArray(PF.TTF));
+      W(' >>');
+      EndObj;
+
+      // FontDescriptor
+      BeginObj(Base + 2);
+      W(RawByteString(Format('<< /Type /FontDescriptor /FontName /%s /Flags %d ' +
+        '/FontBBox [ %d %d %d %d ] /ItalicAngle %d /Ascent %d /Descent %d ' +
+        '/CapHeight %d /StemV %d /FontFile2 %d 0 R >>',
+        [string(BN), PF.TTF.Flags, PF.TTF.BBox(0), PF.TTF.BBox(1), PF.TTF.BBox(2),
+         PF.TTF.BBox(3), PF.TTF.ItalicAngle, PF.TTF.Ascent, PF.TTF.Descent,
+         PF.TTF.CapHeight, StemV, Base + 3])));
+      EndObj;
+
+      // FontFile2 (a fonte inteira embutida)
+      BeginObj(Base + 3);
+      W(RawByteString(Format('<< /Length %d /Length1 %d >>'#10'stream'#10,
+        [Length(PF.TTF.FontData), Length(PF.TTF.FontData)])));
+      WBytes(PF.TTF.FontData);
+      W(#10'endstream');
+      EndObj;
+
+      // ToUnicode
+      ToUni := BuildToUnicode(PF.TTF);
+      BeginObj(Base + 4);
+      W(RawByteString('<< /Length ' + IntToStr(Length(ToUni)) + ' >>'#10'stream'#10));
+      W(ToUni);
+      W(#10'endstream');
+      EndObj;
+    end;
 
     // imagens
     for I := 0 to FImages.Count - 1 do
@@ -447,6 +687,11 @@ begin
     for I := 0 to FImages.Count - 1 do
       XObjRes := XObjRes + RawByteString(Format('/Im%d %d 0 R ', [I, FImgFirst + I]));
 
+    // recurso de fontes compartilhado (/F0 = fonte 0, ...)
+    FontRes := '';
+    for K := 0 to FFonts.Count - 1 do
+      FontRes := FontRes + RawByteString(Format('/F%d %d 0 R ', [K, FFontFirst + K * 5]));
+
     // paginas + conteudo
     for I := 0 to NPages - 1 do
     begin
@@ -455,8 +700,9 @@ begin
 
       Body := RawByteString(Format(
         '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %s %s] ' +
-        '/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >>',
-        [string(NS(MMToPt(FDoc.Pages[I].Width))), string(NS(MMToPt(FDoc.Pages[I].Height)))]));
+        '/Resources << /Font << %s>>',
+        [string(NS(MMToPt(FDoc.Pages[I].Width))), string(NS(MMToPt(FDoc.Pages[I].Height))),
+         string(FontRes)]));
       if FImages.Count > 0 then
         Body := Body + RawByteString(' /XObject << ' + string(XObjRes) + '>>');
       Body := Body + RawByteString(' >> /Contents ' + IntToStr(ContentObj) + ' 0 R >>');

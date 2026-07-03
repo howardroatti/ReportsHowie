@@ -1,0 +1,251 @@
+{
+  "formatVersion": 1,
+  "generator": "ReportsHowie 0.1.0-dev",
+  "title": "Fontes e Unicode",
+  "author": "",
+  "pages": [
+    {
+      "name": "",
+      "paperWidth": 2100,
+      "paperHeight": 2970,
+      "orientation": "portrait",
+      "marginLeft": 100,
+      "marginTop": 100,
+      "marginRight": 100,
+      "marginBottom": 100,
+      "bands": [
+        {
+          "bandType": "reportTitle",
+          "name": "",
+          "height": 650,
+          "visible": true,
+          "canGrow": false,
+          "canShrink": false,
+          "printIfEmpty": false,
+          "dataSetName": "",
+          "groupExpression": "",
+          "masterKeyExpr": "",
+          "detailKeyField": "",
+          "objects": [
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 30,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Fontes & Unicode no PDF",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 18,
+                "color": -16777208,
+                "style": "B"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 120,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Portugues: acentuacao, coracao, pao, agua  ->  Português: acentuação, coração, pão, água",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 12,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 190,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Deutsch: Grüße, schön, Übung   Français: déjà, où, être, ça",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 12,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 260,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Русский (Cyrillic): Привет, мир!",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 13,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 330,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Ελληνικά (Greek): Γειά σου κόσμε",
+              "dataField": "",
+              "font": {
+                "name": "Segoe UI",
+                "size": 13,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 410,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Times New Roman: Relatório — açaí, ênfase, ûî",
+              "dataField": "",
+              "font": {
+                "name": "Times New Roman",
+                "size": 13,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 480,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Consolas (mono): R$ 1.234,56  |  código: ABC-0042",
+              "dataField": "",
+              "font": {
+                "name": "Consolas",
+                "size": 12,
+                "color": -16777208,
+                "style": ""
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            },
+            {
+              "type": "text",
+              "name": "",
+              "left": 0,
+              "top": 550,
+              "width": 1900,
+              "height": 70,
+              "visible": true,
+              "frame": {
+                "sides": "",
+                "color": 0,
+                "width": 2
+              },
+              "text": "Arial Bold Italic: ção coração ünë",
+              "dataField": "",
+              "font": {
+                "name": "Arial",
+                "size": 12,
+                "color": -16777208,
+                "style": "BI"
+              },
+              "hAlign": "left",
+              "vAlign": "top",
+              "wordWrap": false,
+              "color": 16777215,
+              "transparent": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

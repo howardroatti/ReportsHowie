@@ -7,6 +7,16 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (PDF — fontes embutidas + Unicode)
+- O exportador PDF agora **embute a fonte TrueType** de cada (nome+estilo) usado, como
+  fonte composta **Type0/Identity-H** (CIDFontType2 + FontFile2 + larguras `/W` + CMap
+  **ToUnicode**). Antes usava só as 14 fontes padrao em WinAnsi.
+- **Acentuacao e Unicode** (latino estendido, cirilico, grego, ...) e **fontes customizadas**
+  saem corretos; o texto continua **copiavel/buscavel** (ToUnicode). O texto e escrito como
+  glyph indices via o novo leitor `rh.PDF.TrueType` (le head/hhea/maxp/hmtx/cmap fmt 4 e 12).
+- Fallback para fontes comuns do Windows se a fonte pedida nao existir. Ref #8.
+  *Limitacao atual:* embute a fonte inteira (sem subsetting) e trata o plano BMP (<= U+FFFF).
+
 ### Adicionado (subrelatorios / master-detail)
 - **Bandas `detailData`** agora sao emitidas pelo pipeline: para cada linha da banda
   master, a banda de detalhe roda uma vez por linha do **seu proprio dataset**. Antes o
