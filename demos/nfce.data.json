@@ -1,0 +1,48 @@
+{
+  "Venda": [
+    {
+      "emit_nome": "MERCADO EXEMPLO LTDA",
+      "emit_cnpj": "12345678000199",
+      "emit_ie": "082345678",
+      "emit_end": "RUA DO VAREJO, 45 - CENTRO",
+      "emit_mun": "VITORIA",
+      "emit_uf": "ES",
+      "qtd_itens": "3",
+      "valor_total": 47.3,
+      "valor_pago": 50.0,
+      "forma_pgto": "Dinheiro (troco R$ 2,70)",
+      "url_consulta": "www.sefaz.es.gov.br/nfce/consulta",
+      "chave": "35240712345678000199650010000012341123456789",
+      "qr_conteudo": "https://www.sefaz.es.gov.br/nfce/qrcode?p=35240712345678000199650010000012341123456789|2|1|1|ABCDEF0123456789",
+      "protocolo": "135240000987654 - 03/07/2026 14:07",
+      "dt_emissao": "03/07/2026 14:07:33",
+      "consumidor": "CONSUMIDOR: JOAO DA SILVA - CPF 123.456.789-00"
+    }
+  ],
+  "Itens": [
+    {
+      "codigo": "7891",
+      "descricao": "REFRIGERANTE COLA 2L",
+      "un": "UN",
+      "qtd": 2.0,
+      "valor_unit": 8.9,
+      "valor_total": 17.8
+    },
+    {
+      "codigo": "7420",
+      "descricao": "PAO FRANCES",
+      "un": "KG",
+      "qtd": 0.65,
+      "valor_unit": 15.0,
+      "valor_total": 9.75
+    },
+    {
+      "codigo": "3310",
+      "descricao": "CAFE TORRADO E MOIDO 500G",
+      "un": "UN",
+      "qtd": 1.0,
+      "valor_unit": 19.75,
+      "valor_total": 19.75
+    }
+  ]
+}

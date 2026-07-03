@@ -1,0 +1,47 @@
+{
+  "MDFe": [
+    {
+      "emit_nome": "TRANSPORTADORA EXEMPLO LTDA",
+      "emit_end": "ROD. BR-101, KM 300",
+      "emit_mun": "SERRA",
+      "emit_uf": "ES",
+      "emit_cnpj": "11222333000181",
+      "emit_ie": "081234567",
+      "serie": "1",
+      "numero": "0000789",
+      "chave": "35240711222333000181580010000007891123456780",
+      "qr_conteudo": "https://dfe-portal.svrs.rs.gov.br/mdfe/qrCode?chMDFe=35240711222333000181580010000007891123456780&tpAmb=1",
+      "protocolo": "135240000778899 - 03/07/2026 08:40",
+      "uf_ini": "ES",
+      "uf_fim": "SP",
+      "qtd_cte": "0",
+      "qtd_nfe": "3",
+      "peso": "1.250,000",
+      "valor": 85000.0,
+      "mun_carreg": "SERRA/ES",
+      "percurso": "ES / RJ / SP",
+      "placa": "ABC-1D23",
+      "renavam": "00123456789",
+      "condutor": "CARLOS MOTORISTA",
+      "cpf_condutor": "12345678900",
+      "observacoes": "Manifesto referente a carga fracionada com destino a Sao Paulo/SP. Veiculo proprio. Sem contratacao de vale-pedagio."
+    }
+  ],
+  "Docs": [
+    {
+      "municipio": "SAO PAULO/SP",
+      "tipo": "NF-e",
+      "chave": "35240712345678000199550010001234561123456780"
+    },
+    {
+      "municipio": "SAO PAULO/SP",
+      "tipo": "NF-e",
+      "chave": "35240712345678000199550010001234571123456791"
+    },
+    {
+      "municipio": "CAMPINAS/SP",
+      "tipo": "NF-e",
+      "chave": "35240712345678000199550010001234601123456805"
+    }
+  ]
+}

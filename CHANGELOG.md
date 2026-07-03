@@ -12,11 +12,20 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `REPLICATE`, `PADLEFT`, `PADRIGHT`, `PROPER`, `CONCAT`, `CONTAINS`, `STARTSWITH`,
   `ENDSWITH`, `ONLYDIGITS`, `MASK`, `CHR`, `ASC`. `MASK(valor,'##.###.###/####-##')`
   formata CNPJ/CPF/CEP/chave; `ONLYDIGITS` limpa nao-digitos.
-- **Demo DANFE** (#22): `demos/danfe.rhr` + `demos/danfe.data.json`, um Documento
-  Auxiliar da NF-e (layout fiscal brasileiro) com emitente, caixa DANFE, codigo de
-  barras da chave de acesso, destinatario, calculo do imposto, tabela de itens
-  (banda de detalhe) e dados adicionais. Gerado por `demos/danfe_build.py`
-  (reproduzivel); usa `MASK`/`FORMATFLOAT`.
+- **Conjunto de Documentos Auxiliares fiscais brasileiros** (#22), onde o Delphi mais
+  se emprega — cada um com um par `.rhr` + `.data.json` e um gerador Python reproduzivel,
+  usando `MASK`/`FORMATFLOAT`, banda de detalhe e barcode/QR:
+  - **DANFE** (NF-e, modelo 55): emitente, caixa DANFE, Code128 da chave, destinatario,
+    calculo do imposto, tabela de itens e dados adicionais.
+  - **NFC-e** (DANFE NFC-e, modelo 65): cupom em bobina de 80 mm com **QR Code** de
+    consulta, itens e forma de pagamento.
+  - **DACTE** (CT-e, modelo 57): transportadora, remetente/destinatario, tomador,
+    componentes do frete, ISS/ICMS e documentos originarios (detalhe).
+  - **DAMDFE** (MDF-e, modelo 58): manifesto com **QR Code**, veiculo/condutor,
+    quantidades e NF-e vinculadas por municipio de descarga.
+  - **NFS-e** (servicos): prestador/tomador, discriminacao dos servicos, tributacao do
+    ISS, retencoes federais e valor liquido.
+  - Primitivas compartilhadas em `demos/fiscal_common.py`.
 
 ### Corrigido (PDF: quebra de linha por largura)
 - O exportador **PDF** agora faz **word-wrap** de textos que excedem a largura do

@@ -1,0 +1,54 @@
+{
+  "Nota": [
+    {
+      "municipio": "VITORIA",
+      "numero": "2026/0004587",
+      "dt_emissao": "03/07/2026 16:22",
+      "cod_verificacao": "A1B2-C3D4-E5F6",
+      "prest_nome": "CONSULTORIA EXEMPLO LTDA",
+      "prest_cnpj": "12345678000199",
+      "prest_end": "AV. NOSSA SENHORA DA PENHA, 1200 - SL 801",
+      "prest_mun": "VITORIA",
+      "prest_uf": "ES",
+      "prest_im": "123456",
+      "tom_nome": "CLIENTE CORPORATIVO S/A",
+      "tom_cnpj": "98765432000155",
+      "tom_end": "RUA DA TECNOLOGIA, 45 - CENTRO",
+      "tom_mun": "VILA VELHA",
+      "tom_uf": "ES",
+      "tom_email": "financeiro@cliente.com.br",
+      "cod_servico": "1.07 - SUPORTE TECNICO",
+      "valor_servicos": 12000.0,
+      "base_calculo": 12000.0,
+      "aliquota": 5.0,
+      "valor_iss": 600.0,
+      "irrf": 180.0,
+      "pis": 78.0,
+      "cofins": 360.0,
+      "csll": 120.0,
+      "inss": 0.0,
+      "valor_liquido": 11262.0,
+      "observacoes": "Servicos prestados no mes de junho/2026 conforme contrato 2026-045. ISS retido pelo tomador. Documento sem valor de circulacao de mercadoria."
+    }
+  ],
+  "Servicos": [
+    {
+      "item": "1",
+      "descricao": "Consultoria em arquitetura de software (40h)",
+      "qtd": 40.0,
+      "valor": 8000.0
+    },
+    {
+      "item": "2",
+      "descricao": "Suporte tecnico mensal - plano premium",
+      "qtd": 1.0,
+      "valor": 3000.0
+    },
+    {
+      "item": "3",
+      "descricao": "Treinamento da equipe (8h)",
+      "qtd": 8.0,
+      "valor": 1000.0
+    }
+  ]
+}
