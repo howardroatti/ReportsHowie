@@ -1,0 +1,28 @@
+{
+  "Itens": [
+    {
+      "produto": "Parafuso sextavado M6 x 20",
+      "qtd": 100,
+      "valor": 12.5
+    },
+    {
+      "produto": "Arruela lisa M6",
+      "qtd": 250,
+      "valor": 3.2
+    },
+    {
+      "produto": "Item sem custo (valor null)",
+      "qtd": 10
+    },
+    {
+      "produto": "Bucha de nylon (valor 0)",
+      "qtd": 40,
+      "valor": 0
+    },
+    {
+      "produto": "Porca autotravante M6",
+      "qtd": 100,
+      "valor": 8.75
+    }
+  ]
+}

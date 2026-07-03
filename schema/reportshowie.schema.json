@@ -147,6 +147,10 @@
         "visible": {
           "type": "boolean"
         },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada no contexto corrente; se der falso, a banda inteira e omitida. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
+        },
         "canGrow": {
           "type": "boolean"
         },
@@ -243,6 +247,10 @@
         "visible": {
           "type": "boolean"
         },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
+        },
         "frame": {
           "$ref": "#/$defs/frame"
         }
@@ -302,6 +310,10 @@
         "visible": {
           "type": "boolean"
         },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
+        },
         "frame": {
           "$ref": "#/$defs/frame"
         },
@@ -321,7 +333,8 @@
           "enum": [
             "left",
             "center",
-            "right"
+            "right",
+            "justify"
           ]
         },
         "vAlign": {
@@ -370,6 +383,10 @@
         },
         "visible": {
           "type": "boolean"
+        },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
         },
         "frame": {
           "$ref": "#/$defs/frame"
@@ -420,6 +437,10 @@
         "visible": {
           "type": "boolean"
         },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
+        },
         "frame": {
           "$ref": "#/$defs/frame"
         },
@@ -460,13 +481,17 @@
         "visible": {
           "type": "boolean"
         },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
+        },
         "frame": {
           "$ref": "#/$defs/frame"
         },
         "kind": {
           "type": "string",
           "enum": [
-            "rect",
+            "rectangle",
             "roundRect",
             "ellipse"
           ]
@@ -513,6 +538,10 @@
         },
         "visible": {
           "type": "boolean"
+        },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
         },
         "frame": {
           "$ref": "#/$defs/frame"
@@ -573,6 +602,10 @@
         },
         "visible": {
           "type": "boolean"
+        },
+        "visibleExpr": {
+          "type": "string",
+          "description": "Visibilidade condicional por expressao (issue #24): avaliada por linha; se der falso, o objeto nao e emitido. Vazio = usa 'visible'. Ex.: \"[exibe_valor]='S'\"."
         },
         "frame": {
           "$ref": "#/$defs/frame"

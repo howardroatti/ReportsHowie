@@ -152,6 +152,26 @@ begin
   if S = '' then Result := Default else Result := S[1];
 end;
 
+function ArgNull(const V: Variant): Boolean;
+begin
+  Result := VarIsNull(V) or VarIsEmpty(V);
+end;
+
+// Converte um argumento em Double de forma segura (issue #26): NULL/vazio ou
+// valor nao-numerico devolvem False, sem lancar excecao. As funcoes numericas
+// usam isso para tratar campos NULL como vazio em vez de estourar.
+function TryArgFloat(const V: Variant; out D: Double): Boolean;
+begin
+  Result := False;
+  if ArgNull(V) then Exit;
+  try
+    D := V;
+    Result := True;
+  except
+    Result := False;
+  end;
+end;
+
 procedure RegisterBuiltins;
 begin
   rhExprRegisterFunction('UPPER',
@@ -279,36 +299,65 @@ begin
 
   rhExprRegisterFunction('ROUND',
     function(const A: TArray<Variant>): Variant
-    var D: Integer;
+    var D: Integer; F: Double;
     begin
       NeedArgs('ROUND', A, 1, 2);
+      if not TryArgFloat(A[0], F) then Exit(Null);
       if Length(A) = 2 then D := Integer(A[1]) else D := 0;
-      Result := RoundTo(Double(A[0]), -D);
+      Result := RoundTo(F, -D);
     end);
 
   rhExprRegisterFunction('TRUNC',
     function(const A: TArray<Variant>): Variant
-    begin NeedArgs('TRUNC', A, 1, 1); Result := Trunc(Double(A[0])); end);
+    var F: Double;
+    begin
+      NeedArgs('TRUNC', A, 1, 1);
+      if TryArgFloat(A[0], F) then Result := Trunc(F) else Result := Null;
+    end);
 
   rhExprRegisterFunction('INT',
     function(const A: TArray<Variant>): Variant
-    begin NeedArgs('INT', A, 1, 1); Result := Int(Double(A[0])); end);
+    var F: Double;
+    begin
+      NeedArgs('INT', A, 1, 1);
+      if TryArgFloat(A[0], F) then Result := Int(F) else Result := Null;
+    end);
 
   rhExprRegisterFunction('ABS',
     function(const A: TArray<Variant>): Variant
-    begin NeedArgs('ABS', A, 1, 1); Result := Abs(Double(A[0])); end);
+    var F: Double;
+    begin
+      NeedArgs('ABS', A, 1, 1);
+      if TryArgFloat(A[0], F) then Result := Abs(F) else Result := Null;
+    end);
 
+  // Null-safe (issue #26): FORMATFLOAT/FORMATDATETIME/DATETOSTR sobre NULL
+  // devolvem string vazia em vez de lancar (campo ausente => celula em branco).
   rhExprRegisterFunction('FORMATFLOAT',
     function(const A: TArray<Variant>): Variant
-    begin NeedArgs('FORMATFLOAT', A, 2, 2); Result := FormatFloat(VarToStr(A[0]), Double(A[1])); end);
+    var F: Double;
+    begin
+      NeedArgs('FORMATFLOAT', A, 2, 2);
+      if TryArgFloat(A[1], F) then Result := FormatFloat(VarToStr(A[0]), F)
+      else Result := '';
+    end);
 
   rhExprRegisterFunction('FORMATDATETIME',
     function(const A: TArray<Variant>): Variant
-    begin NeedArgs('FORMATDATETIME', A, 2, 2); Result := FormatDateTime(VarToStr(A[0]), TDateTime(A[1])); end);
+    var F: Double;
+    begin
+      NeedArgs('FORMATDATETIME', A, 2, 2);
+      if TryArgFloat(A[1], F) then Result := FormatDateTime(VarToStr(A[0]), TDateTime(F))
+      else Result := '';
+    end);
 
   rhExprRegisterFunction('DATETOSTR',
     function(const A: TArray<Variant>): Variant
-    begin NeedArgs('DATETOSTR', A, 1, 1); Result := DateToStr(TDateTime(A[0])); end);
+    var F: Double;
+    begin
+      NeedArgs('DATETOSTR', A, 1, 1);
+      if TryArgFloat(A[0], F) then Result := DateToStr(TDateTime(F)) else Result := '';
+    end);
 
   rhExprRegisterFunction('STR',
     function(const A: TArray<Variant>): Variant

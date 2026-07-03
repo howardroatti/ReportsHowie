@@ -7,6 +7,26 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (integracao Nutr1 v2: visibilidade condicional + parametros)
+- **`VisibleExpr` em objeto e banda** (#24): visibilidade condicional por expressao,
+  avaliada por linha; se der falso, o objeto/banda nao e emitido. Vazio = comportamento
+  do `Visible` estatico (100% retrocompativel). Permite um **unico** `.rhr` servir
+  variantes (ex.: com/sem coluna de valor) controladas por campo ou parametro.
+- **Parametros de relatorio** (#25): `TrhReport.SetParam`/`ClearParams`/`TryGetParam` —
+  valores nomeados (titulo dinamico, flags) resolvidos nas ilhas `[ ]` como campos, sem
+  virar coluna do dataset. Precedencia: campo > parametro > pseudo-variavel. `rhtool`
+  ganhou `--param nome=valor` (repetivel).
+- **Demo `visibilidade`**: exercita #24+#25+#26 juntos (Ordem de Producao com/sem valor).
+
+### Corrigido
+- **Motor de expressoes null-safe** (#26): comparacoes com `NULL` resultam falso (nao
+  lancam); `FORMATFLOAT`/`FORMATDATETIME`/`DATETOSTR` sobre `NULL` devolvem string vazia;
+  `ROUND`/`TRUNC`/`INT`/`ABS` devolvem `NULL`; aritmetica com `NULL` resulta `NULL`. Um
+  campo nulo nao faz mais a ilha vazar o texto cru da expressao. O fallback de erro de
+  avaliacao agora emite vazio em producao (literal so com `rhExprShowRawOnError := True`).
+- **JSON Schema**: `shape.kind` corrigido de `"rect"` para `"rectangle"` (valor real do
+  modelo) e `hAlign` ganhou `"justify"` — os demos fiscais voltam a validar contra o schema.
+
 ### Adicionado (demos genericos + evolucoes fiscais)
 - **Demos genericos** (#2): **fatura** (duplicata mercantil com itens, parcelas e bloco
   de boleto), **matricial** (listagem densa em paisagem, fonte monoespacada, agrupada,

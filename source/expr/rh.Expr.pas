@@ -43,11 +43,25 @@ type
     function EvalAggregate(const FuncName: string; Arg: TrhExprNode): Variant;
   end;
 
+var
+  /// <summary>Controla o que acontece quando uma ilha [expr] falha ao avaliar
+  ///  (issue #26). Padrao False (producao): o erro vira string vazia, para nao
+  ///  vazar a sintaxe crua do template ao usuario final. True (designer/preview):
+  ///  repoe o texto literal da ilha, util para depurar a expressao.</summary>
+  rhExprShowRawOnError: Boolean = False;
+
 /// <summary>Compila, avalia e libera — atalho para uma unica avaliacao.</summary>
 function rhEvalExpr(const Source: string; const Ctx: IrhEvalContext): Variant;
 
 /// <summary>Processa um texto com ilhas [expr], retornando o texto final.</summary>
 function rhEvalText(const S: string; const Ctx: IrhEvalContext): string;
+
+/// <summary>Avalia uma expressao de visibilidade condicional (issue #24).
+///  Fonte vazia => True (visivel); Ctx nil => True (preview estatico do layout
+///  nao esconde objetos); erro de avaliacao => True (uma expressao invalida nao
+///  deve sumir com conteudo). O resultado e interpretado como booleano:
+///  nao-zero, ou 'S'/'SIM'/'TRUE'/'T'/'Y'/'YES'/'1' (case-insensitive) => visivel.</summary>
+function rhVisibleExpr(const Source: string; const Ctx: IrhEvalContext): Boolean;
 
 implementation
 
@@ -122,7 +136,10 @@ begin
         try
           Result := Result + VarToStr(rhEvalExpr(ExprText, Ctx));
         except
-          Result := Result + Copy(S, I, J - I + 1); // erro -> mantem literal
+          // erro de avaliacao: em modo debug repoe o literal (util no designer);
+          // em producao emite vazio, para nao vazar a sintaxe do template (#26).
+          if rhExprShowRawOnError then
+            Result := Result + Copy(S, I, J - I + 1);
         end;
         I := J + 1;
       end
@@ -137,6 +154,40 @@ begin
       Result := Result + S[I];
       Inc(I);
     end;
+  end;
+end;
+
+// Interpreta um Variant como booleano de forma tolerante (para visibilidade):
+// aceita numeros (nao-zero), booleanos e as strings usuais de "sim/nao".
+function rhVarAsBool(const V: Variant): Boolean;
+var
+  S: string;
+  D: Double;
+begin
+  if VarIsNull(V) or VarIsEmpty(V) then Exit(False);
+  if VarIsStr(V) then
+  begin
+    S := UpperCase(Trim(VarToStr(V)));
+    if (S = 'S') or (S = 'SIM') or (S = 'TRUE') or (S = 'T') or
+       (S = 'Y') or (S = 'YES') or (S = '1') then Exit(True);
+    if TryStrToFloat(S, D) then Exit(D <> 0);
+    Exit(False);
+  end;
+  try
+    Result := V; // Boolean/numero -> Boolean
+  except
+    Result := False;
+  end;
+end;
+
+function rhVisibleExpr(const Source: string; const Ctx: IrhEvalContext): Boolean;
+begin
+  if Trim(Source) = '' then Exit(True);
+  if Ctx = nil then Exit(True);
+  try
+    Result := rhVarAsBool(rhEvalExpr(Source, Ctx));
+  except
+    Result := True; // expressao invalida nao deve esconder conteudo
   end;
 end;
 

@@ -293,6 +293,43 @@ NovoTexto(B, 'Preco: R$ [FORMATFLOAT(''#,##0.00'', [preco])]', 0, 5);
 
 > Dentro de uma string Pascal, aspas simples são duplicadas: `''#,##0.00''`.
 
+### 7.5 Parâmetros de relatório — `SetParam`
+
+Valores que pertencem ao **relatório** (não à linha de dados) — um título dinâmico, um flag "exibe valor", a data de referência — são **parâmetros**. Defina-os em código antes do preview/export; eles resolvem nas ilhas `[ ]` como se fossem campos, **sem** virar coluna repetida no dataset.
+
+```pascal
+rhReport1.SetParam('titulo', 'ORDEM DE PRODUÇÃO - VALORADA');
+rhReport1.SetParam('exibe_valor', 'S');
+// no template:  [titulo]     e     [exibe_valor]
+```
+
+**Precedência de resolução:** campo do dataset › parâmetro › pseudo-variável. Parâmetros são *runtime* (não são gravados no `.rhr`). No `rhtool`: `--param nome=valor` (repetível).
+
+### 7.6 Visibilidade condicional — `VisibleExpr`
+
+Tanto **objetos** quanto **bandas** têm, além do booleano estático `Visible`, uma propriedade `VisibleExpr`: uma expressão avaliada **por linha**; se der falso, o objeto/banda não é emitido. Vazia = comportamento de `Visible`. Assim **um único** `.rhr` serve variantes (com/sem uma coluna, por exemplo), controladas por um campo ou parâmetro:
+
+```pascal
+Col.VisibleExpr  := '[exibe_valor]=''S''';   // esconde a coluna de valor
+Total.VisibleExpr := '[exibe_valor]=''S''';  // esconde a banda de total
+```
+
+Resultado verdadeiro = visível para: não-zero, ou as strings `S`/`SIM`/`TRUE`/`T`/`Y`/`1`. No preview de layout (sem dados) nada é escondido. Veja o demo `demos/visibilidade` (exporte com `--param exibe_valor=S` e depois `=N`).
+
+### 7.7 Comportamento com `NULL` (null-safe)
+
+O motor é **null-safe**: um campo `NULL` nunca faz a ilha "vazar" o texto cru da expressão.
+
+- Comparações com `NULL` (`[x] > 0`, `[x] = y`, …) resultam **falso** (não lançam).
+- `FORMATFLOAT`/`FORMATDATETIME`/`DATETOSTR` sobre `NULL` devolvem **string vazia**; `ROUND`/`TRUNC`/`INT`/`ABS` devolvem `NULL`.
+- Aritmética com operando `NULL` resulta `NULL`.
+
+```
+[IIF([valor] > 0, FORMATFLOAT('#,##0.00', [valor]), '')]
+```
+
+Com `[valor]` nulo ou `0`, a célula sai **em branco**. Se uma expressão realmente falhar (erro de sintaxe), em produção a saída é vazia; para depurar no designer, ligue `rhExprShowRawOnError := True` (unit `rh.Expr`) e o literal da ilha reaparece.
+
 ---
 
 ## 8. Ligação com dados (data binding)

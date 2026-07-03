@@ -31,6 +31,7 @@ type
     FPages: TrhPageList;
     FWatermark: TrhWatermark;
     FDataSets: TDictionary<string, TComponent>; // binding runtime (nao serializado)
+    FParams: TDictionary<string, Variant>;      // params de relatorio (runtime, nao serializado)
     procedure ReadReportData(Stream: TStream);
     procedure WriteReportData(Stream: TStream);
   protected
@@ -48,6 +49,15 @@ type
     procedure SetDataSet(const Name: string; DataSet: TComponent);
     /// <summary>Resolve o TDataSet ligado ao nome (nil se nao houver). Cast para TDataSet no uso.</summary>
     function FindDataSet(const Name: string): TComponent;
+
+    /// <summary>Define (em runtime) um parametro/variavel de relatorio resolvido
+    ///  nas ilhas [expr] como se fosse um campo (issue #25). Nome case-insensitive.
+    ///  Nao e serializado no .rhr. Ex.: Rep.SetParam('exibe_valor', 'S').</summary>
+    procedure SetParam(const Name: string; const Value: Variant);
+    /// <summary>Remove todos os parametros definidos.</summary>
+    procedure ClearParams;
+    /// <summary>Resolve um parametro pelo nome (case-insensitive). False se nao existir.</summary>
+    function TryGetParam(const Name: string; out Value: Variant): Boolean;
 
     // --- serializacao ---
     function ToJSONString(Pretty: Boolean = True): string;
@@ -83,10 +93,12 @@ begin
   FPages.AddPage; // um relatorio novo ja nasce com uma pagina
   FWatermark := TrhWatermark.Create;
   FDataSets := TDictionary<string, TComponent>.Create;
+  FParams := TDictionary<string, Variant>.Create;
 end;
 
 destructor TrhReport.Destroy;
 begin
+  FParams.Free;
   FDataSets.Free;
   FWatermark.Free;
   FPages.Free;
@@ -102,6 +114,21 @@ function TrhReport.FindDataSet(const Name: string): TComponent;
 begin
   if not FDataSets.TryGetValue(UpperCase(Name), Result) then
     Result := nil;
+end;
+
+procedure TrhReport.SetParam(const Name: string; const Value: Variant);
+begin
+  FParams.AddOrSetValue(UpperCase(Name), Value);
+end;
+
+procedure TrhReport.ClearParams;
+begin
+  FParams.Clear;
+end;
+
+function TrhReport.TryGetParam(const Name: string; out Value: Variant): Boolean;
+begin
+  Result := FParams.TryGetValue(UpperCase(Name), Value);
 end;
 
 procedure TrhReport.Clear;

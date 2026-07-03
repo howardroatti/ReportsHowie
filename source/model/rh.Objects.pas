@@ -45,6 +45,7 @@ type
     FWidth: TrhUnit;
     FHeight: TrhUnit;
     FVisible: Boolean;
+    FVisibleExpr: string;
     FFrame: TrhFrame;
   public
     constructor Create; virtual;
@@ -65,6 +66,11 @@ type
     property Width: TrhUnit read FWidth write FWidth;
     property Height: TrhUnit read FHeight write FHeight;
     property Visible: Boolean read FVisible write FVisible default True;
+    /// <summary>Visibilidade condicional por expressao (issue #24). Vazio =
+    ///  comportamento estatico de Visible. Quando preenchida, e avaliada por
+    ///  linha no motor de expressoes; se der falso, o objeto nao e emitido.
+    ///  Ex.: "[exibe_valor]='S'". Resolve campos, params (SetParam) e pseudo-vars.</summary>
+    property VisibleExpr: string read FVisibleExpr write FVisibleExpr;
     property Frame: TrhFrame read FFrame;
   end;
 
@@ -351,6 +357,7 @@ begin
     FWidth := Src.FWidth;
     FHeight := Src.FHeight;
     FVisible := Src.FVisible;
+    FVisibleExpr := Src.FVisibleExpr;
     FFrame.Assign(Src.FFrame);
   end
   else
@@ -373,6 +380,8 @@ begin
   O.AddPair('width', TJSONNumber.Create(FWidth));
   O.AddPair('height', TJSONNumber.Create(FHeight));
   O.AddPair('visible', TJSONBool.Create(FVisible));
+  if FVisibleExpr <> '' then
+    O.AddPair('visibleExpr', FVisibleExpr);
   FrameObj := TJSONObject.Create;
   FFrame.SaveToJSON(FrameObj);
   O.AddPair('frame', FrameObj);
@@ -387,6 +396,7 @@ begin
   FWidth := JGetInt(O, 'width', FWidth);
   FHeight := JGetInt(O, 'height', FHeight);
   FVisible := JGetBool(O, 'visible', True);
+  FVisibleExpr := JGetStr(O, 'visibleExpr', '');
   FFrame.LoadFromJSON(JGetObj(O, 'frame'));
 end;
 

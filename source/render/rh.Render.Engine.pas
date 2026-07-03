@@ -387,6 +387,9 @@ var
   BarData: string;
 begin
   if not Obj.Visible then Exit;
+  // visibilidade condicional por expressao (issue #24): avaliada no contexto
+  // corrente; sem contexto (preview estatico do layout) nao esconde.
+  if not rhVisibleExpr(Obj.VisibleExpr, Ctx) then Exit;
   L := OriginX + Obj.Left;
   T := OriginY + Obj.Top;
 
@@ -534,6 +537,7 @@ begin
     for Band in Page.Bands do
     begin
       if not Band.Visible then Continue;
+      if not rhVisibleExpr(Band.VisibleExpr, Ctx) then Continue; // issue #24
 
       // quebra de pagina por transbordo (mantendo ao menos uma banda por pagina)
       if (CurY + Band.Height > ContentBottom) and (CurY > Page.MarginTop) then

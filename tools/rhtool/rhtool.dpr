@@ -60,7 +60,7 @@ begin
   Writeln('Uso:');
   Writeln('  rhtool validate <arquivo.rhr>              valida o template (parse do modelo)');
   Writeln('  rhtool info <arquivo.rhr>                  mostra a estrutura (paginas/bandas/objetos)');
-  Writeln('  rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>]');
+  Writeln('  rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>] [--param n=v ...]');
   Writeln('                                            exporta (.pdf/.html/.xlsx/.docx)');
   Writeln('  rhtool import <entrada.frx> <saida.rhr> [--dpi 96]');
   Writeln('                                            importa template FastReport (.frx)');
@@ -70,6 +70,9 @@ begin
   Writeln('Dados (--data): JSON no formato { "NomeDataset": [ {campo: valor, ...}, ... ] }.');
   Writeln('      O nome do dataset casa com o dataSetName das bandas. Sem --data, as');
   Writeln('      bandas de dados nao produzem linhas (bandas estaticas saem normal).');
+  Writeln('Params (--param n=v): parametros de relatorio resolvidos nas ilhas [n] e em');
+  Writeln('      visibleExpr, sem existir como coluna do dataset. Repetivel. Ex.:');
+  Writeln('      --param exibe_valor=S --param titulo="ORDEM VALORADA".');
 end;
 
 function LoadReport(const FileName: string): TrhReport;
@@ -271,7 +274,7 @@ begin
   end;
 end;
 
-procedure CmdExport(const FileName, OutFile, DataFile: string);
+procedure CmdExport(const FileName, OutFile, DataFile: string; Params: TStrings);
 var
   R: TrhReport;
   Doc: TrhRenderedDocument;
@@ -287,6 +290,12 @@ begin
       begin
         N := BuildDataSets(R, DataFile, DataOwner);
         Writeln(Format('dados: %d dataset(s) carregado(s) de "%s".', [N, DataFile]));
+      end;
+      if (Params <> nil) and (Params.Count > 0) then
+      begin
+        for N := 0 to Params.Count - 1 do
+          R.SetParam(Params.Names[N], Params.ValueFromIndex[N]);
+        Writeln(Format('params: %d parametro(s) definido(s).', [Params.Count]));
       end;
       Doc := TrhDataPipeline.BuildDocument(R);
       try
@@ -349,6 +358,7 @@ procedure RunCLI;
 var
   Cmd, DataFile: string;
   I, Dpi: Integer;
+  Params: TStringList;
 begin
   if ParamCount < 1 then
   begin
@@ -377,12 +387,22 @@ begin
   begin
     if ParamCount < 3 then
       raise Exception.Create(
-        'uso: rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>]');
+        'uso: rhtool export <arquivo.rhr> <saida.ext> [--data <dados.json>] [--param n=v ...]');
     DataFile := '';
-    for I := 4 to ParamCount do
-      if SameText(ParamStr(I), '--data') and (I < ParamCount) then
-        DataFile := ParamStr(I + 1);
-    CmdExport(ParamStr(2), ParamStr(3), DataFile);
+    Params := TStringList.Create;
+    try
+      for I := 4 to ParamCount do
+      begin
+        if SameText(ParamStr(I), '--data') and (I < ParamCount) then
+          DataFile := ParamStr(I + 1)
+        else if SameText(ParamStr(I), '--param') and (I < ParamCount) and
+                (Pos('=', ParamStr(I + 1)) > 0) then
+          Params.Add(ParamStr(I + 1)); // formato n=v
+      end;
+      CmdExport(ParamStr(2), ParamStr(3), DataFile, Params);
+    finally
+      Params.Free;
+    end;
   end
   else if Cmd = 'import' then
   begin

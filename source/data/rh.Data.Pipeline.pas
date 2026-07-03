@@ -47,6 +47,7 @@ type
   TrhReportContext = class(TInterfacedObject, IrhEvalContext)
   private
     FDataSet: TDataSet;
+    FReport: TrhReport;
     FPageNo: Integer;
     FTotalPages: Integer;
     FGroupExprs: TList<string>;
@@ -65,6 +66,7 @@ type
     // respeitando o escopo de grupo ativo (mesmos filtros do EvalAggregate).
     procedure FillChartSeries(Chart: TrhChartObject);
     property DataSet: TDataSet read FDataSet write FDataSet;
+    property Report: TrhReport read FReport write FReport;
     property PageNo: Integer read FPageNo write FPageNo;
     property TotalPages: Integer read FTotalPages write FTotalPages;
   end;
@@ -122,6 +124,10 @@ begin
       Exit(True);
     end;
   end;
+  // parametros de relatorio (issue #25). Precedencia: campo do dataset > param
+  // > pseudo-variavel. Assim [titulo]/[exibe_valor] resolvem sem virar coluna.
+  if (FReport <> nil) and FReport.TryGetParam(Name, Value) then
+    Exit(True);
   if SameText(Name, 'PAGE') then begin Value := FPageNo; Exit(True); end;
   if SameText(Name, 'TOTALPAGES') then begin Value := FTotalPages; Exit(True); end;
   if SameText(Name, 'DATE') or SameText(Name, 'TODAY') then begin Value := Date; Exit(True); end;
@@ -349,6 +355,7 @@ begin
   inherited Create;
   FReport := AReport;
   FCtxObj := TrhReportContext.Create;
+  FCtxObj.Report := AReport; // resolve params nas expressoes (issue #25)
   FCtx := FCtxObj; // interface gerencia o tempo de vida
 end;
 
@@ -441,7 +448,7 @@ begin
   FCtxObj.PageNo := FDoc.PageCount;
   TrhRenderEngine.EmitWatermark(FRP, FReport, FCtx); // fundo, antes de tudo
   FCurY := FPage.MarginTop;
-  if FPageHeader <> nil then
+  if (FPageHeader <> nil) and rhVisibleExpr(FPageHeader.VisibleExpr, FCtx) then
   begin
     TrhRenderEngine.EmitBand(FRP, FPageHeader, FPage.MarginLeft, FCurY, FCtx);
     FCurY := FCurY + FPageHeader.Height;
@@ -450,7 +457,7 @@ end;
 
 procedure TPipeline.FinishPage;
 begin
-  if FPageFooter <> nil then
+  if (FPageFooter <> nil) and rhVisibleExpr(FPageFooter.VisibleExpr, FCtx) then
     TrhRenderEngine.EmitBand(FRP, FPageFooter, FPage.MarginLeft,
       FPage.MarginTop + FPage.ContentHeight - FPageFooter.Height, FCtx);
 end;
@@ -469,6 +476,9 @@ end;
 procedure TPipeline.EmitFlow(Band: TrhBand);
 begin
   if Band = nil then Exit;
+  // visibilidade condicional da banda (issue #24): avaliada no contexto corrente
+  // (por linha, nas bandas de dados). Falso => a banda inteira e omitida.
+  if not rhVisibleExpr(Band.VisibleExpr, FCtx) then Exit;
   PrepareBandCharts(Band);
   if (FCurY + Band.Height > FBodyBottom) and (FCurY > FPage.MarginTop) then
   begin

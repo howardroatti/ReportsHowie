@@ -25,6 +25,7 @@ type
     FName: string;
     FHeight: TrhUnit;
     FVisible: Boolean;
+    FVisibleExpr: string;
     FCanGrow: Boolean;
     FCanShrink: Boolean;
     FPrintIfEmpty: Boolean;
@@ -44,6 +45,11 @@ type
     property Name: string read FName write FName;
     property Height: TrhUnit read FHeight write FHeight;
     property Visible: Boolean read FVisible write FVisible default True;
+    /// <summary>Visibilidade condicional por expressao (issue #24). Vazio =
+    ///  comportamento estatico de Visible. Avaliada no contexto corrente (por
+    ///  linha, nas bandas de dados); se der falso, a banda inteira e omitida.
+    ///  Ex.: "[exibe_valor]='S'". Resolve campos, params e pseudo-vars.</summary>
+    property VisibleExpr: string read FVisibleExpr write FVisibleExpr;
     property CanGrow: Boolean read FCanGrow write FCanGrow default False;
     property CanShrink: Boolean read FCanShrink write FCanShrink default False;
     property PrintIfEmpty: Boolean read FPrintIfEmpty write FPrintIfEmpty default False;
@@ -104,6 +110,7 @@ begin
     FName := Src.FName;
     FHeight := Src.FHeight;
     FVisible := Src.FVisible;
+    FVisibleExpr := Src.FVisibleExpr;
     FCanGrow := Src.FCanGrow;
     FCanShrink := Src.FCanShrink;
     FPrintIfEmpty := Src.FPrintIfEmpty;
@@ -134,6 +141,8 @@ begin
   O.AddPair('name', FName);
   O.AddPair('height', TJSONNumber.Create(FHeight));
   O.AddPair('visible', TJSONBool.Create(FVisible));
+  if FVisibleExpr <> '' then
+    O.AddPair('visibleExpr', FVisibleExpr);
   O.AddPair('canGrow', TJSONBool.Create(FCanGrow));
   O.AddPair('canShrink', TJSONBool.Create(FCanShrink));
   O.AddPair('printIfEmpty', TJSONBool.Create(FPrintIfEmpty));
@@ -153,6 +162,7 @@ begin
   FName := JGetStr(O, 'name', '');
   FHeight := JGetInt(O, 'height', 100);
   FVisible := JGetBool(O, 'visible', True);
+  FVisibleExpr := JGetStr(O, 'visibleExpr', '');
   FCanGrow := JGetBool(O, 'canGrow', False);
   FCanShrink := JGetBool(O, 'canShrink', False);
   FPrintIfEmpty := JGetBool(O, 'printIfEmpty', False);

@@ -205,6 +205,19 @@ begin
   end;
 
   R := FRight.Evaluate(Ctx);
+
+  // Null-safe (issue #26): qualquer comparacao envolvendo NULL => falso (nunca
+  // lanca); aritmetica com operando NULL => NULL (evita o cast Null->Int64 do
+  // mod estourar e propaga o vazio p/ FORMATFLOAT etc. renderizarem em branco).
+  if VarIsNull(L) or VarIsEmpty(L) or VarIsNull(R) or VarIsEmpty(R) then
+  begin
+    case FOp of
+      rhbEq, rhbNe, rhbLt, rhbLe, rhbGt, rhbGe: Exit(False);
+    else
+      Exit(Null);
+    end;
+  end;
+
   case FOp of
     rhbAdd: Result := L + R;
     rhbSub: Result := L - R;
