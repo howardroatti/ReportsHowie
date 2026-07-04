@@ -77,6 +77,14 @@
     min-height:150px;color:var(--muted);font-size:13px;text-align:center;padding:20px}
   figure.shot .ph{display:none}
   figure.shot.missing .ph{display:flex}
+  /* documento fiscal embutido (HTML fiel) */
+  figure.shot iframe{display:block;width:100%;height:660px;border:0;background:#fff}
+  figure.shot figcaption a{font-weight:600}
+  /* galeria de demos: cartoes uniformes mostrando o topo de cada relatorio */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:18px 0}
+  .gallery figure.shot{margin:0}
+  .gallery figure.shot img{height:300px;object-fit:cover;object-position:top center}
+  .gallery figure.shot figcaption{min-height:0}
 
   .backtop{position:fixed;right:22px;bottom:22px;background:var(--accent);color:#fff;
     border:none;border-radius:22px;padding:9px 14px;font-size:13px;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s}
@@ -277,6 +285,29 @@ NovoTexto(B, 'Pagina [PAGE] de [TOTALPAGES]', 0, 5, rhhaRight);
 NovoTexto(B, 'Situacao: [IIF([saldo] &lt; 0, ''DEVEDOR'', ''OK'')]', 0, 5);
 NovoTexto(B, 'Nome: [UPPER(TRIM([nome]))]', 0, 5);</code></pre>
     <blockquote><p>Dentro de string Pascal, aspas simples dobram: <code>''#,##0.00''</code>.</p></blockquote>
+
+    <h3>7.5 Parâmetros de relatório — <code>SetParam</code></h3>
+    <p>Valores que pertencem ao <b>relatório</b> (não à linha de dados) — um título dinâmico, um flag "exibe valor", a data de referência — são <b>parâmetros</b>. Defina-os em código antes do preview/export; resolvem nas ilhas <code>[ ]</code> como se fossem campos, <b>sem</b> virar coluna repetida no dataset.</p>
+    <pre><code>rhReport1.SetParam('titulo', 'ORDEM DE PRODUÇÃO - VALORADA');
+rhReport1.SetParam('exibe_valor', 'S');
+// no template:  [titulo]     e     [exibe_valor]</code></pre>
+    <p><b>Precedência de resolução:</b> campo do dataset › parâmetro › pseudo-variável. Parâmetros são <i>runtime</i> (não são gravados no <code>.rhr</code>). No <code>rhtool</code>: <code>--param nome=valor</code> (repetível).</p>
+
+    <h3>7.6 Visibilidade condicional — <code>VisibleExpr</code></h3>
+    <p>Tanto <b>objetos</b> quanto <b>bandas</b> têm, além do booleano estático <code>Visible</code>, uma propriedade <code>VisibleExpr</code>: uma expressão avaliada <b>por linha</b>; se der falso, o objeto/banda não é emitido. Vazia = comportamento de <code>Visible</code>. Assim <b>um único</b> <code>.rhr</code> serve variantes (com/sem uma coluna, por exemplo), controladas por um campo ou parâmetro:</p>
+    <pre><code>Col.VisibleExpr   := '[exibe_valor]=''S''';   // esconde a coluna de valor
+Total.VisibleExpr := '[exibe_valor]=''S''';   // esconde a banda de total</code></pre>
+    <p>Resultado verdadeiro (visível) para: não-zero, ou as strings <code>S</code>/<code>SIM</code>/<code>TRUE</code>/<code>T</code>/<code>Y</code>/<code>1</code>. No preview de layout (sem dados) nada é escondido. Veja o demo <code>demos/visibilidade</code> (exporte com <code>--param exibe_valor=S</code> e depois <code>=N</code>).</p>
+
+    <h3>7.7 Comportamento com <code>NULL</code> (null-safe)</h3>
+    <p>O motor é <b>null-safe</b>: um campo <code>NULL</code> nunca faz a ilha "vazar" o texto cru da expressão.</p>
+    <ul>
+      <li>Comparações com <code>NULL</code> (<code>[x] &gt; 0</code>, <code>[x] = y</code>, …) resultam <b>falso</b> (não lançam).</li>
+      <li><code>FORMATFLOAT</code>/<code>FORMATDATETIME</code>/<code>DATETOSTR</code> sobre <code>NULL</code> devolvem <b>string vazia</b>; <code>ROUND</code>/<code>TRUNC</code>/<code>INT</code>/<code>ABS</code> devolvem <code>NULL</code>.</li>
+      <li>Aritmética com operando <code>NULL</code> resulta <code>NULL</code>.</li>
+    </ul>
+    <pre><code>[IIF([valor] &gt; 0, FORMATFLOAT('#,##0.00', [valor]), '')]</code></pre>
+    <p>Com <code>[valor]</code> nulo ou <code>0</code>, a célula sai <b>em branco</b>. Se uma expressão realmente falhar (erro de sintaxe), em produção a saída é vazia; para depurar no designer, ligue <code>rhExprShowRawOnError := True</code> (unit <code>rh.Expr</code>) e o literal da ilha reaparece.</p>
 
     <h2 id="binding">8. Ligação com dados (data binding)</h2>
     <p>Dois modos (<b>híbrido</b>) — use o que preferir, inclusive misturados:</p>
@@ -564,6 +595,181 @@ Preview.LoadDocument(Doc, True);              // substitui a visao atual</code><
       <tr><td>Grupo repetido/quebrado</td><td>dataset não ordenado pela <code>GroupExpression</code></td><td>adicione <code>ORDER BY</code> na ordem dos grupos</td></tr>
       <tr><td>Componente não aparece na paleta</td><td>pacote DT não instalado / form fechado</td><td>instale <code>ReportsHowieDT</code> e abra um form VCL</td></tr>
     </table>
+
+    <h2 id="fiscais">19. Relatórios fiscais</h2>
+    <p>O ReportsHowie reproduz os <b>Documentos Auxiliares</b> fiscais brasileiros usando só os objetos nativos (texto, forma, linha, <b>barcode</b>/<b>QR</b>) — sem componente externo. Esta seção mostra os seis demos prontos (<b>embutidos abaixo em HTML fiel</b>) e <b>como cada um é montado</b>. Os geradores completos, em Python, estão em <code>demos/&lt;nome&gt;_build.py</code>; rode-os com <code>py demos/danfe_build.py</code> e exporte com o <code>rhtool</code>.</p>
+
+    <h3>19.0 Fundamentos comuns</h3>
+    <p>Os geradores fiscais compartilham as primitivas de <code>demos/fiscal_common.py</code> (<code>mm</code>, <code>txt</code>, <code>cell</code>, <code>box</code>, <code>fill</code>, <code>hline</code>, <code>vline</code>, <code>barcode</code>, <code>qrcode</code>, <code>band</code>, <code>page</code>, <code>save</code>). Conceitos que se repetem em todos:</p>
+    <ul>
+      <li><b>Unidade = 0,1 mm inteiro.</b> <code>mm(210)=2100</code>. Cores em <b>BGR</b> (<code>TColor</code>).</li>
+      <li><b>Coordenadas relativas à área de conteúdo:</b> o motor já aplica as margens. Use <code>X0 = 0</code> e <code>W = papel − 2·margem</code> — não some a margem de novo.</li>
+      <li><b>Modelo de bandas:</b> a 1ª <code>masterData</code> é o cabeçalho fixo do documento (1 registro); os itens repetem numa <code>detailData</code>; totais/observações ficam numa <code>summary</code>. Bandas fora do contexto de linha não resolvem <code>[campo]</code>.</li>
+      <li><b><code>cell(l,t,w,h,rótulo,valor)</code></b> desenha a célula estilo DAC: moldura + rótulo pequeno em cima + valor embaixo — o tijolo de quase todo formulário fiscal.</li>
+      <li><b>Máscaras:</b> <code>[MASK(cnpj,'##.###.###/####-##')]</code>, CPF <code>'###.###.###-##'</code>, CEP <code>'#####-###'</code>, e a <b>chave de 44 dígitos</b> em grupos de 4.</li>
+      <li><b>Idioma de tabela (<i>column-spec</i>):</b> uma função devolve tuplas <code>(rótulo, largura, campo, alinhamento)</code>; o cabeçalho (na master) e a linha (na detail) percorrem <b>a mesma</b> lista — colunas sempre alinhadas.</li>
+      <li><b><code>sect(o, y, "TÍTULO")</code>:</b> desenha a faixa cinza de título de seção e devolve o <code>y</code> avançado.</li>
+    </ul>
+    <pre><code># column-spec reutilizado pelo cabecalho (master) e pela linha (detail)
+def product_columns():
+    return [("CODIGO", mm(16), "codigo", "left"),
+            ("DESCRICAO", W - mm(104), "descricao", "left"),
+            ("NCM/SH", mm(16), "ncm", "center"),
+            ("QTD", mm(24), "qtd", "right"),
+            ("V.UNIT / V.TOTAL", mm(26), "valor_total", "right")]
+
+# na linha de detalhe: mesma lista -> [campo] por coluna + separador vertical
+x = X0
+for i, (_lbl, cw, field, al) in enumerate(product_columns()):
+    txt(o, x + mm(1), mm(0.6), cw - mm(2), mm(4), "[%s]" % field, size=6, align=al)
+    if i &gt; 0: vline(o, x, 0, RH)
+    x += cw</code></pre>
+    <blockquote><p><b>Dados fictícios.</b> Todos os exemplos usam CNPJ/chaves de demonstração — nada de dado real. Os HTML embutidos abaixo são gerados por <code>py docs/build_gallery.py</code> a partir dos <code>.rhr</code>.</p></blockquote>
+
+    <h3>19.1 DANFE — Nota Fiscal Eletrônica</h3>
+    <p>Formulário A4 retrato (modelo 55). O mais completo: canhoto, bloco emitente/DANFE/chave, destinatário, cálculo do imposto e tabela de produtos. A <b>chave de acesso</b> vira um <b>Code128</b>.</p>
+    <table>
+      <tr><th>Papel</th><th>Bandas</th><th>Código fiscal</th></tr>
+      <tr><td>A4 retrato · margem 4 mm</td><td><code>masterData</code> Nota + <code>detailData</code> Itens + <code>summary</code> Adicionais</td><td>Code128 (chave)</td></tr>
+    </table>
+    <p><b>Técnica-chave — barcode + chave mascarada</b> na 3ª coluna do cabeçalho:</p>
+    <pre><code>barcode(o, xc + mm(3), y + mm(2), wc - mm(6), mm(11), "[chave]")
+txt(o, xc + mm(2), y + mm(17), wc - mm(4), mm(4),
+    "[MASK(chave,'#### #### #### #### #### #### #### #### #### #### ####')]",
+    size=5, style="B", align="center")</code></pre>
+    <p>A célula de valor da linha combina unitário e total numa coluna só:</p>
+    <pre><code>"[FORMATFLOAT('#,##0.00', valor_unit)] / [FORMATFLOAT('#,##0.00', valor_total)]"</code></pre>
+    <figure class="shot">
+      <iframe src="exemplos/danfe.html" loading="lazy" title="DANFE renderizada"></iframe>
+      <figcaption>DANFE renderizada (HTML fiel). <a href="exemplos/danfe.html" target="_blank" rel="noopener">abrir em nova aba ↗</a> · fonte: <code>demos/danfe_build.py</code></figcaption>
+    </figure>
+    <p><b>Como criar do zero:</b></p>
+    <ol>
+      <li>Página A4 retrato, <code>X0=0</code>, <code>W=mm(210)−2·mm(4)</code>.</li>
+      <li>Na <code>masterData</code> "Nota": canhoto (<code>box</code> + textos), depois o bloco de 3 colunas emitente | DANFE | (barcode+chave) separadas por <code>vline</code>.</li>
+      <li>Linhas de natureza/protocolo, IE/CNPJ e o quadro DESTINATÁRIO com <code>cell(...)</code>.</li>
+      <li>CÁLCULO DO IMPOSTO em duas fileiras de 5 células; a última (<b>VALOR TOTAL DA NOTA</b>) em negrito size 8.</li>
+      <li>Cabeçalho da tabela (na master) e a <code>detailData</code> "Itens" percorrendo o mesmo <code>product_columns()</code>.</li>
+      <li><code>summary</code> "Adicionais": caixa dividida 60/40 (INFORMAÇÕES COMPLEMENTARES com <code>wrap=True</code> | RESERVADO AO FISCO).</li>
+    </ol>
+
+    <h3>19.2 NFC-e — Nota Fiscal de Consumidor</h3>
+    <p>Cupom em <b>bobina térmica de 80 mm</b> (modelo 65). Fluxo centralizado, colunas finas, e o código fiscal é um <b>QR Code</b> (não barcode) na banda de totais.</p>
+    <table>
+      <tr><th>Papel</th><th>Bandas</th><th>Código fiscal</th></tr>
+      <tr><td>80 × 122 mm · margem 2 mm</td><td><code>masterData</code> Venda + <code>detailData</code> Itens + <code>summary</code> Totais</td><td>QR Code</td></tr>
+    </table>
+    <p><b>Técnica-chave — QR centralizado</b> (o QR é quadrado; centralize pela largura útil):</p>
+    <pre><code>qr = mm(34)
+qrcode(o, X0 + (W - qr) // 2, y, qr, "[qr_conteudo]")</code></pre>
+    <figure class="shot">
+      <iframe src="exemplos/nfce.html" loading="lazy" title="NFC-e renderizada"></iframe>
+      <figcaption>NFC-e (cupom 80 mm, 2 páginas) — o QR e os totais ficam na página 2. <a href="exemplos/nfce.html" target="_blank" rel="noopener">abrir em nova aba ↗</a> · fonte: <code>demos/nfce_build.py</code></figcaption>
+    </figure>
+    <p><b>Como criar do zero:</b></p>
+    <ol>
+      <li>Página estreita <code>mm(80)×mm(122)</code>, margem <code>mm(2)</code>.</li>
+      <li><code>masterData</code> "Venda": emitente centralizado + <code>hline</code> + cabeçalho compacto (COD | DESCRIÇÃO | QTD×UN VL.TOTAL).</li>
+      <li><code>detailData</code> "Itens": duas linhas por item (descrição em cima; <code>qtd × unit</code> e total embaixo).</li>
+      <li><code>summary</code> "Totais": QTD/VALOR TOTAL, forma de pagamento, chave mascarada e o <code>qrcode</code> centralizado.</li>
+    </ol>
+
+    <h3>19.3 DACTE — Conhecimento de Transporte (CT-e)</h3>
+    <p>A4 retrato, modal rodoviário (modelo 57). Introduz o idioma de <b>seções</b> (<code>sect()</code>) e um laço que gera os blocos <b>remetente/destinatário</b> lado a lado.</p>
+    <table>
+      <tr><th>Papel</th><th>Bandas</th><th>Código fiscal</th></tr>
+      <tr><td>A4 retrato · margem 4 mm</td><td><code>masterData</code> CTe + <code>detailData</code> Docs + <code>summary</code> Obs</td><td>Code128 (chave)</td></tr>
+    </table>
+    <p><b>Técnica-chave — dois blocos simétricos por laço:</b></p>
+    <pre><code>half = W // 2
+for (lbl, pre) in (("REMETENTE", "rem"), ("DESTINATARIO", "dest")):
+    xh = X0 if lbl == "REMETENTE" else X0 + half
+    wh = half if lbl == "REMETENTE" else W - half
+    cell(o, xh, y,      wh, mm(8), lbl,       "[%s_nome]" % pre, valign_val="left")
+    cell(o, xh, y+mm(8), wh, mm(8), "ENDERECO","[%s_end]"  % pre, valign_val="left")</code></pre>
+    <figure class="shot">
+      <iframe src="exemplos/dacte.html" loading="lazy" title="DACTE renderizado"></iframe>
+      <figcaption>DACTE (CT-e rodoviário). <a href="exemplos/dacte.html" target="_blank" rel="noopener">abrir em nova aba ↗</a> · fonte: <code>demos/dacte_build.py</code></figcaption>
+    </figure>
+    <p><b>Como criar do zero:</b> cabeçalho de 3 colunas (transportadora | DACTE/modelo 57 | barcode+chave); linhas natureza/protocolo, CFOP/tomador e início/término; seções (<code>sect()</code>) REMETENTE/DESTINATÁRIO, DADOS DA CARGA, COMPONENTES DO VALOR e IMPOSTO; título dos DOCUMENTOS ORIGINÁRIOS + <code>detailData</code> "Docs".</p>
+
+    <h3>19.4 DAMDFE — Manifesto (MDF-e)</h3>
+    <p>A4 retrato (modelo 58). Único documento que usa <b>barcode E QR juntos</b>: QR no cabeçalho e um Code128 da chave numa faixa própria.</p>
+    <table>
+      <tr><th>Papel</th><th>Bandas</th><th>Código fiscal</th></tr>
+      <tr><td>A4 retrato · margem 4 mm</td><td><code>masterData</code> MDFe + <code>detailData</code> Docs + <code>summary</code> Obs</td><td>Code128 <b>+</b> QR</td></tr>
+    </table>
+    <p><b>Técnica-chave — faixa de métricas por divisão igual</b> (6 colunas de largura uniforme):</p>
+    <pre><code>cols = [("UF CARREG.","uf_ini"), ("UF DESCARREG.","uf_fim"),
+        ("QTD. CT-e","qtd_cte"), ("QTD. NF-e","qtd_nfe"),
+        ("PESO TOTAL (KG)","peso"), ("VALOR TOTAL R$","valor")]
+cw = W // len(cols)
+for i, (lbl, fld) in enumerate(cols):
+    cell(o, X0 + i*cw, y, cw, ROW, lbl, "[%s]" % fld)</code></pre>
+    <p>Repare que a coluna <code>chave</code> aparece <b>mascarada dentro das linhas de detalhe</b> (chaves de 44 dígitos por município de descarga).</p>
+    <figure class="shot">
+      <iframe src="exemplos/mdfe.html" loading="lazy" title="DAMDFE renderizado"></iframe>
+      <figcaption>DAMDFE (barcode + QR). <a href="exemplos/mdfe.html" target="_blank" rel="noopener">abrir em nova aba ↗</a> · fonte: <code>demos/mdfe_build.py</code></figcaption>
+    </figure>
+
+    <h3>19.5 NFS-e — Nota Fiscal de Serviço</h3>
+    <p>A4 retrato, layout municipal genérico. É o único documento de <b>serviço</b> (sem barcode/QR): mostra grades de retenção e um <b>destaque de VALOR LÍQUIDO</b>.</p>
+    <table>
+      <tr><th>Papel</th><th>Bandas</th><th>Código fiscal</th></tr>
+      <tr><td>A4 retrato · margem 6 mm</td><td><code>masterData</code> Nota + <code>detailData</code> Serviços + <code>summary</code> Totais</td><td>—</td></tr>
+    </table>
+    <p><b>Técnica-chave — grade de retenções por laço</b> (IRRF/PIS/COFINS/CSLL/INSS) e o box de valor líquido em destaque (size 11, negrito).</p>
+    <pre><code>ret = [("IRRF","irrf"), ("PIS","pis"), ("COFINS","cofins"), ("CSLL","csll"), ("INSS","inss")]
+rw = W // len(ret)
+for i, (lbl, fld) in enumerate(ret):
+    cell(o, X0 + i*rw, y, rw, ROW, lbl, "[FORMATFLOAT('#,##0.00', %s)]" % fld)</code></pre>
+    <figure class="shot">
+      <iframe src="exemplos/nfse.html" loading="lazy" title="NFS-e renderizada"></iframe>
+      <figcaption>NFS-e (serviço, com retenções). <a href="exemplos/nfse.html" target="_blank" rel="noopener">abrir em nova aba ↗</a> · fonte: <code>demos/nfse_build.py</code></figcaption>
+    </figure>
+
+    <h3>19.6 DACCE — Carta de Correção (CC-e)</h3>
+    <p>Evento da NF-e. Estruturalmente o mais simples: <b>uma única banda</b> <code>masterData</code> (sem itens), com destaque para o <b>texto legal justificado</b> com quebra de linha.</p>
+    <table>
+      <tr><th>Papel</th><th>Bandas</th><th>Código fiscal</th></tr>
+      <tr><td>A4 retrato · margem 6 mm</td><td><code>masterData</code> CCe (banda única)</td><td>Code128 (chave)</td></tr>
+    </table>
+    <p><b>Técnica-chave — parágrafo legal justificado</b> (<code>wrap=True, align="justify"</code>) a partir de uma constante:</p>
+    <pre><code>CONDICOES = "A Carta de Correcao e disciplinada pelo paragrafo 1o-A do art. 7o ..."
+box(o, X0, y, W, mm(26))
+txt(o, X0 + mm(2), y + mm(1.5), W - mm(4), mm(24), CONDICOES,
+    size=8, wrap=True, align="justify")</code></pre>
+    <figure class="shot">
+      <iframe src="exemplos/dacce.html" loading="lazy" title="DACCE renderizado"></iframe>
+      <figcaption>DACCE (CC-e — banda única). <a href="exemplos/dacce.html" target="_blank" rel="noopener">abrir em nova aba ↗</a> · fonte: <code>demos/dacce_build.py</code></figcaption>
+    </figure>
+
+    <h2 id="galeria">20. Galeria de demos</h2>
+    <p>Além dos fiscais, o repositório traz demos genéricos (varejo/escritório, dados fictícios) que exercitam agrupamento, subtotais, master-detail, paisagem, mala direta e gráfico. Prints abaixo; os <code>.rhr</code> estão em <code>demos/</code>. Regenere tudo com <code>py docs/build_gallery.py</code>.</p>
+    <div class="gallery">
+<!-- gallery:auto:start -->
+        <figure class="shot">
+          <img src="img/gallery/fatura.png" alt="Fatura/duplicata com itens, parcelas e boleto (Code128)." loading="lazy">
+          <figcaption><strong>fatura</strong> — Fatura/duplicata com itens, parcelas e boleto (Code128). <a href="../demos/fatura.rhr"><code>demos/fatura.rhr</code></a></figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="img/gallery/matricial.png" alt="Matricial em paisagem, grupos com subtotais e paginacao." loading="lazy">
+          <figcaption><strong>matricial</strong> — Matricial em paisagem, grupos com subtotais e paginacao. <a href="../demos/matricial.rhr"><code>demos/matricial.rhr</code></a></figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="img/gallery/mala_direta.png" alt="Mala direta — uma carta por destinatario (1 pagina/registro)." loading="lazy">
+          <figcaption><strong>mala_direta</strong> — Mala direta — uma carta por destinatario (1 pagina/registro). <a href="../demos/mala_direta.rhr"><code>demos/mala_direta.rhr</code></a></figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="img/gallery/catalogo.png" alt="Catalogo de produtos com codigo de barras e QR por item." loading="lazy">
+          <figcaption><strong>catalogo</strong> — Catalogo de produtos com codigo de barras e QR por item. <a href="../demos/catalogo.rhr"><code>demos/catalogo.rhr</code></a></figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="img/gallery/vendas.png" alt="Vendas por categoria com subtotais, total e grafico de barras." loading="lazy">
+          <figcaption><strong>vendas</strong> — Vendas por categoria com subtotais, total e grafico de barras. <a href="../demos/vendas.rhr"><code>demos/vendas.rhr</code></a></figcaption>
+        </figure>
+        <!-- gallery:auto:end -->
+    </div>
 
     <p style="margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:16px">
       ReportsHowie — <a href="https://github.com/howardroatti/ReportsHowie">github.com/howardroatti/ReportsHowie</a> — LGPL-3.0.

@@ -24,6 +24,8 @@ Gerador de relatórios *banded* para Delphi (VCL) — alternativa livre ao FastR
 16. [Impressão](#16-impressão)
 17. [Receitas rápidas](#17-receitas-rápidas)
 18. [Solução de problemas](#18-solução-de-problemas)
+19. [Relatórios fiscais (DANFE, NFC-e, DACTE, DAMDFE, NFS-e, DACCE)](#19-relatórios-fiscais)
+20. [Galeria de demos](#20-galeria-de-demos)
 
 ---
 
@@ -838,6 +840,189 @@ end;
 | Texto acentuado sai como `Ã©`/`â€"` | literal não-ASCII em `.pas` lido como ANSI | salve o `.pas` em UTF-8 com BOM **ou** use escapes `#$XXXX` |
 | Grupo aparece repetido/quebrado | dataset não ordenado pela `GroupExpression` | adicione `ORDER BY` pela expressão de grupo |
 | Componente não aparece na paleta | pacote **DT** não instalado / form fechado | instale `ReportsHowieDT` e abra um form VCL |
+
+---
+
+## 19. Relatórios fiscais
+
+O ReportsHowie reproduz os **Documentos Auxiliares** fiscais brasileiros usando só os objetos nativos (texto, forma, linha, **barcode**/**QR**) — sem componente externo. O repositório traz seis demos prontos; os geradores completos em Python estão em `demos/<nome>_build.py` (rode com `py demos/danfe_build.py`) e as versões renderizadas em HTML fiel ficam em `docs/exemplos/`. As imagens abaixo e os HTML são regeneráveis com `py docs/build_gallery.py`.
+
+> **Manual navegável:** a versão HTML deste manual (`docs/index.html`) **embute cada documento renderizado** num quadro rolável. Aqui, no Markdown, mostramos o print e o link para o HTML.
+
+### 19.0 Fundamentos comuns
+
+Os geradores fiscais compartilham as primitivas de `demos/fiscal_common.py` (`mm`, `txt`, `cell`, `box`, `fill`, `hline`, `vline`, `barcode`, `qrcode`, `band`, `page`, `save`). Conceitos recorrentes:
+
+- **Unidade = 0,1 mm inteiro** (`mm(210)=2100`); cores em **BGR** (`TColor`).
+- **Coordenadas relativas à área de conteúdo:** o motor já aplica as margens. Use `X0 = 0` e `W = papel − 2·margem` — não some a margem de novo.
+- **Modelo de bandas:** a 1ª `masterData` é o cabeçalho fixo do documento (1 registro); os itens repetem numa `detailData`; totais/observações numa `summary`.
+- **`cell(l,t,w,h,rótulo,valor)`** desenha a célula estilo DAC (moldura + rótulo pequeno em cima + valor embaixo) — o tijolo de quase todo formulário fiscal.
+- **Máscaras:** `[MASK(cnpj,'##.###.###/####-##')]`, CPF `'###.###.###-##'`, CEP `'#####-###'`, chave de 44 dígitos em grupos de 4.
+- **Idioma de tabela (*column-spec*):** uma função devolve tuplas `(rótulo, largura, campo, alinhamento)`; o cabeçalho (na master) e a linha (na detail) percorrem **a mesma** lista → colunas sempre alinhadas.
+- **`sect(o, y, "TÍTULO")`** desenha a faixa cinza de título de seção e devolve o `y` avançado.
+
+```python
+# column-spec reutilizado pelo cabecalho (master) e pela linha (detail)
+def product_columns():
+    return [("CODIGO", mm(16), "codigo", "left"),
+            ("DESCRICAO", W - mm(104), "descricao", "left"),
+            ("QTD", mm(24), "qtd", "right"),
+            ("V.UNIT / V.TOTAL", mm(26), "valor_total", "right")]
+
+x = X0                                    # na linha de detalhe
+for i, (_lbl, cw, field, al) in enumerate(product_columns()):
+    txt(o, x + mm(1), mm(0.6), cw - mm(2), mm(4), "[%s]" % field, size=6, align=al)
+    if i > 0: vline(o, x, 0, RH)
+    x += cw
+```
+
+> **Dados fictícios.** Todos os exemplos usam CNPJ/chaves de demonstração — nada de dado real.
+
+### 19.1 DANFE — Nota Fiscal Eletrônica
+
+Formulário A4 retrato (modelo 55), o mais completo: canhoto, bloco emitente/DANFE/chave, destinatário, cálculo do imposto e tabela de produtos. A **chave de acesso** vira um **Code128**.
+
+| Papel | Bandas | Código fiscal |
+|---|---|---|
+| A4 retrato · margem 4 mm | `masterData` Nota + `detailData` Itens + `summary` Adicionais | Code128 (chave) |
+
+Barcode + chave mascarada, na 3ª coluna do cabeçalho:
+
+```python
+barcode(o, xc + mm(3), y + mm(2), wc - mm(6), mm(11), "[chave]")
+txt(o, xc + mm(2), y + mm(17), wc - mm(4), mm(4),
+    "[MASK(chave,'#### #### #### #### #### #### #### #### #### #### ####')]",
+    size=5, style="B", align="center")
+```
+
+![DANFE renderizada](img/gallery/danfe.png)
+
+*Fonte: [`demos/danfe_build.py`](../demos/danfe_build.py) · HTML fiel: [`exemplos/danfe.html`](exemplos/danfe.html)*
+
+**Como criar do zero:** página A4 retrato (`X0=0`, `W=mm(210)−2·mm(4)`); na `masterData` "Nota" o canhoto, depois o bloco de 3 colunas emitente | DANFE | (barcode+chave) separadas por `vline`; linhas natureza/protocolo, IE/CNPJ e o quadro DESTINATÁRIO com `cell(...)`; CÁLCULO DO IMPOSTO em duas fileiras de 5 células (a última, **VALOR TOTAL DA NOTA**, em negrito); cabeçalho da tabela (na master) + a `detailData` "Itens" percorrendo o mesmo `product_columns()`; `summary` "Adicionais" dividida 60/40.
+
+### 19.2 NFC-e — Nota Fiscal de Consumidor
+
+Cupom em **bobina térmica de 80 mm** (modelo 65). Fluxo centralizado, colunas finas, e o código fiscal é um **QR Code** na banda de totais.
+
+| Papel | Bandas | Código fiscal |
+|---|---|---|
+| 80 × 122 mm · margem 2 mm | `masterData` Venda + `detailData` Itens + `summary` Totais | QR Code |
+
+QR centralizado pela largura útil (o QR é quadrado):
+
+```python
+qr = mm(34)
+qrcode(o, X0 + (W - qr) // 2, y, qr, "[qr_conteudo]")
+```
+
+![NFC-e renderizada](img/gallery/nfce.png)
+
+*Fonte: [`demos/nfce_build.py`](../demos/nfce_build.py) · HTML fiel: [`exemplos/nfce.html`](exemplos/nfce.html). Com estes dados o cupom ocupa 2 páginas — o QR e os totais ficam na página 2.*
+
+### 19.3 DACTE — Conhecimento de Transporte (CT-e)
+
+A4 retrato, modal rodoviário (modelo 57). Introduz o idioma de **seções** (`sect()`) e um laço que gera os blocos **remetente/destinatário** lado a lado.
+
+| Papel | Bandas | Código fiscal |
+|---|---|---|
+| A4 retrato · margem 4 mm | `masterData` CTe + `detailData` Docs + `summary` Obs | Code128 (chave) |
+
+```python
+half = W // 2
+for (lbl, pre) in (("REMETENTE", "rem"), ("DESTINATARIO", "dest")):
+    xh = X0 if lbl == "REMETENTE" else X0 + half
+    wh = half if lbl == "REMETENTE" else W - half
+    cell(o, xh, y,       wh, mm(8), lbl,        "[%s_nome]" % pre, valign_val="left")
+    cell(o, xh, y+mm(8), wh, mm(8), "ENDERECO", "[%s_end]"  % pre, valign_val="left")
+```
+
+![DACTE renderizado](img/gallery/dacte.png)
+
+*Fonte: [`demos/dacte_build.py`](../demos/dacte_build.py) · HTML fiel: [`exemplos/dacte.html`](exemplos/dacte.html)*
+
+### 19.4 DAMDFE — Manifesto (MDF-e)
+
+A4 retrato (modelo 58). Único documento que usa **barcode E QR juntos**: QR no cabeçalho e um Code128 da chave numa faixa própria; as chaves de 44 dígitos aparecem **mascaradas dentro das linhas de detalhe**.
+
+| Papel | Bandas | Código fiscal |
+|---|---|---|
+| A4 retrato · margem 4 mm | `masterData` MDFe + `detailData` Docs + `summary` Obs | Code128 **+** QR |
+
+Faixa de métricas por divisão igual (6 colunas uniformes):
+
+```python
+cols = [("UF CARREG.","uf_ini"), ("UF DESCARREG.","uf_fim"), ("QTD. CT-e","qtd_cte"),
+        ("QTD. NF-e","qtd_nfe"), ("PESO TOTAL (KG)","peso"), ("VALOR TOTAL R$","valor")]
+cw = W // len(cols)
+for i, (lbl, fld) in enumerate(cols):
+    cell(o, X0 + i*cw, y, cw, ROW, lbl, "[%s]" % fld)
+```
+
+![DAMDFE renderizado](img/gallery/mdfe.png)
+
+*Fonte: [`demos/mdfe_build.py`](../demos/mdfe_build.py) · HTML fiel: [`exemplos/mdfe.html`](exemplos/mdfe.html)*
+
+### 19.5 NFS-e — Nota Fiscal de Serviço
+
+A4 retrato, layout municipal genérico. Único documento de **serviço** (sem barcode/QR): grades de retenção e um **destaque de VALOR LÍQUIDO**.
+
+| Papel | Bandas | Código fiscal |
+|---|---|---|
+| A4 retrato · margem 6 mm | `masterData` Nota + `detailData` Serviços + `summary` Totais | — |
+
+Grade de retenções por laço (IRRF/PIS/COFINS/CSLL/INSS):
+
+```python
+ret = [("IRRF","irrf"), ("PIS","pis"), ("COFINS","cofins"), ("CSLL","csll"), ("INSS","inss")]
+rw = W // len(ret)
+for i, (lbl, fld) in enumerate(ret):
+    cell(o, X0 + i*rw, y, rw, ROW, lbl, "[FORMATFLOAT('#,##0.00', %s)]" % fld)
+```
+
+![NFS-e renderizada](img/gallery/nfse.png)
+
+*Fonte: [`demos/nfse_build.py`](../demos/nfse_build.py) · HTML fiel: [`exemplos/nfse.html`](exemplos/nfse.html)*
+
+### 19.6 DACCE — Carta de Correção (CC-e)
+
+Evento da NF-e. Estruturalmente o mais simples: **uma única banda** `masterData` (sem itens), com destaque para o **texto legal justificado** com quebra de linha.
+
+| Papel | Bandas | Código fiscal |
+|---|---|---|
+| A4 retrato · margem 6 mm | `masterData` CCe (banda única) | Code128 (chave) |
+
+```python
+CONDICOES = "A Carta de Correcao e disciplinada pelo paragrafo 1o-A do art. 7o ..."
+box(o, X0, y, W, mm(26))
+txt(o, X0 + mm(2), y + mm(1.5), W - mm(4), mm(24), CONDICOES,
+    size=8, wrap=True, align="justify")
+```
+
+![DACCE renderizado](img/gallery/dacce.png)
+
+*Fonte: [`demos/dacce_build.py`](../demos/dacce_build.py) · HTML fiel: [`exemplos/dacce.html`](exemplos/dacce.html)*
+
+---
+
+## 20. Galeria de demos
+
+Além dos fiscais, o repositório traz demos genéricos (varejo/escritório, dados fictícios) que exercitam agrupamento, subtotais, master-detail, paisagem, mala direta e gráfico. Os `.rhr` estão em `demos/`; regenere os prints com `py docs/build_gallery.py`.
+
+| Demo | Mostra |
+|---|---|
+| [`fatura`](../demos/fatura.rhr) | Fatura/duplicata com itens, parcelas e bloco de boleto (linha digitável + Code128); **multi-detail** (dois datasets). |
+| [`matricial`](../demos/matricial.rhr) | Relatório matricial em **paisagem**, grupos com subtotais e paginação `Folha [PAGE]/[TOTALPAGES]`. |
+| [`mala_direta`](../demos/mala_direta.rhr) | Mala direta — **uma carta por destinatário** (uma página por registro). |
+| [`catalogo`](../demos/catalogo.rhr) | Catálogo de produtos com **código de barras (Code128)** e **QR** por item. |
+| [`vendas`](../demos/vendas.rhr) | Vendas por categoria com subtotais, total geral e **gráfico de barras**. |
+
+| | | |
+|:--:|:--:|:--:|
+| ![fatura](img/gallery/fatura.png) | ![matricial](img/gallery/matricial.png) | ![mala direta](img/gallery/mala_direta.png) |
+| **fatura** | **matricial** | **mala direta** |
+| ![catálogo](img/gallery/catalogo.png) | ![vendas](img/gallery/vendas.png) | |
+| **catálogo** | **vendas** | |
 
 ---
 

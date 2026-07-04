@@ -148,6 +148,7 @@ Veja templates prontos em **[`demos/`](./demos/)** e o guia completo no
 
 - 📘 **[Manual de uso (online)](https://howardroatti.github.io/ReportsHowie/)** — versão HTML navegável com índice lateral, busca e prints (GitHub Pages). Também no repo: **[docs/index.html](./docs/index.html)** e em Markdown **[MANUAL.md](./docs/MANUAL.md)**.
 - Cobre: bandas, objetos, expressões, data binding híbrido, agrupamento/agregados e **grupos aninhados**, banco de dados, preview, exportação, designer e receitas prontas.
+- 🧾 **Relatórios fiscais** (§19) — tutoriais passo-a-passo de **DANFE, NFC-e, DACTE, DAMDFE, NFS-e e DACCE**, com cada documento **renderizado e embutido em HTML** no manual online, mais uma **galeria** dos demos genéricos (§20). Assets gerados por `py docs/build_gallery.py`.
 - 🏗️ [Arquitetura](./docs/ARCHITECTURE.md) — visão interna do componente.
 - 🧩 [JSON Schema do `.rhr`](./schema/reportshowie.schema.json) — contrato do formato (draft-07) para validar/gerar templates em qualquer linguagem e como base para LLMs.
 - ⌨️ [`rhtool` CLI](./tools/rhtool/) — validar, inspecionar e exportar `.rhr` sem abrir o IDE (base *headless* do MCP).

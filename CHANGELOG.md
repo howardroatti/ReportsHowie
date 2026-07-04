@@ -7,6 +7,20 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado (manual: capitulo de relatorios fiscais + galeria)
+- **Capitulo 19 "Relatorios fiscais"** no manual (`docs/index.html` + `docs/MANUAL.md`):
+  tutorial passo-a-passo de **DANFE, NFC-e, DACTE, DAMDFE, NFS-e e DACCE** — papel/bandas,
+  tecnicas-chave (Code128/QR da chave, `MASK`, column-spec, `sect()`, texto legal justificado)
+  e "como criar do zero" de cada um. No manual HTML cada documento e **embutido renderizado**
+  via `<iframe>` (HTML self-contained); no Markdown, print + link.
+- **Capitulo 20 "Galeria de demos"**: grid com print dos demos genericos (fatura, matricial,
+  mala direta, catalogo, vendas).
+- **`docs/build_gallery.py`**: gerador que roda `rhtool export` (HTML/PDF) + `pdftoppm` para
+  produzir `docs/exemplos/*.html` e `docs/img/gallery/*.png` (multipagina empilhada) e injeta o
+  grid da galeria entre marcadores no `index.html`. Um comando poe o manual em dia.
+- **Manual HTML** ganhou as secoes **7.5 (`SetParam`), 7.6 (`VisibleExpr`) e 7.7 (null-safe)**,
+  que ja existiam no `MANUAL.md` — os dois espelhos voltam a ficar em sincronia.
+
 ### Adicionado (integracao Nutr1 v2: visibilidade condicional + parametros)
 - **`VisibleExpr` em objeto e banda** (#24): visibilidade condicional por expressao,
   avaliada por linha; se der falso, o objeto/banda nao e emitido. Vazio = comportamento
