@@ -48,7 +48,10 @@ INDEX_HTML = HERE / "index.html"
 PDF_DPI = 110
 MAX_STITCH_PAGES = 4     # limite de paginas empilhadas na miniatura
 
-# nome, kind ("fiscal"|"generic"), descricao (usada na galeria de genericos)
+# nome, kind ("fiscal"|"generic"|"section"), descricao (usada na galeria de genericos)
+#   fiscal  -> exporta HTML (iframe) + PNG
+#   generic -> so PNG, e entra no grid da galeria (secao 20)
+#   section -> so PNG, usado por uma figura especifica da prosa (fora do grid)
 REPORTS = [
     # --- fiscais: geram HTML (iframe) + PNG ---
     ("danfe", "fiscal", "DANFE — Nota Fiscal Eletronica (produtos)."),
@@ -63,6 +66,8 @@ REPORTS = [
     ("mala_direta", "generic", "Mala direta — uma carta por destinatario (1 pagina/registro)."),
     ("catalogo",    "generic", "Catalogo de produtos com codigo de barras e QR por item."),
     ("vendas",      "generic", "Vendas por categoria com subtotais, total e grafico de barras."),
+    # --- ilustracoes de secoes especificas (fora do grid da galeria) ---
+    ("pedidos",     "section", "Relatorio agrupado Cliente > Categoria > Produtos com subtotais."),
 ]
 
 

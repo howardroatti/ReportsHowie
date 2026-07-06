@@ -86,6 +86,39 @@
   .gallery figure.shot img{height:300px;object-fit:cover;object-position:top center}
   .gallery figure.shot figcaption{min-height:0}
 
+  /* ---- Mockups de UI do designer/preview (esquema em HTML/CSS; sem screenshot) ---- */
+  figure.mock{margin:18px 0;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);background:var(--bg)}
+  figure.mock figcaption{font-size:12.5px;color:var(--muted);padding:8px 12px;background:var(--side);border-top:1px solid var(--border)}
+  figure.mock .scroll{overflow-x:auto}
+  .mock{font:12px/1.45 "Segoe UI",system-ui,sans-serif;color:var(--fg);-webkit-user-select:none;user-select:none}
+  .mock.wide{min-width:440px}
+  .mock .ribbon{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;background:var(--side);border-bottom:1px solid var(--border);font-size:11.5px;color:var(--muted)}
+  .mock .ribbon .tab{padding:2px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg)}
+  .mock .ribbon .tab.on{color:var(--accent);border-color:var(--accent);background:var(--accent-bg);font-weight:600}
+  .mock .body{display:grid;grid-template-columns:158px 1fr 132px}
+  .mock .pane{padding:9px 11px;border-right:1px solid var(--border);min-height:186px;overflow:hidden}
+  .mock .pane:last-child{border-right:0}
+  .mock .pane h5{margin:0 0 7px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .mock .tree{list-style:none;margin:0;padding:0;font-size:12px}
+  .mock .tree li{padding:1px 0}
+  .mock .tree .ds::before{content:"\25be  ";color:var(--muted)}
+  .mock .tree .ds{color:var(--accent);font-weight:600}
+  .mock .tree .fld{padding-left:17px;color:var(--fg);opacity:.85}
+  .mock .tree .fld::before{content:"\2022  ";color:var(--muted)}
+  .mock .surface{padding:8px;background:repeating-linear-gradient(0deg,transparent,transparent 15px,rgba(9,105,218,.05) 15px,rgba(9,105,218,.05) 16px),var(--bg)}
+  .mock .band{margin:7px 4px;border:1px dashed var(--border);border-radius:4px;padding:5px 8px;background:var(--bg)}
+  .mock .band .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);display:block;margin-bottom:4px}
+  .mock .band .obj{display:inline-block;border:1px solid var(--accent);background:var(--accent-bg);color:var(--fg);border-radius:3px;padding:0 5px;margin:2px}
+  .mock .prop div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dotted var(--border);font-size:11px}
+  .mock .prop div b{font-weight:600;color:var(--muted)}
+  .mock .toolbar{display:flex;gap:6px;align-items:center;padding:6px 10px;background:var(--side);border-bottom:1px solid var(--border);font-size:11.5px;color:var(--muted)}
+  .mock .toolbar .btn{padding:1px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg)}
+  .mock .toolbar .sp{flex:1}
+  .mock .page{margin:14px auto;width:158px;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow);padding:10px}
+  .mock .page .ln{height:5px;margin:5px 0;background:var(--side);border-radius:2px}
+  .mock .page .ln.s{width:55%}
+  .mock .page .ln.t{width:75%;height:7px;background:var(--accent-bg)}
+
   .backtop{position:fixed;right:22px;bottom:22px;background:var(--accent);color:#fff;
     border:none;border-radius:22px;padding:9px 14px;font-size:13px;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s}
   .backtop.show{opacity:1;pointer-events:auto}
@@ -359,10 +392,9 @@ NovoTexto(BSum, 'TOTAL: R$ [FORMATFLOAT(''#,##0.00'', SUM([total]))]  |  Itens: 
 
     <h3 id="aninhados">9.1 Grupos aninhados (multi-nível)</h3>
     <p>Vários níveis de grupo. A <b>ordem dos cabeçalhos</b> (de cima para baixo) define o aninhamento: o primeiro é o mais <b>externo</b>. Cada nível pode ter rodapé (casado pela <code>GroupExpression</code>). Os subtotais somam o escopo do nível — o total da categoria considera só as linhas <b>daquele cliente e categoria</b>.</p>
-    <figure class="shot missing">
-      <img src="img/relatorio-aninhado.png" alt="Relatório hierárquico Cliente › Categoria › Produtos com subtotais">
-      <div class="ph">[ Print sugerido: <code>img/relatorio-aninhado.png</code> — preview do relatório Cliente › Categoria › Produtos, com subtotais por categoria e total do cliente ]</div>
-      <figcaption>Saída da hierarquia Cliente › Categoria › Produtos › Subtotal categoria › Total do cliente.</figcaption>
+    <figure class="shot">
+      <img src="img/gallery/pedidos.png" alt="Relatório hierárquico Cliente › Categoria › Produtos com subtotais" loading="lazy">
+      <figcaption>Saída da hierarquia Cliente › Categoria › Produtos › Subtotal categoria › Total do cliente (<a href="../demos/pedidos.rhr"><code>demos/pedidos.rhr</code></a>).</figcaption>
     </figure>
     <p><b>Exemplo 8.1 — hierarquia Cliente › Categoria › Produtos › totais:</b></p>
     <pre><code>// nivel externo: Cliente
@@ -438,10 +470,20 @@ rhReport1.ShowDataPreview;</code></pre>
     <pre><code>rhReport1.ShowDataPreview;   // com dados
 rhReport1.ShowPreview;       // layout estatico</code></pre>
     <h3>12.2 Preview embutida no form — <code>TrhPreviewControl</code></h3>
-    <figure class="shot missing">
-      <img src="img/preview-embutida.png" alt="TrhPreviewControl embutido num form">
-      <div class="ph">[ Print sugerido: <code>img/preview-embutida.png</code> — o controle de preview embutido no form, com a barra de navegação de páginas e zoom ]</div>
-      <figcaption>Preview embutida (<code>TrhPreviewControl</code>) — navegação de páginas e zoom inline.</figcaption>
+    <figure class="mock">
+      <div class="mock" role="img" aria-label="Controle de preview embutido: barra com primeira/anterior/proxima/ultima pagina, contador 1 de 3 e zoom; abaixo, uma pagina do relatorio">
+        <div class="toolbar"><span class="btn">&#x2759;&#x25c0;</span><span class="btn">&#x25c0;</span><span>Pág. 1 / 3</span><span class="btn">&#x25b6;</span><span class="btn">&#x25b6;&#x2759;</span><span class="sp"></span><span class="btn">&#x2212;</span><span>100%</span><span class="btn">+</span></div>
+        <div class="surface" style="padding:2px 0 6px">
+          <div class="page">
+            <div class="ln t"></div>
+            <div class="ln"></div>
+            <div class="ln s"></div>
+            <div class="ln"></div>
+            <div class="ln s"></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Preview embutida (<code>TrhPreviewControl</code>) — navegação de páginas e zoom inline. <em>Esquema ilustrativo (não é screenshot).</em></figcaption>
     </figure>
     <p><b>Exemplo 10 — preview sempre visível num painel:</b></p>
     <pre><code>Prev := TrhPreviewControl.Create(Self);
@@ -520,10 +562,37 @@ rhReport1.LoadFromJSONString(S);</code></pre>
 
     <h2 id="designer">15. Designer visual</h2>
     <p>Com o pacote <b>DT</b> instalado, dê <b>duplo-clique no <code>TrhReport</code></b> para abrir o designer.</p>
-    <figure class="shot missing">
-      <img src="img/designer.png" alt="Designer visual do ReportsHowie">
-      <div class="ph">[ Print sugerido: <code>img/designer.png</code> — o designer aberto: ribbon no topo, painel de dados à esquerda, superfície central com bandas, inspetor à direita ]</div>
-      <figcaption>Designer: ribbon (Arquivo/Zoom/Inserir/Banda/Alinhar/Ver), painel de dados, superfície e inspetor.</figcaption>
+    <figure class="mock">
+      <div class="scroll"><div class="mock wide" role="img" aria-label="Esquema do designer: ribbon no topo; painel de dados a esquerda; superficie central com bandas; inspetor de propriedades a direita">
+        <div class="ribbon"><span class="tab on">Arquivo</span><span class="tab">Zoom</span><span class="tab">Inserir</span><span class="tab">Banda</span><span class="tab">Alinhar</span><span class="tab">Ver</span></div>
+        <div class="body">
+          <div class="pane">
+            <h5>Dados</h5>
+            <ul class="tree">
+              <li class="ds">Pedidos</li>
+              <li class="fld">cliente</li>
+              <li class="fld">categoria</li>
+              <li class="fld">produto</li>
+              <li class="fld">total</li>
+            </ul>
+          </div>
+          <div class="pane surface">
+            <div class="band"><span class="lbl">Cabecalho de pagina</span><span class="obj">Relatorio de Pedidos</span></div>
+            <div class="band"><span class="lbl">Grupo: cliente</span><span class="obj">[cliente]</span></div>
+            <div class="band"><span class="lbl">Detalhe</span><span class="obj">[produto]</span><span class="obj">[total]</span></div>
+            <div class="band"><span class="lbl">Rodape de grupo</span><span class="obj">Subtotal [categoria]</span></div>
+          </div>
+          <div class="pane prop">
+            <h5>Propriedades</h5>
+            <div><b>Name</b><span>Detalhe1</span></div>
+            <div><b>Band</b><span>Detail</span></div>
+            <div><b>DataSet</b><span>Pedidos</span></div>
+            <div><b>Height</b><span>60</span></div>
+            <div><b>Visible</b><span>True</span></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption>Designer: ribbon (Arquivo/Zoom/Inserir/Banda/Alinhar/Ver), painel de dados, superfície e inspetor. <em>Esquema ilustrativo (não é screenshot).</em></figcaption>
     </figure>
     <ul>
       <li><b>Arquivo</b> — Abrir/Salvar template <code>.rhr</code>.</li>
@@ -534,10 +603,24 @@ rhReport1.LoadFromJSONString(S);</code></pre>
       <li><b>Ver</b> — <code>Preview</code> e <code>Ajuda</code> (abre esta documentação).</li>
     </ul>
     <p>Recursos: seleção múltipla (Shift+clique ou retângulo), snap ao grid, guias de alinhamento, <b>Ctrl+Z</b>, duplo-clique no texto para editar / na imagem para carregar arquivo.</p>
-    <figure class="shot missing">
-      <img src="img/painel-dados.png" alt="Painel de dados do designer">
-      <div class="ph">[ Print sugerido: <code>img/painel-dados.png</code> — o painel &quot;Dados&quot; à esquerda, com a árvore dataset → campos ]</div>
-      <figcaption>Painel de dados: árvore <code>dataset → campos</code>. Duplo-clique num campo insere <code>[campo]</code> na banda selecionada.</figcaption>
+    <figure class="mock">
+      <div class="mock" role="img" aria-label="Painel de dados: arvore com o dataset Pedidos e os campos cliente, categoria, produto, quantidade, preco e total">
+        <div class="body" style="grid-template-columns:1fr">
+          <div class="pane" style="border-right:0">
+            <h5>Dados</h5>
+            <ul class="tree">
+              <li class="ds">Pedidos</li>
+              <li class="fld">cliente</li>
+              <li class="fld">categoria</li>
+              <li class="fld">produto</li>
+              <li class="fld">quantidade</li>
+              <li class="fld">preco</li>
+              <li class="fld">total</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <figcaption>Painel de dados: árvore <code>dataset → campos</code>. Duplo-clique num campo insere <code>[campo]</code> na banda selecionada. <em>Esquema ilustrativo (não é screenshot).</em></figcaption>
     </figure>
     <p><b>De onde vêm os datasets:</b> o designer coleta (1) os <code>TDataSet</code> do próprio form/DataModule sendo desenhado, (2) os apontados por um <code>TDataSource</code> nele (inclusive quando o dataset mora em outro DataModule) e (3) os de qualquer <b><code>TDataModule</code></b> aberto no IDE (via ToolsAPI). O passo (3) fica restrito a DataModules por padrão — onde datasets quase sempre moram — para não varrer todos os forms abertos em projetos grandes. Se você tem datasets <b>soltos em forms comuns</b>, ligue a propriedade <code>ScanFormsForLooseDatasets</code> do <code>TrhReport</code> (no inspetor; default <code>False</code>) para incluir os forms na varredura.</p>
     <p><b>Drag-to-bind (arrastar campo):</b> arraste um campo da árvore para a superfície — <b>sobre um texto</b> seta o <code>DataField</code> dele; <b>em área vazia</b> cria um texto já vinculado no ponto do drop. Objetos vinculados exibem um <b>triângulo azul</b> no canto superior esquerdo e mostram <code>[campo]</code> no design-time.</p>

@@ -7,6 +7,17 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (manual: figuras sem screenshot)
+- As figuras do designer/preview (que dependiam de **prints** da IDE nunca
+  capturados) viraram **mockups em HTML/CSS embutidos** no próprio help
+  (`docs/index.html`): esquema do designer (ribbon + painel de dados +
+  superfície + inspetor), painel de dados isolado e controle de preview.
+  Self-contained, adaptam ao tema e não precisam da IDE.
+- A figura do relatório hierárquico (Cliente › Categoria › Produtos) passou a
+  ser um **render real** do `demos/pedidos.rhr` via `rhtool` — o
+  `docs/build_gallery.py` ganhou o tipo de asset `section` (gera só o PNG, fora
+  do grid da galeria) para ilustrar seções específicas da prosa.
+
 ### Melhorado (designer: descoberta de datasets)
 - **`ScanOpenModules` restrito a `TDataModule`** (#3): a varredura de módulos
   abertos no IDE (via ToolsAPI) agora coleta datasets apenas de **DataModules**,
