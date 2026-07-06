@@ -675,6 +675,8 @@ Recursos: seleção múltipla (Shift+clique ou retângulo), snap ao grid, guias 
 
 **Painel de dados** (à esquerda, quando há datasets no form): lista `dataset → campos`. Duplo-clique num campo insere um texto `[campo]` na banda selecionada e ajusta o `DataSetName`.
 
+*De onde vêm os datasets:* o designer coleta (1) os `TDataSet` do próprio form/DataModule sendo desenhado, (2) os apontados por um `TDataSource` nele (inclusive quando o dataset mora em outro DataModule) e (3) os de qualquer **`TDataModule`** aberto no IDE (via ToolsAPI). O passo (3) fica restrito a DataModules por padrão — onde datasets quase sempre moram — para não varrer todos os forms abertos em projetos grandes. Se você tem datasets **soltos em forms comuns**, ligue a propriedade **`ScanFormsForLooseDatasets`** do `TrhReport` (Object Inspector, default `False`) para incluir os forms na varredura.
+
 **Drag-to-bind (arrastar campo):** arraste um campo da árvore direto para a superfície:
 - **Sobre um objeto de texto** → seta o `DataField` dele (vincula o objeto existente).
 - **Em área vazia de uma banda** → cria um texto já vinculado na posição do drop.
