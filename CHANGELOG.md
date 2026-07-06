@@ -7,6 +7,16 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (designer: descoberta de datasets)
+- **`ScanOpenModules` restrito a `TDataModule`** (#3): a varredura de módulos
+  abertos no IDE (via ToolsAPI) agora coleta datasets apenas de **DataModules**,
+  onde eles quase sempre moram, em vez de percorrer todos os forms abertos —
+  evita varredura desnecessária em projetos grandes. Os datasets do form/DM
+  **atual** continuam vindo pelos estágios 1 (componentes do root) e 2
+  (referências de `TDataSource`), então nada se perde no caso comum. Uma const
+  `ScanFormsForLooseDatasets` (default `False`) reabilita a varredura de forms
+  comuns para quem tem datasets soltos fora de DataModules.
+
 ### Adicionado (manual: capitulo de relatorios fiscais + galeria)
 - **Capitulo 19 "Relatorios fiscais"** no manual (`docs/index.html` + `docs/MANUAL.md`):
   tutorial passo-a-passo de **DANFE, NFC-e, DACTE, DAMDFE, NFS-e e DACCE** — papel/bandas,

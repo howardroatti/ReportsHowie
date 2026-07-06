@@ -38,6 +38,15 @@ uses
   rh.Report, rh.Page, rh.Import.FastReport,
   rh.Design.Designer.Form, rh.Design.Data, rh.Preview.Form;
 
+const
+  /// <summary>
+  ///   #3: por padrao o ScanOpenModules coleta datasets apenas de TDataModule
+  ///   (onde eles quase sempre moram), evitando varrer todos os forms abertos no
+  ///   IDE em projetos grandes. Ligue para tambem varrer forms comuns atras de
+  ///   datasets soltos (os datasets do form ATUAL ja chegam pelos estagios 1 e 2).
+  /// </summary>
+  ScanFormsForLooseDatasets = False;
+
 function ReportHasContent(R: TrhReport): Boolean;
 var
   P: Integer;
@@ -85,7 +94,9 @@ var
 
   // Enumera os modulos ABERTOS no IDE (via ToolsAPI) e coleta os TDataSet do
   // root de cada um — pega datasets de DataModules mesmo SEM um TDataSource no
-  // form. Falhas de ToolsAPI sao silenciadas (o designer segue com o que achou).
+  // form. #3: por padrao restringe a TDataModule (onde datasets moram), sem
+  // varrer todos os forms; ScanFormsForLooseDatasets libera forms comuns.
+  // Falhas de ToolsAPI sao silenciadas (o designer segue com o que achou).
   procedure ScanOpenModules;
   var
     MS: IOTAModuleServices;
@@ -114,6 +125,9 @@ var
         if (RootIntf = nil) or (not Supports(RootIntf, INTAComponent)) then Continue;
         NativeRoot := (RootIntf as INTAComponent).GetComponent;
         if NativeRoot = nil then Continue;
+        // #3: prioriza DataModules; forms comuns so entram com a flag ligada.
+        if not ((NativeRoot is TDataModule) or ScanFormsForLooseDatasets) then
+          Continue;
         for CI := 0 to NativeRoot.ComponentCount - 1 do
           if NativeRoot.Components[CI] is TDataSet then
             AddDS(TDataSet(NativeRoot.Components[CI]));
