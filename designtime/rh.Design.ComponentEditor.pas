@@ -38,15 +38,6 @@ uses
   rh.Report, rh.Page, rh.Import.FastReport,
   rh.Design.Designer.Form, rh.Design.Data, rh.Preview.Form;
 
-const
-  /// <summary>
-  ///   #3: por padrao o ScanOpenModules coleta datasets apenas de TDataModule
-  ///   (onde eles quase sempre moram), evitando varrer todos os forms abertos no
-  ///   IDE em projetos grandes. Ligue para tambem varrer forms comuns atras de
-  ///   datasets soltos (os datasets do form ATUAL ja chegam pelos estagios 1 e 2).
-  /// </summary>
-  ScanFormsForLooseDatasets = False;
-
 function ReportHasContent(R: TrhReport): Boolean;
 var
   P: Integer;
@@ -63,6 +54,7 @@ var
   Root: TComponent;
   I: Integer;
   Flds, Seen: TStringList;
+  ScanForms: Boolean; // #3: espelha TrhReport.ScanFormsForLooseDatasets
 
   // Coleta os campos de um dataset (persistentes ou via FieldDefs). Evita
   // duplicar quando o mesmo dataset e achado direto e via TDataSource.
@@ -95,7 +87,8 @@ var
   // Enumera os modulos ABERTOS no IDE (via ToolsAPI) e coleta os TDataSet do
   // root de cada um — pega datasets de DataModules mesmo SEM um TDataSource no
   // form. #3: por padrao restringe a TDataModule (onde datasets moram), sem
-  // varrer todos os forms; ScanFormsForLooseDatasets libera forms comuns.
+  // varrer todos os forms; a propriedade TrhReport.ScanFormsForLooseDatasets
+  // (capturada em ScanForms) libera forms comuns.
   // Falhas de ToolsAPI sao silenciadas (o designer segue com o que achou).
   procedure ScanOpenModules;
   var
@@ -126,7 +119,7 @@ var
         NativeRoot := (RootIntf as INTAComponent).GetComponent;
         if NativeRoot = nil then Continue;
         // #3: prioriza DataModules; forms comuns so entram com a flag ligada.
-        if not ((NativeRoot is TDataModule) or ScanFormsForLooseDatasets) then
+        if not ((NativeRoot is TDataModule) or ScanForms) then
           Continue;
         for CI := 0 to NativeRoot.ComponentCount - 1 do
           if NativeRoot.Components[CI] is TDataSet then
@@ -145,6 +138,9 @@ begin
   if Root = nil then Exit;
   Flds := TStringList.Create;
   Seen := TStringList.Create;
+  // #3: le a preferencia do proprio TrhReport sendo editado (default False).
+  ScanForms := (Component is TrhReport) and
+    TrhReport(Component).ScanFormsForLooseDatasets;
   try
     // 1) datasets que vivem no proprio form/DM sendo desenhado
     for I := 0 to Root.ComponentCount - 1 do

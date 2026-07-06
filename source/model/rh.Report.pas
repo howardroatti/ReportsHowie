@@ -28,6 +28,7 @@ type
     FTitle: string;
     FAuthor: string;
     FFormatVersion: Integer;
+    FScanFormsForLooseDatasets: Boolean;
     FPages: TrhPageList;
     FWatermark: TrhWatermark;
     FDataSets: TDictionary<string, TComponent>; // binding runtime (nao serializado)
@@ -76,6 +77,15 @@ type
     property Title: string read FTitle write FTitle;
     property Author: string read FAuthor write FAuthor;
     property FormatVersion: Integer read FFormatVersion write FFormatVersion default RH_FORMAT_VERSION;
+    /// <summary>
+    ///   Design-time (#3): quando True, a descoberta de datasets do designer
+    ///   tambem varre forms comuns abertos no IDE atras de datasets soltos, alem
+    ///   dos DataModules. Default False (so DataModules) — os datasets do
+    ///   proprio form/DM e os referenciados por TDataSource ja sao achados
+    ///   independentemente desta flag. Nao tem efeito em runtime.
+    /// </summary>
+    property ScanFormsForLooseDatasets: Boolean read FScanFormsForLooseDatasets
+      write FScanFormsForLooseDatasets default False;
   end;
 
 implementation

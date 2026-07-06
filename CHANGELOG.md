@@ -13,9 +13,10 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   onde eles quase sempre moram, em vez de percorrer todos os forms abertos —
   evita varredura desnecessária em projetos grandes. Os datasets do form/DM
   **atual** continuam vindo pelos estágios 1 (componentes do root) e 2
-  (referências de `TDataSource`), então nada se perde no caso comum. Uma const
-  `ScanFormsForLooseDatasets` (default `False`) reabilita a varredura de forms
-  comuns para quem tem datasets soltos fora de DataModules.
+  (referências de `TDataSource`), então nada se perde no caso comum. Nova
+  **propriedade publicada `TrhReport.ScanFormsForLooseDatasets`** (default
+  `False`, visível no Object Inspector) reabilita a varredura de forms comuns
+  por-relatório, para quem tem datasets soltos fora de DataModules.
 
 ### Adicionado (manual: capitulo de relatorios fiscais + galeria)
 - **Capitulo 19 "Relatorios fiscais"** no manual (`docs/index.html` + `docs/MANUAL.md`):
