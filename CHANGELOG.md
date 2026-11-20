@@ -7,6 +7,12 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Melhorado (preview: roda do mouse)
+- `TrhPreviewForm` e `TrhPreviewControl` agora respondem à **roda do mouse**:
+  rola a página na vertical; **Shift+roda** rola na horizontal; **Ctrl+roda** dá
+  zoom; ao chegar ao fim/início da página, continuar girando avança/volta de
+  página. Antes só a barra lateral rolava (o `TScrollBox` do VCL não trata a roda).
+
 ### Melhorado (manual: figuras sem screenshot)
 - As figuras do designer/preview (que dependiam de **prints** da IDE nunca
   capturados) viraram **mockups em HTML/CSS embutidos** no próprio help

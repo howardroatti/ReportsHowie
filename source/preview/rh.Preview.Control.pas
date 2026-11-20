@@ -23,7 +23,7 @@ unit rh.Preview.Control;
 interface
 
 uses
-  System.Classes, Vcl.Controls, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Graphics,
+  System.Classes, System.Types, Vcl.Controls, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Graphics,
   Vcl.Forms,
   rh.Report, rh.Render.Intf, rh.Expr.Nodes;
 
@@ -51,6 +51,11 @@ type
     procedure DoLast(Sender: TObject);
     procedure DoZoomIn(Sender: TObject);
     procedure DoZoomOut(Sender: TObject);
+  protected
+    /// <summary>Roda do mouse: rola a pagina; Shift = horizontal; Ctrl = zoom;
+    ///  no fim/inicio da pagina, avanca/volta de pagina.</summary>
+    function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
+      MousePos: TPoint): Boolean; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -66,7 +71,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.StrUtils, System.Types,
+  System.SysUtils, System.StrUtils,
   rh.Render.Engine, rh.Render.VCLCanvas;
 
 const
@@ -268,6 +273,51 @@ procedure TrhPreviewControl.DoZoomOut(Sender: TObject);
 begin
   if FZoom > 0.25 then FZoom := FZoom / 1.25;
   UpdateView;
+end;
+
+function TrhPreviewControl.DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
+  MousePos: TPoint): Boolean;
+const
+  STEP = 60; // px por "clique" da roda
+  WHEEL_STEP = 120;
+var
+  Bar: TControlScrollBar;
+  OldPos, NewPos: Integer;
+begin
+  Result := True;
+  if ssCtrl in Shift then
+  begin
+    if WheelDelta > 0 then DoZoomIn(nil) else DoZoomOut(nil);
+    Exit;
+  end;
+
+  if ssShift in Shift then
+    Bar := FScroll.HorzScrollBar
+  else
+    Bar := FScroll.VertScrollBar;
+
+  OldPos := Bar.Position;
+  NewPos := OldPos - (WheelDelta div WHEEL_STEP) * STEP;
+  if NewPos < 0 then NewPos := 0;
+  if NewPos > Bar.Range then NewPos := Bar.Range;
+  Bar.Position := NewPos;
+
+  // ja estava no limite: muda de pagina
+  if (Bar = FScroll.VertScrollBar) and (Bar.Position = OldPos) and (FDoc <> nil) then
+  begin
+    if (WheelDelta < 0) and (FPageIndex < FDoc.PageCount - 1) then
+    begin
+      Inc(FPageIndex);
+      UpdateView;
+      Bar.Position := 0;
+    end
+    else if (WheelDelta > 0) and (FPageIndex > 0) then
+    begin
+      Dec(FPageIndex);
+      UpdateView;
+      Bar.Position := Bar.Range;
+    end;
+  end;
 end;
 
 end.
